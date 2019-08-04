@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="de"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:p="http://primefaces.org/ui" xmlns:f="http://java.sun.com/jsf/core">
+<h:head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta content="no-cache"/>
+    <title>H2</title>
+</h:head>
+<h:body>
+    <f:metadata>
+        <f:event type="preRenderView" listener="#{baseController.onPageLoad}"/>
+    </f:metadata>
+    <h:form>
+        <p:growl id="messages"/>
+
+        <p:menubar>
+            <p:submenu label="File" icon="pi pi-file">
+            </p:submenu>
+
+            <p:submenu label="Edit" icon="pi pi-pencil">
+            </p:submenu>
+
+            <p:menuitem value="Quit" url="http://www.primefaces.org" icon="pi pi-times" />
+
+            <f:facet name="options">
+                <p:commandButton actionListener="#{statementSQL.closeCon()}" value="Logout" icon="pi pi-home" />
+            </f:facet>
+        </p:menubar>
+    </h:form>
+    <h:form id="mainForm">
+            <h3>Tables</h3>
+            <p:tree value="#{tables.tree}" var="node" dynamic="true">
+                <p:treeNode>
+                    <h:outputText value="#{node}" />
+                </p:treeNode>
+            </p:tree>
+
+            <p:inputTextarea rows="6" cols="33" value="#{statementSQL.sql}" />
+            <p:commandButton value="Submit" actionListener="#{statementSQL.submit()}"/>
+
+       <h:outputText id="htmlStuff" value="#{statementSQL.html}" escape="false"/>
+        <p:dataTable id="tables" var="table" value="#{statementSQL.getTable().inhalt}" widgetVar="Ttable" >
+            <p:columns value="#{statementSQL.table.attribute}" var="attribut" columnIndexVar="colIndex" sortBy="#{table[attribut]}" filterBy="#{table[attribut]}">
+                <f:facet name="header">
+                    <h:outputText value="#{attribut.wert}" />
+                </f:facet>
+                <h:outputText value="#{table[attribut.nummer].wert}" />
+            </p:columns>
+        </p:dataTable>
+    </h:form>
+</h:body>
+</html>
+
+
+        <!--<p:dataTable id="tables" var="table" value="#{statementSQL.getTable().inhalt}" widgetVar="Ttable" >
+            <p:columns value="#{statementSQL.table.attribute}" var="attribut" columnIndexVar="colIndex" sortBy="#{table[attribut]}" filterBy="#{table[attribut]}">
+                <f:facet name="header">
+                    <h:outputText value="#{attribut.wert}" />
+                </f:facet>
+                <h:outputText value="#{table[attribut.nummer].wert}" />
+            </p:columns>
+        </p:dataTable>-->
