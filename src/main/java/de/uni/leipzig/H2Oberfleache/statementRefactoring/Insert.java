@@ -4,7 +4,6 @@ import de.uni.leipzig.H2Oberfleache.parser.SQL_Parser;
 import de.uni.leipzig.H2Oberfleache.parser.SQLiteParser;
 import org.antlr.v4.runtime.RuleContext;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -12,7 +11,9 @@ import java.util.Map;
 
 public class Insert extends Statement {
     //Todo: baue eingabe ohne name(...)values(...)
-    public static String nf2ToNf1(String sql) throws SQLException {
+    private static Map<String, List<Map<String, String>>> table_key_value = new HashMap<>();
+
+    public static String nf2ToNf1(String sql){
         sql = prepareSQL(sql);
         String result = sql;
         Map<String, List<RuleContext>> map = SQL_Parser.getParsedMap(sql);
@@ -22,121 +23,110 @@ public class Insert extends Statement {
         if (!subtables.isEmpty()) {
             result = "";
             List<RuleContext> children = SQL_Parser.getChildList(map.get("insert_stmt").get(0));
-            Map<String, Integer> tableName_NextID = getNextSubIDs(subtables);
-            if (map.containsKey("column_name") || map.containsKey("nf2_point_Noation")) {
-                Map<String, String> name_table = findWrightTablename(map, subtables);
-                Map<RuleContext, RuleContext> keyValue = getKeyValue(children);
-                for (Map.Entry<RuleContext, RuleContext> entry : keyValue.entrySet()) {
-                    System.out.println(entry.getKey().getText() + ": " + entry.getValue().getText());
-                }
-                    queries = createQuerys(tablename, keyValue, tableName_NextID, name_table, map);
+            if (map.containsKey("column_name") || map.containsKey("nf2_point_Noation"))
+                    queries = generateQuerys(children, map, tablename);
             } else {
                 //queries = getQuerysWhitoutColumns(tablename, map.get("expr"), tableName_NextID);
             }
-        }
         for (String query : queries) {
             result += query;
         }
         return result;
     }
 
-    private static List<String> createQuerys(String tablename, Map<RuleContext, RuleContext> keyValue,
-                                             Map<String, Integer> tableName_NextID, Map<String, String> name_table,
-                                             Map<String, List<RuleContext>> map) {
-        List<String> querys = new ArrayList<>();
-        querys.add(getQuery(tablename, keyValue, tableName_NextID, name_table, true));
-        querys.addAll(createSubQuerys(keyValue, tableName_NextID, name_table, map));
-        return querys;
+    private static List<String> generateQuerys(List<RuleContext> children, Map<String, List<RuleContext>> map, String tablename) {
+        List<String> allSubtables = new ArrayList<>();
+        allSubtables = getAllSubtables(tablename, allSubtables);
+        Map<String, String> name_table = findWrightTablename(map, allSubtables);
+        table_key_value = getKey_Value_forTabels(children, name_table);
+        List<Map<String, String>> key_value = table_key_value.get("main");
+        List<String> queries = createQuerys(tablename, key_value);
+        return queries;
     }
 
-    private static List<String> createSubQuerys(Map<RuleContext, RuleContext> keyValue, Map<String,
-            Integer> tableName_NextID, Map<String, String> name_table, Map<String, List<RuleContext>> map) {
-        List<String> querys = new ArrayList<>();
-        Map<String, Map<RuleContext, RuleContext>> tableName_Query = new HashMap<>();
-        for (Map.Entry<RuleContext, RuleContext> entry : keyValue.entrySet()) {
-            String tablename = name_table.get(entry.getKey().getText().split("\\.")[0]);
-            String s2 = (entry.getKey().getText());
-            List<RuleContext> columns = map.get("subtable_column_name");
-            for (RuleContext column : columns) {
-                String s1 = column.getParent().getText();
-                if(s1.equals(s2)){
-                    Map<RuleContext, RuleContext> ruleC = new HashMap<>();
-                    ruleC.put(column, entry.getValue());
-                    if(!tableName_Query.containsKey(tablename)){
-                        tableName_Query.put(tablename, ruleC);
-                    }else tableName_Query.get(tablename).put(column, entry.getValue());
+    private static List<String> getAllSubtables(String tablename, List<String> subtables){
+        List<String> tableSubtables = getNF2TableNames(tablename);
+        for (String subtable : tableSubtables) {
+            subtables.addAll(getAllSubtables(subtable, subtables));
+            subtables.add(subtable);
+        }
+        return subtables;
+    }
 
-                }
+    private static List<String> createQuerys(String tablename, List<Map<String, String>> key_value){
+        List<String> querys = new ArrayList<>();
+        List<String> subtables = getNF2TableNames(tablename);
+        if(!subtables.isEmpty()){
+            Integer nextTableID = getNextSubID(tablename);
+            String IDName = "__" + tablename + "ID";
+            Map<String, String> newMap = new HashMap<>();
+            newMap.put(IDName, nextTableID.toString());
+            for (String subtable : subtables) {
+                List<Map<String, String>> sub_key_value = table_key_value.get(subtable);
+                sub_key_value.add(newMap);
+                querys.addAll(createQuerys(subtable, sub_key_value));
             }
+            key_value.add(newMap);
         }
-        for (Map.Entry<String, Map<RuleContext, RuleContext>> entry : tableName_Query.entrySet()) {
-            querys.add(getQuery(entry.getKey(), entry.getValue(), tableName_NextID, name_table, false));
-        }
-        return querys;
-    }
-
-    //Funktioniert kein stück
-    private static String getQuery(String tablename, Map<RuleContext, RuleContext> keyValue,
-                                          Map<String,Integer> tableName_NextID, Map<String, String> name_table, Boolean firstround){
         String query = "INSERT INTO " + tablename + "(";
-        String values = "VALUES (";
-        Map<RuleContext, RuleContext> removable = new HashMap<>();
+        String values = " VALUES (";
         int i = 0;
-        for (Map.Entry<RuleContext, RuleContext> entry : keyValue.entrySet()) {
-            if (SQLiteParser.ruleNames[entry.getKey().getRuleIndex()].equals("column_name")
-            || SQLiteParser.ruleNames[entry.getKey().getRuleIndex()].equals("subtable_column_name")) {
+        for (Map<String, String> stringStringMap : key_value) {
+            for (Map.Entry<String, String> kv : stringStringMap.entrySet()) {
                 if (i != 0) {
                     query += ",";
                     values += ",";
                 }
                 i++;
-                removable.put(entry.getKey(), entry.getValue());
-                query += entry.getKey().getText();
-                values += entry.getValue().getText();
+                query += kv.getKey();
+                values += kv.getValue();
             }
         }
-        if(firstround) {
-            for (Map.Entry<RuleContext, RuleContext> entry : removable.entrySet()) {
-                keyValue.remove(entry.getKey(), entry.getValue());
-            }
-        }
-        List<String> idList = idErstellen(tablename, name_table);
-        if(!idList.isEmpty()){
-            for (String id : idList) {
-                String[] ids = id.split(".");
-                if (i != 0) {
-                    query += ",";
-                    values += ",";
-                }
-                i++;
-                if(ids.length > 1){
-                query += "," + ids[ids.length-1] + "ID";
-                }else query += id + "ID";
-                values += tableName_NextID.get(name_table.get(id));
-            }
-        }
-        if(tableName_NextID.containsKey(tablename)){
-            if (i != 0) {
-                query += ",";
-                values += ",";
-            }
-            i++;
-            query += tablename + "ID";
-            values += tableName_NextID.get(tablename);
-        }
-        query += ")" + values + ");";
-        return query;
+        query = query + " )" + values + " );";
+        querys.add(query);
+        return querys;
     }
 
-    //Todo: value
-    private static List<String> idErstellen(String tablename, Map<String, String> name_table){
-        List<String> list = new ArrayList<>();
-        for (Map.Entry<String, String> entry : name_table.entrySet()) {
-            if(entry.getValue().contains("__" + tablename + "_") && !entry.getValue().equals("__" + tablename + "_")){
-                list.add(entry.getKey());
+    private static Map<String, List<Map<String, String>>> getKey_Value_forTabels(List<RuleContext> children, Map<String, String> name_table){
+        Map<String, List<Map<String, String>>> table_key_vale = new HashMap<>();
+        int stelle = 0;
+        for (RuleContext child : children) {
+            String tableName = "main";
+            int i = 0;
+            String ruleName = SQLiteParser.ruleNames[child.getRuleIndex()];
+            if (ruleName.equals("column_name") || ruleName.equals("nf2_point_Noation")) {
+                Map<String, String> map = new HashMap<>();
+                if(ruleName.equals("nf2_point_Noation")){
+                    tableName = name_table.get(getPointNotationPartAt(child, 2));
+                }
+                for (RuleContext child1 : children) {
+                    String ruleName1 = SQLiteParser.ruleNames[child1.getRuleIndex()];
+                    if (ruleName1.equals("expr") && stelle==i){
+                        map.put(getPointNotationPartAt(child, 1), child1.getText());
+                        if(table_key_vale.containsKey(tableName)){
+                            List<Map<String, String>> liste = table_key_vale.get(tableName);
+                            liste.add(map);
+                            table_key_vale.put(tableName, liste);
+                        }else {
+                            List<Map<String, String>> liste = new ArrayList<>();
+                            liste.add(map);
+                            table_key_vale.put(tableName, liste);
+                        }
+
+                        i++;
+                    }else if(ruleName1.equals("expr")){
+                        i++;
+                    }
+                }
+                stelle++;
             }
         }
-        return list;
+        return table_key_vale;
+    }
+
+    private static String getPointNotationPartAt(RuleContext pointNotation, Integer part){
+        String[] tabellen = pointNotation.getText().split("\\.");
+        return tabellen[(tabellen.length-part)];
     }
 
     private static Map<String, String> findWrightTablename(Map<String, List<RuleContext>> map, List<String> subtables){
@@ -157,48 +147,5 @@ public class Insert extends Statement {
             }
         }
         return name_table;
-    }
-    public static List<String> getQuerysWhitoutColumns(String tablename, List<RuleContext> werte, Map<String, Integer> nextID){
-        List<String> queries = new ArrayList<>();
-        try {
-            Map<String, List<String>> tableN_Values = getColumnsPlaces(tablename, werte, nextID);
-            for (Map.Entry<String, List<String>> table : tableN_Values.entrySet()) {
-                String query = "INSERT INTO " + table.getKey() + " VALUES(";
-                int i = 0;
-                for (String value : table.getValue()) {
-                    if(i!=0)query += ",";
-                    i++;
-                    query += value;
-                }
-                queries.add(query + ");");
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        }
-        return queries;
-    }
-
-    public static Map<RuleContext, RuleContext> getKeyValue(List<RuleContext> children){
-        Map<RuleContext, RuleContext> map = new HashMap<>();
-        int stelle = 0;
-        for (RuleContext child : children) {
-            int i = 0;
-            String ruleName = SQLiteParser.ruleNames[child.getRuleIndex()];
-            if (ruleName.equals("column_name") || ruleName.equals("nf2_point_Noation")) {
-                for (RuleContext child1 : children) {
-                    String ruleName1 = SQLiteParser.ruleNames[child1.getRuleIndex()];
-                    if (ruleName1.equals("expr") && stelle==i){
-                        map.put(child, child1);
-                        i++;
-                    }else if(ruleName1.equals("expr")){
-                        i++;
-                    }
-                }
-                stelle++;
-            }
-        }
-        return map;
     }
 }

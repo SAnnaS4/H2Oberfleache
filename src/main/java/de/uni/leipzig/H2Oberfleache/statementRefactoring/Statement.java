@@ -35,6 +35,7 @@ public class Statement {
     protected static String prepareSQL(String sql){
         sql.toUpperCase();
         sql = deleteBlank(sql);
+       // sql = sql.replace(")", ") ");
         return sql.trim();
     }
 
@@ -52,16 +53,20 @@ public class Statement {
         return closePosition;
     }
 
-    protected static List<String> getNF2TableNames(String tablename) throws SQLException {
+    protected static List<String> getNF2TableNames(String tablename){
         List<String> tablenames = new ArrayList<>();
-        ResultSet rs = getNextTableNames(tablename);
-        while (rs.next()){
-            tablename = rs.getString(1);
-            tablenames.add(tablename);
-            ResultSet rs1 = getNextTableNames(tablename);
-            if(rs1.next()) {
-                tablenames.addAll(getNF2TableNames(tablename));
+        try {
+            ResultSet rs = getNextTableNames(tablename);
+            while (rs.next()){
+                tablename = rs.getString(1);
+                tablenames.add(tablename);
+                ResultSet rs1 = getNextTableNames(tablename);
+                if(rs1.next()) {
+                    tablenames.addAll(getNF2TableNames(tablename));
+                }
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
         return tablenames;
     }
@@ -73,19 +78,19 @@ public class Statement {
         return rs;
     }
 
-    protected static Map<String, Integer> getNextSubIDs(List<String> tablenames) throws SQLException {
-        Map<String, Integer> name_id = new HashMap<>();
-        for (String table : tablenames) {
-            String selection = "SELECT MAX(" + table + "ID) FROM " + table;
+    protected static Integer getNextSubID(String tablename) {
+        String selection = "SELECT MAX(" + "__" + tablename + "ID) FROM " + tablename;
+        Integer maxID = -1;
+        try {
             java.sql.Statement st = BaseController.connection.getCon().createStatement();
             ResultSet rs = st.executeQuery(selection);
-            Integer maxID = -1;
             if(rs.next()) {
                 maxID = rs.getInt(1);
             }
-            name_id.put(table, maxID+1);
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-        return name_id;
+        return maxID+1;
     }
 
     protected static Map<String, List<String>> getColumnsPlaces(String tablename, List<RuleContext> werte, Map<String, Integer> nextID) throws SQLException, IllegalAccessException {

@@ -22,7 +22,7 @@ public class Create extends Statement {
         String result;
         if(sql.contains("CREATE TABLE") && sql.contains("SET(ROW")){
             List<String> querys = new ArrayList<>();
-            querys = getQuerys(querys, stmt, null);
+            querys = getQuerys(stmt, null);
             result = "CREATE TABLE IF NOT EXISTS " + nf2TabName + "(NAME VARCHAR(60), OBERTABELLE VARCHAR(60));";
             for (String query : querys) {
                 result += query;
@@ -33,7 +33,8 @@ public class Create extends Statement {
         return result;
     }
 
-    private static List<String> getQuerys(List<String> querys, RuleContext stmt, String higherTablename){
+    private static List<String> getQuerys(RuleContext stmt, String higherTablename){
+        List<String> querys = new ArrayList<>();
         List<RuleContext> childList = SQL_Parser.getChildList(stmt);
         Map<String, String> columname_type = new HashMap<>();
         Boolean containsSubTable = false;
@@ -46,7 +47,7 @@ public class Create extends Statement {
                 }else tablename = context.getText();
             }
             if(contextTyp.equals("set_row_create")){
-                querys = (getQuerys(querys, context, tablename));
+                querys.addAll(getQuerys(context, tablename));
                 containsSubTable = true;
             }
             if(contextTyp.equals("column_def")){

@@ -1,9 +1,6 @@
 package de.uni.leipzig.H2Oberfleache.controller;
 
-import de.uni.leipzig.H2Oberfleache.parser.SQL_Parser;
-import de.uni.leipzig.H2Oberfleache.parser.SQLiteParser;
 import de.uni.leipzig.H2Oberfleache.tables.Table;
-import org.antlr.v4.runtime.RuleContext;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -37,7 +34,7 @@ public class HtmlBuilder {
         html = makeFinalHtml(table, tabelname_Attribute);
     }
 
-    public Integer tiefe(Integer tiefe, String tabellenname){
+    private Integer tiefe(Integer tiefe, String tabellenname){
         String obertabelle;
         for (String attribute : Tables.getAllAttributes(tabellenname)) {
             if(attribute.startsWith("__") && attribute.endsWith("ID") && !attribute.equals("__" + tabellenname + "ID")){
@@ -50,7 +47,7 @@ public class HtmlBuilder {
     }
 
     //Todo: optimieren
-    public Integer getHoechsteSchachtelung(List<Table.Attribute> attribute){
+    private Integer getHoechsteSchachtelung(List<Table.Attribute> attribute){
         Integer attributCounter = 0;
         Integer hoehe = 0;
         while (attributCounter < attribute.size()) {
@@ -65,7 +62,7 @@ public class HtmlBuilder {
         return hoehe;
     }
 
-    public String addHead(Table table, Map<String, List<Table.Attribute>> tabelname_Attribute){
+    private String addHead(Table table, Map<String, List<Table.Attribute>> tabelname_Attribute){
         String head = "<thead>\n";
         Integer groessteHoehe = getHoechsteSchachtelung(table.attributes);
         Integer attributCounter = 0;
@@ -127,7 +124,7 @@ public class HtmlBuilder {
 //        return body;
 //    }
 
-    public String makeFinalHtml(Table table, Map<String, List<Table.Attribute>> tabelname_Attribute){
+    private String makeFinalHtml(Table table, Map<String, List<Table.Attribute>> tabelname_Attribute){
         return css +
                 "<table border=\"1\">\n" +
                 addHead(table, tabelname_Attribute) +
