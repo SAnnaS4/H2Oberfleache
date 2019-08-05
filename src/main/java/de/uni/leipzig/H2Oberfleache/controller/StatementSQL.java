@@ -24,7 +24,7 @@ import java.util.Map;
 @Component
 @SessionScoped
 public class StatementSQL extends BaseController implements Serializable {
-    String sql;
+    String sql = "select * from nf";
     String result;
     int update;
     ResultSet rs;

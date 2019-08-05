@@ -54,6 +54,14 @@ public class Table {
             this.wert = wert;
             this.table = tablename;
         }
+
+        public Boolean isIn(List<Attribute> list){
+            Boolean isIn = false;
+            for (Attribute attribute : list) {
+                if(attribute.getWert().equals(this.getWert()) && attribute.getTable().equals(this.getTable())) isIn =true;
+            }
+            return isIn;
+        }
     }
 
     @Getter

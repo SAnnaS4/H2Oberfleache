@@ -12,7 +12,7 @@ import javax.faces.context.FacesContext;
 @Setter
 public class BaseController{
     public static Boolean autoCommit = false;
-    public static String dbName = "db";
+    public static String dbName = "testdb";
     public static DBConnection connection;
     public static String css =
             "<style>\n" +
