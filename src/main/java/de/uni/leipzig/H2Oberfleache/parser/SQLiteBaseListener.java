@@ -1,4 +1,5 @@
 package de.uni.leipzig.H2Oberfleache.parser;
+
 // Generated from C:/Users/Anna/Desktop/test/H2Oberfleache/src/main/antlr4\SQLite.g4 by ANTLR 4.7.2
 
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -683,6 +684,18 @@ public class SQLiteBaseListener implements SQLiteListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitJoin_constraint(SQLiteParser.Join_constraintContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterGroup_by(SQLiteParser.Group_byContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitGroup_by(SQLiteParser.Group_byContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

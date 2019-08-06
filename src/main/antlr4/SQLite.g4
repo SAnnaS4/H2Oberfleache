@@ -244,7 +244,7 @@ select_or_values
  : K_SELECT ( K_DISTINCT | K_ALL )? result_column ( ',' result_column )*
    ( K_FROM ( table_or_subquery ( ',' table_or_subquery )* | join_clause ) )?
    ( where_expr )?
-   ( K_GROUP K_BY expr ( ',' expr )* ( K_HAVING expr )? )?
+   ( group_by )?
  | K_VALUES '(' expr ( ',' expr )* ')' ( ',' '(' expr ( ',' expr )* ')' )*
  ;
 
@@ -254,7 +254,7 @@ update_stmt
                          | K_OR K_REPLACE
                          | K_OR K_FAIL
                          | K_OR K_IGNORE )? qualified_table_name
-   K_SET (column_name|nf2_point_Noation) '=' expr ( ',' column_name '=' expr )* ( ',' nf2_point_Noation '=' expr )* ( where_expr )?
+   K_SET (column_name|nf2_point_Noation) '=' expr ( ',' column_name '=' expr | ',' nf2_point_Noation '=' expr )* ( where_expr )?
  ;
 
 update_stmt_limited
@@ -263,7 +263,7 @@ update_stmt_limited
                          | K_OR K_REPLACE
                          | K_OR K_FAIL
                          | K_OR K_IGNORE )? qualified_table_name
-   K_SET (column_name|nf2_point_Noation) '=' expr ( ',' column_name '=' expr )* ( ',' nf2_point_Noation '=' expr )* ( where_expr )?
+   K_SET (column_name|nf2_point_Noation) '=' expr ( ',' column_name '=' expr | ',' nf2_point_Noation '=' expr )* ( where_expr )?
    ( ( K_ORDER K_BY ordering_term ( ',' ordering_term )* )?
      K_LIMIT expr ( ( K_OFFSET | ',' ) expr )?
    )?
@@ -316,8 +316,10 @@ conflict_clause
     AND
     OR
 */
+
 expr
  : literal_value
+ | signed_number
  | BIND_PARAMETER
  | ( table_name '.')? (column_name)? ('.' column_name)*
  | unary_operator expr
@@ -431,11 +433,15 @@ join_constraint
    | K_USING '(' (nf2_point_Noation|column_name) ( ',' column_name )* (',' nf2_point_Noation)* ')' )?
  ;
 
+group_by
+ :K_GROUP K_BY expr ( ',' expr )* ( K_HAVING expr )?
+ ;
+
 select_core
  : K_SELECT ( K_DISTINCT | K_ALL )? result_column ( ',' result_column )*
    ( K_FROM ( table_or_subquery ( ',' table_or_subquery )* | join_clause ) )?
    ( where_expr )?
-   ( K_GROUP K_BY expr ( ',' expr )* ( K_HAVING expr )? )?
+   ( group_by )?
  | K_VALUES '(' expr ( ',' expr )* ')' ( ',' '(' expr ( ',' expr )* ')' )*
  ;
 

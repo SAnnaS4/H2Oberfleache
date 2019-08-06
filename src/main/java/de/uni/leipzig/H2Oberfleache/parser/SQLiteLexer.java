@@ -1,4 +1,5 @@
 package de.uni.leipzig.H2Oberfleache.parser;
+
 // Generated from C:/Users/Anna/Desktop/test/H2Oberfleache/src/main/antlr4\SQLite.g4 by ANTLR 4.7.2
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.CharStream;

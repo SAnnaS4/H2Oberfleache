@@ -1,4 +1,5 @@
 package de.uni.leipzig.H2Oberfleache.parser;
+
 // Generated from C:/Users/Anna/Desktop/test/H2Oberfleache/src/main/antlr4\SQLite.g4 by ANTLR 4.7.2
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
@@ -567,6 +568,16 @@ public interface SQLiteListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitJoin_constraint(SQLiteParser.Join_constraintContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link SQLiteParser#group_by}.
+	 * @param ctx the parse tree
+	 */
+	void enterGroup_by(SQLiteParser.Group_byContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link SQLiteParser#group_by}.
+	 * @param ctx the parse tree
+	 */
+	void exitGroup_by(SQLiteParser.Group_byContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link SQLiteParser#select_core}.
 	 * @param ctx the parse tree

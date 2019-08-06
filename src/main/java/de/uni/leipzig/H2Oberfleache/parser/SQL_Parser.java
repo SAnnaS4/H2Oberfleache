@@ -1,11 +1,13 @@
 package de.uni.leipzig.H2Oberfleache.parser;
 
 import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonToken;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.Tree;
+import org.stringtemplate.v4.gui.JTreeScopeStackModel;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,6 +23,9 @@ public class SQL_Parser {
         Map<String, List<RuleContext>> map = getParsedMap(sql);
         SQLiteLexer lexer = new SQLiteLexer(CharStreams.fromString(sql));
         SQLiteParser parser = new SQLiteParser(new CommonTokenStream(lexer));
+        CommonTokenStream stream = new CommonTokenStream(lexer);
+        List<CommonToken> tokens = new ArrayList<>();
+
         RuleContext context = parser.sql_stmt();
         print(context);
         parser.name().getText();
@@ -53,6 +58,11 @@ public class SQL_Parser {
         RuleContext ctx = parser.sql_stmt();
         Map<String, List<RuleContext>> map = new HashMap<>();
         return explore(ctx, 0, map);
+    }
+
+    public static Map<String, List<RuleContext>> getParsedMap(RuleContext context){
+        Map<String, List<RuleContext>> map = new HashMap<>();
+        return explore(context, 0, map);
     }
 
     public static Map<String, List<RuleContext>> getCildren(RuleContext ctx){
@@ -89,7 +99,14 @@ public class SQL_Parser {
         return children;
     }
 
-    public static void getWhereClause(){}
-
-
+    public static List<String> getChildStringList(RuleContext ctx){
+        List<String> children = new ArrayList<>();
+        for (int i = 0; i < ctx.getChildCount(); i++) {
+            ParseTree element = ctx.getChild(i);
+            if (element instanceof RuleContext) {
+                children.add(SQLiteParser.ruleNames[((RuleContext) element).getRuleIndex()]);
+            }
+        }
+        return children;
+    }
 }
