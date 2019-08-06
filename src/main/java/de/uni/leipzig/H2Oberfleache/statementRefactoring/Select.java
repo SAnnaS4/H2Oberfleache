@@ -15,6 +15,7 @@ import java.util.Map;
 public class Select extends Statement{
     static Integer aliasCounter = 0;
     static Map<String, String> alias_tablename = new HashMap<>();
+    static List<String> haupttables = new ArrayList<>();
 
     public static String nf2ToNf1(String sql) {
         sql = prepareSQL(sql);
@@ -31,7 +32,7 @@ public class Select extends Statement{
         for (RuleContext tablename : tablenames) {
             List<String> subtables = getNF2TableNames(tablename.getText());
             if (!subtables.isEmpty()) {
-                alias_tablename.put(("_A_" + ++aliasnumber), tablename.getText());
+                haupttables.add(tablename.getText());
                 sql = insertJoins(tablename);
             }
         }
@@ -64,6 +65,7 @@ public class Select extends Statement{
         if(name_inhaltSubtables.isEmpty())return tablename;
         String alias;
         alias = "_A_" + ++aliasCounter;
+        if(haupttables.contains(tablename))alias_tablename.put(alias, tablename);
         String tablename_mit_Joins = "(" + tablename + " as " + alias;
         for (Map.Entry<String, String> subtable : name_inhaltSubtables.entrySet()) {
             String IDName = "__" + tablename + "ID";
@@ -84,11 +86,11 @@ public class Select extends Statement{
         for (RuleContext context : SQL_Parser.getChildList(stmt)) {
             if(SQLiteParser.ruleNames[context.getRuleIndex()].equals("ordering_term")){
                 RuleContext expr = (RuleContext) context.getChild(0);
-                String newExp = Where.changeExpr(expr, ("_A_" + aliasCounter));
+                String newExp = Where.changeExpr(expr, alias_tablename);
                 sql = replaceRuleContext(expr, newExp);
             }
             if(SQLiteParser.ruleNames[context.getRuleIndex()].equals("select_or_values")){
-                Where where = new Where(sql, context, ("_A_" + aliasCounter));
+                Where where = new Where(sql, context, alias_tablename);
                 sql = where.sql;
             }
         }
