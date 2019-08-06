@@ -62,7 +62,8 @@ public class Insert extends Statement {
             Map<String, String> newMap = new HashMap<>();
             newMap.put(IDName, nextTableID.toString());
             for (String subtable : subtables) {
-                List<Map<String, String>> sub_key_value = table_key_value.get(subtable);
+                List<Map<String, String>> sub_key_value = new ArrayList<>();
+                if(table_key_value.containsKey(subtable)) sub_key_value = (table_key_value.get(subtable));
                 sub_key_value.add(newMap);
                 querys.addAll(createQuerys(subtable, sub_key_value));
             }
@@ -87,6 +88,8 @@ public class Insert extends Statement {
         return querys;
     }
 
+
+    //Todo: für rekusive
     private static Map<String, List<Map<String, String>>> getKey_Value_forTabels(List<RuleContext> children, Map<String, String> name_table){
         Map<String, List<Map<String, String>>> table_key_vale = new HashMap<>();
         int stelle = 0;
@@ -97,12 +100,12 @@ public class Insert extends Statement {
             if (ruleName.equals("column_name") || ruleName.equals("nf2_point_Noation")) {
                 Map<String, String> map = new HashMap<>();
                 if(ruleName.equals("nf2_point_Noation")){
-                    tableName = name_table.get(getPointNotationPartAt(child, 2));
+                    tableName = name_table.get(getPointNotationPartAt(child, false));
                 }
                 for (RuleContext child1 : children) {
                     String ruleName1 = SQLiteParser.ruleNames[child1.getRuleIndex()];
                     if (ruleName1.equals("expr") && stelle==i){
-                        map.put(getPointNotationPartAt(child, 1), child1.getText());
+                        map.put(getPointNotationPartAt(child, true), child1.getText());
                         if(table_key_vale.containsKey(tableName)){
                             List<Map<String, String>> liste = table_key_vale.get(tableName);
                             liste.add(map);
@@ -124,18 +127,28 @@ public class Insert extends Statement {
         return table_key_vale;
     }
 
-    private static String getPointNotationPartAt(RuleContext pointNotation, Integer part){
+    private static String getPointNotationPartAt(RuleContext pointNotation, Boolean column){
         String[] tabellen = pointNotation.getText().split("\\.");
-        return tabellen[(tabellen.length-part)];
+        String tableNotation = tabellen[tabellen.length-1];
+        boolean ersteZeile = true;
+        if(!column) {
+            tableNotation = "";
+            for (int i = 0; i < tabellen.length - 1; i++) {
+                if (!ersteZeile) tableNotation += ".";
+                ersteZeile = false;
+                tableNotation += tabellen[i];
+            }
+        }
+        return tableNotation;
     }
 
     private static Map<String, String> findWrightTablename(Map<String, List<RuleContext>> map, List<String> subtables){
         Map<String, String> name_table = new HashMap<>();
         for (RuleContext nameInQuery : map.get("name_of_subtable")) {
             String name = "";
-            String[] words = nameInQuery.getText().split(".");
-            if(words.length < 0) {
-                for (int i = 0; i < words.length - 1; i++) {
+            String[] words = nameInQuery.getText().split("\\.");
+            if(words.length > 0) {
+                for (int i = 0; i < words.length; i++) {
                     name += "_" + words[i];
                 }
             }else name += "_" + nameInQuery.getText();

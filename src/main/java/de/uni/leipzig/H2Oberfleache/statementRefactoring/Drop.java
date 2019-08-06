@@ -13,7 +13,7 @@ public class Drop extends Statement{
         List<String> querys = new ArrayList<>();
         if(!sql.endsWith(";")){sql += ";"; }
         for (String tablename : tablenames) {
-            querys.addAll(createQuerys(getNF2TableNames(tablename)));
+            querys.addAll(createQuerys(getNF2TableNamesRec(tablename)));
             String delete = "DELETE FROM " +nf2TabName + " WHERE NAME = '" + tablename + "'";
             java.sql.Statement st1 = BaseController.connection.getCon().createStatement();
             st1.executeUpdate(delete);

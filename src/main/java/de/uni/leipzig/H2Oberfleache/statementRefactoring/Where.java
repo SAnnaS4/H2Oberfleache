@@ -18,7 +18,7 @@ public class Where extends Statement{
                 for (RuleContext expr : exprs) {
                         String newExpr = changeExpr(expr, aliasName);
                         if (!newExpr.equals(expr.getText())) {
-                            this.sql = replaceRuleContext(this.sql, expr, newExpr);
+                            this.sql = replaceRuleContext(expr, newExpr);
                         }
                 }
             }
@@ -27,7 +27,7 @@ public class Where extends Statement{
                     if(SQLiteParser.ruleNames[context1.getRuleIndex()].equals("expr")){
                         String newExpr = changeExpr(context1, aliasName);
                         if(!newExpr.equals(context.getText())){
-                            this.sql = replaceRuleContext(this.sql, context, newExpr);
+                            this.sql = replaceRuleContext(context, newExpr);
                         }
                     }
                 }

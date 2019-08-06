@@ -65,7 +65,7 @@ public class SQL_Parser {
         return explore(context, 0, map);
     }
 
-    public static Map<String, List<RuleContext>> getCildren(RuleContext ctx){
+    public static Map<String, List<RuleContext>> getChildren(RuleContext ctx){
         Map<String, List<RuleContext>> map = new HashMap<>();
         return explore(ctx, 0, map);
     }

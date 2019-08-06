@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 public class Update extends Statement {
-    public static String nf2ToNf1(String sql) throws SQLException {
+    public static String nf2ToNf1(String sql) {
         sql = prepareSQL(sql);
         Map<String, List<RuleContext>> map = SQL_Parser.getParsedMap(sql);
         String tablename = map.get("table_name").get(0).getText();

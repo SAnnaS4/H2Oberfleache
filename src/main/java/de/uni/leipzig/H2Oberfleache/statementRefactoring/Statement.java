@@ -3,11 +3,8 @@ package de.uni.leipzig.H2Oberfleache.statementRefactoring;
 import de.uni.leipzig.H2Oberfleache.controller.BaseController;
 import de.uni.leipzig.H2Oberfleache.jdbc.DbInfo;
 import de.uni.leipzig.H2Oberfleache.parser.SQL_Parser;
-import de.uni.leipzig.H2Oberfleache.parser.SQLiteParser;
-import org.antlr.v4.runtime.CommonToken;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.RuleContext;
-import org.antlr.v4.runtime.Token;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -19,6 +16,7 @@ import java.util.Map;
 public class Statement {
     public static final String nf2TabName = "NF2_UNTERTABELLEN";
     static Integer addedToSQL = 0;
+    static Map<Integer, String> position_sql = new HashMap<>();
 
     // Todo: noch test schreiben!!!
     private static String deleteBlank(String sql){
@@ -40,7 +38,6 @@ public class Statement {
     protected static String prepareSQL(String sql){
         sql.toUpperCase();
         sql = deleteBlank(sql);
-       // sql = sql.replace(")", ") ");
         return sql.trim();
     }
 
@@ -58,68 +55,39 @@ public class Statement {
         return closePosition;
     }
 
-    protected static String replaceRuleContext(String sql, RuleContext context, String replacement){
+    protected static String replaceRuleContext(RuleContext context, String replacement){
         ParserRuleContext parserRuleContext = (ParserRuleContext) context;
-        Integer start = parserRuleContext.start.getStartIndex() + addedToSQL;
-        Integer stop = parserRuleContext.stop.getStopIndex() + addedToSQL;
-        addedToSQL += replacement.length()-context.getText().length();
+        Integer start = parserRuleContext.start.getStartIndex();
+        Integer stop = parserRuleContext.stop.getStopIndex();
         String newSQL = "";
-        for(int i = 0; i<sql.length(); i++){
-            if(i>=start && i<=stop){
-                if(i == start) newSQL += replacement;
-            }else newSQL += sql.charAt(i);
+        for (Map.Entry<Integer, String> entry : position_sql.entrySet()) {
+            if(entry.getKey()>=start && entry.getKey()<=stop){
+                if(entry.getKey() == start){
+                    newSQL += replacement;
+                    position_sql.put(entry.getKey(), replacement);
+                }else {
+                    position_sql.put(entry.getKey(), "");
+                }
+            }else newSQL += entry.getValue();
         }
         return newSQL;
     }
 
-    protected static String replaceRuleContext1(String sql, RuleContext context, String replacement){
-        RuleContext parent = context.parent.parent;
-        String before = " ";
-        String after = "";
-        String fullName = "";
-        Integer position1 = 0;
-        Integer position2 = 0;
-        for(int i =  0; i<parent.getChildCount(); i++){
-            for(int j =  0; j<parent.getChild(i).getChildCount(); j++) {
-                if (parent.getChild(i).getChild(j).equals(context)) {
-                    position1 = i;
-                    position2 = j;
-                    if (i > 0) before = parent.getChild(i - 1).getText();
-                    if (i < parent.getChildCount() - 1) after = parent.getChild(i + 1).getText();
-                    break;
-                }
+    protected static List<String> getNF2TableNames(String tablename){
+        List<String> tablenames = new ArrayList<>();
+        try {
+            ResultSet rs = getNextTableNames(tablename);
+            while (rs.next()){
+                tablename = rs.getString(1);
+                tablenames.add(tablename);
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-        if(parent.getChild(position1).getChildCount() >= 1) {
-            String before1 = "";
-            Boolean danach = false;
-            String after1 = "";
-            for (int i = 0; i < parent.getChild(position1).getChildCount(); i++) {
-                String between = " ";
-                if(before1.equals(")") || before1.equals("(") ||
-                        before1.equals("") || before1.endsWith(" ") || before1.equals(",")) between = "";
-                before1 = parent.getChild(position1).getChild(i).getText();
-                if(danach) after1 += between + before1;
-                if(i == position2){
-                    replacement = fullName + between + "(" + replacement + ")";
-                    danach = true;
-                }
-                fullName += between + before1;
-            }
-            replacement += after1;
-        }
-        String between1 = " ";
-        if(before.equals(")") || before.equals("(") || before.equals(".") ||
-                before.equals("") || before.endsWith(" ") || before.equals(",")) between1 = "";
-        String between2 = " ";
-        if(after.equals(".") || after.equals(")") || after.equals("(") ||
-                after.equals("") || after.startsWith(" ") || after.equals(",")) between2 = "";
-        String newSql = sql.replace(before + between1 + fullName + between2 + after,
-                before + between1 + replacement + between2 + after);
-        return newSql;
+        return tablenames;
     }
 
-    protected static List<String> getNF2TableNames(String tablename){
+    protected static List<String> getNF2TableNamesRec(String tablename){
         List<String> tablenames = new ArrayList<>();
         try {
             ResultSet rs = getNextTableNames(tablename);
@@ -191,8 +159,16 @@ public class Statement {
         return table_cols;
     }
 
+    public static void makeMap(String sql){
+        for(int i = 0; i < sql.length(); i++){
+            String c = "" + sql.charAt(i);
+            position_sql.put(i, c);
+        }
+    }
+
     public static String changeToNF1(String sql) throws SQLException {
         String newSQL = sql;
+        makeMap(sql);
         if(SQL_Parser.getQueryType(sql).equals("CREATE")){
             newSQL = Create.nf2ToNf1(newSQL);
         }else if (SQL_Parser.getQueryType(sql).equals("DROP")){
@@ -202,7 +178,7 @@ public class Statement {
         }else if (SQL_Parser.getQueryType(sql).equals("SELECT")){
             newSQL = Select.nf2ToNf1(newSQL);
         }
-        addedToSQL = 0;
+        position_sql = new HashMap<>();
         return newSQL;
     }
 

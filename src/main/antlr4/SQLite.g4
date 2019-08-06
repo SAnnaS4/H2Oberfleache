@@ -385,7 +385,7 @@ with_clause
  ;
 
 qualified_table_name
- : ( database_name '.' )? table_name ( K_INDEXED K_BY index_name
+ : table_name ('.' subtable_name)* ( K_INDEXED K_BY index_name
                                      | K_NOT K_INDEXED )?
  ;
 
