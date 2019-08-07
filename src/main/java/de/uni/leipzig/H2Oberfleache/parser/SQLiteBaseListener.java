@@ -1,5 +1,4 @@
 package de.uni.leipzig.H2Oberfleache.parser;
-
 // Generated from C:/Users/Anna/Desktop/test/H2Oberfleache/src/main/antlr4\SQLite.g4 by ANTLR 4.7.2
 
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -437,6 +436,18 @@ public class SQLiteBaseListener implements SQLiteListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterSet_stmt(SQLiteParser.Set_stmtContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitSet_stmt(SQLiteParser.Set_stmtContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterUpdate_stmt_limited(SQLiteParser.Update_stmt_limitedContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -821,13 +832,13 @@ public class SQLiteBaseListener implements SQLiteListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterNf2_point_Noation(SQLiteParser.Nf2_point_NoationContext ctx) { }
+	@Override public void enterNf2_point_Notation(SQLiteParser.Nf2_point_NotationContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitNf2_point_Noation(SQLiteParser.Nf2_point_NoationContext ctx) { }
+	@Override public void exitNf2_point_Notation(SQLiteParser.Nf2_point_NotationContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

@@ -197,7 +197,7 @@ insert_stmt
                 | K_INSERT K_OR K_ABORT
                 | K_INSERT K_OR K_FAIL
                 | K_INSERT K_OR K_IGNORE ) K_INTO
-   ( database_name '.' )? table_name ( '(' (column_name | nf2_point_Noation) ( ',' (column_name | nf2_point_Noation) )* ')' )?
+   ( database_name '.' )? table_name ( '(' (column_name | nf2_point_Notation) ( ',' (column_name | nf2_point_Notation) )* ')' )?
    ( K_VALUES '(' expr ( ',' expr )* ')' ( ',' '(' expr ( ',' expr )* ')' )*
    | select_stmt
    | K_DEFAULT K_VALUES
@@ -254,8 +254,12 @@ update_stmt
                          | K_OR K_REPLACE
                          | K_OR K_FAIL
                          | K_OR K_IGNORE )? qualified_table_name
-   K_SET (column_name|nf2_point_Noation) '=' expr ( ',' column_name '=' expr | ',' nf2_point_Noation '=' expr )* ( where_expr )?
+   K_SET set_stmt (',' set_stmt)* ( where_expr )?
  ;
+
+ set_stmt
+  :(column_name|nf2_point_Notation) '=' expr
+  ;
 
 update_stmt_limited
  : with_clause? K_UPDATE ( K_OR K_ROLLBACK
@@ -263,7 +267,7 @@ update_stmt_limited
                          | K_OR K_REPLACE
                          | K_OR K_FAIL
                          | K_OR K_IGNORE )? qualified_table_name
-   K_SET (column_name|nf2_point_Noation) '=' expr ( ',' column_name '=' expr | ',' nf2_point_Noation '=' expr )* ( where_expr )?
+   K_SET set_stmt (',' set_stmt)* ( where_expr )?
    ( ( K_ORDER K_BY ordering_term ( ',' ordering_term )* )?
      K_LIMIT expr ( ( K_OFFSET | ',' ) expr )?
    )?
@@ -369,14 +373,14 @@ raise_function
  ;
 
 indexed_column
- : (column_name|nf2_point_Noation) ( K_COLLATE collation_name )? ( K_ASC | K_DESC )?
+ : (column_name|nf2_point_Notation) ( K_COLLATE collation_name )? ( K_ASC | K_DESC )?
  ;
 
 table_constraint
  : ( K_CONSTRAINT name )?
    ( ( K_PRIMARY K_KEY | K_UNIQUE ) '(' indexed_column ( ',' indexed_column )* ')' conflict_clause
    | K_CHECK '(' expr ')'
-   | K_FOREIGN K_KEY '(' (column_name|nf2_point_Noation) ( ',' column_name )* (',' nf2_point_Noation)')' foreign_key_clause
+   | K_FOREIGN K_KEY '(' (column_name|nf2_point_Notation) ( ',' column_name )* (',' nf2_point_Notation)')' foreign_key_clause
    )
  ;
 
@@ -400,17 +404,16 @@ pragma_value
  ;
 
 common_table_expression
- : table_name ( '(' (column_name|nf2_point_Noation) ( ',' column_name )* (',' nf2_point_Noation)* ')' )? K_AS '(' select_stmt ')'
+ : table_name ( '(' (column_name|nf2_point_Notation) ( ',' column_name )* (',' nf2_point_Notation)* ')' )? K_AS '(' select_stmt ')'
  ;
 
 result_column
  : '*'
- | table_name '.' ('*'| (column_name|nf2_point_Noation))
  | expr ( K_AS? column_alias )?
  ;
 
 table_or_subquery
- : table_name ('.' column_name|'.' nf2_point_Noation)? ( K_AS? table_alias )?
+ : table_name ('.' column_name|'.' nf2_point_Notation)? ( K_AS? table_alias )?
    ( K_INDEXED K_BY index_name
    | K_NOT K_INDEXED )?
  | '(' ( table_or_subquery ( ',' table_or_subquery )*
@@ -430,7 +433,7 @@ join_operator
 
 join_constraint
  : ( K_ON expr
-   | K_USING '(' (nf2_point_Noation|column_name) ( ',' column_name )* (',' nf2_point_Noation)* ')' )?
+   | K_USING '(' (nf2_point_Notation|column_name) ( ',' column_name )* (',' nf2_point_Notation)* ')' )?
  ;
 
 group_by
@@ -453,7 +456,7 @@ compound_operator
  ;
 
 cte_table_name
- : table_name ( '(' (column_name|nf2_point_Noation) ( ',' column_name )* (',' nf2_point_Noation)* ')' )?
+ : table_name ( '(' (column_name|nf2_point_Notation) ( ',' column_name )* (',' nf2_point_Notation)* ')' )?
  ;
 
 signed_number
@@ -620,7 +623,7 @@ keyword
 
 // TODO check all names below
 
-nf2_point_Noation
+nf2_point_Notation
  : name_of_subtable'.'subtable_column_name
  ;
 

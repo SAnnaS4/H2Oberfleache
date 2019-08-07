@@ -73,6 +73,26 @@ public class Statement {
         return newSQL;
     }
 
+    protected static String getTablename(RuleContext nameInQuery, List<String> subtables, Boolean mitColumnname){
+        String name = "";
+        String tablename = "";
+        String[] words = nameInQuery.getText().split("\\.");
+        Integer leangeTablename = words.length;
+        if(mitColumnname)--leangeTablename;
+        if(words.length > 0) {
+            for (int i = 0; i < leangeTablename; i++) {
+                name += "_" + words[i];
+            }
+        }else name += "_" + nameInQuery.getText();
+        for (String subtable : subtables) {
+            if(subtable.contains(name)){
+                tablename = subtable;
+
+            }
+        }
+        return tablename;
+    }
+
     protected static List<String> getNF2TableNames(String tablename){
         List<String> tablenames = new ArrayList<>();
         try {
@@ -177,6 +197,10 @@ public class Statement {
             newSQL = Insert.nf2ToNf1(newSQL);
         }else if (SQL_Parser.getQueryType(sql).equals("SELECT")){
             newSQL = Select.nf2ToNf1(newSQL);
+        }else if (SQL_Parser.getQueryType(sql).equals("UPDATE")){
+            newSQL = Update.nf2ToNf1(newSQL);
+        }else if (SQL_Parser.getQueryType(sql).equals("DELETE")){
+            newSQL = Delete.nf2ToNf1(newSQL);
         }
         position_sql = new HashMap<>();
         return newSQL;

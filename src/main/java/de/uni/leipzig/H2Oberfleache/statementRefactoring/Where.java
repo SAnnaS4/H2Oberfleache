@@ -44,7 +44,7 @@ public class Where extends Statement{
                 exprs.addAll(exploreExpr(context));
             }
             if(SQLiteParser.ruleNames[context.getRuleIndex()].equals("column_name")){
-                exprs.add(context);
+                exprs.add(context.getParent());
             }
             if(SQLiteParser.ruleNames[context.getRuleIndex()].equals("select_stmt")){
                 this.sql = Select.nf2ToNf1(this.sql, context);

@@ -6,6 +6,7 @@ import de.uni.leipzig.H2Oberfleache.parser.SQLiteParser;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RuleContext;
+import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,12 +24,15 @@ public class Select extends Statement{
         SQLiteParser parser = new SQLiteParser(new CommonTokenStream(lexer));
         RuleContext select_stmt = parser.select_stmt();
         Map<String, List<RuleContext>> map = SQL_Parser.getParsedMap(sql);
-        return changeSQL(sql, map, select_stmt);
+        String result = changeSQL(sql, map, select_stmt);
+        alias_tablename = new HashMap<>();
+        haupttables = new ArrayList<>();
+        aliasCounter = 0;
+        return result;
     }
 
     private static String changeSQL(String sql, Map<String, List<RuleContext>> map, RuleContext select_stmt){
         List<RuleContext> tablenames = map.get("table_name");
-        Integer aliasnumber = 0;
         for (RuleContext tablename : tablenames) {
             List<String> subtables = getNF2TableNames(tablename.getText());
             if (!subtables.isEmpty()) {
@@ -82,7 +86,7 @@ public class Select extends Statement{
         return result + subtableinhalt + " " + alias + " ON " + tablename_or_alias + "." + IDName + " = " + alias + "." + IDName;
     }
 
-    public static String updateWhereExpr(RuleContext stmt, String sql){
+    private static String updateWhereExpr(RuleContext stmt, String sql){
         for (RuleContext context : SQL_Parser.getChildList(stmt)) {
             if(SQLiteParser.ruleNames[context.getRuleIndex()].equals("ordering_term")){
                 RuleContext expr = (RuleContext) context.getChild(0);
@@ -90,8 +94,23 @@ public class Select extends Statement{
                 sql = replaceRuleContext(expr, newExp);
             }
             if(SQLiteParser.ruleNames[context.getRuleIndex()].equals("select_or_values")){
-                Where where = new Where(sql, context, alias_tablename);
-                sql = where.sql;
+                for (RuleContext ruleContext : SQL_Parser.getChildList(context)) {
+                    if(SQLiteParser.ruleNames[ruleContext.getRuleIndex()].equals("result_column")){
+                        if(!ruleContext.getText().equals("*")) {
+                            RuleContext expr = null;
+                            ParseTree element = ruleContext.getChild(0);
+                            if (element instanceof RuleContext) {
+                                expr = (RuleContext) element;
+                            }
+                            String newExp = Where.changeExpr(expr, alias_tablename);
+                            sql = replaceRuleContext(expr, newExp);
+                        }
+                    }
+                    if(SQLiteParser.ruleNames[ruleContext.getRuleIndex()].equals("where_expr")){
+                        Where where = new Where(sql, context, alias_tablename);
+                        sql = where.sql;
+                    }
+                }
             }
         }
         return sql;

@@ -1,5 +1,4 @@
 package de.uni.leipzig.H2Oberfleache.parser;
-
 // Generated from C:/Users/Anna/Desktop/test/H2Oberfleache/src/main/antlr4\SQLite.g4 by ANTLR 4.7.2
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
@@ -359,6 +358,16 @@ public interface SQLiteListener extends ParseTreeListener {
 	 */
 	void exitUpdate_stmt(SQLiteParser.Update_stmtContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link SQLiteParser#set_stmt}.
+	 * @param ctx the parse tree
+	 */
+	void enterSet_stmt(SQLiteParser.Set_stmtContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link SQLiteParser#set_stmt}.
+	 * @param ctx the parse tree
+	 */
+	void exitSet_stmt(SQLiteParser.Set_stmtContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link SQLiteParser#update_stmt_limited}.
 	 * @param ctx the parse tree
 	 */
@@ -679,15 +688,15 @@ public interface SQLiteListener extends ParseTreeListener {
 	 */
 	void exitKeyword(SQLiteParser.KeywordContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link SQLiteParser#nf2_point_Noation}.
+	 * Enter a parse tree produced by {@link SQLiteParser#nf2_point_Notation}.
 	 * @param ctx the parse tree
 	 */
-	void enterNf2_point_Noation(SQLiteParser.Nf2_point_NoationContext ctx);
+	void enterNf2_point_Notation(SQLiteParser.Nf2_point_NotationContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link SQLiteParser#nf2_point_Noation}.
+	 * Exit a parse tree produced by {@link SQLiteParser#nf2_point_Notation}.
 	 * @param ctx the parse tree
 	 */
-	void exitNf2_point_Noation(SQLiteParser.Nf2_point_NoationContext ctx);
+	void exitNf2_point_Notation(SQLiteParser.Nf2_point_NotationContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link SQLiteParser#name_of_subtable}.
 	 * @param ctx the parse tree

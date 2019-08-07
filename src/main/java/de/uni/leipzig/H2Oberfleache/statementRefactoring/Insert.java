@@ -37,7 +37,7 @@ public class Insert extends Statement {
     private static List<String> generateQuerys(List<RuleContext> children, Map<String, List<RuleContext>> map, String tablename) {
         List<String> allSubtables = new ArrayList<>();
         allSubtables = getAllSubtables(tablename, allSubtables);
-        Map<String, String> name_table = findWrightTablename(map, allSubtables);
+        Map<String, String> name_table = findRightTablename(map, allSubtables);
         table_key_value = getKey_Value_forTabels(children, name_table);
         List<Map<String, String>> key_value = table_key_value.get("main");
         List<String> queries = createQuerys(tablename, key_value);
@@ -142,22 +142,10 @@ public class Insert extends Statement {
         return tableNotation;
     }
 
-    private static Map<String, String> findWrightTablename(Map<String, List<RuleContext>> map, List<String> subtables){
+    private static Map<String, String> findRightTablename(Map<String, List<RuleContext>> map, List<String> subtables){
         Map<String, String> name_table = new HashMap<>();
         for (RuleContext nameInQuery : map.get("name_of_subtable")) {
-            String name = "";
-            String[] words = nameInQuery.getText().split("\\.");
-            if(words.length > 0) {
-                for (int i = 0; i < words.length; i++) {
-                    name += "_" + words[i];
-                }
-            }else name += "_" + nameInQuery.getText();
-            for (String subtable : subtables) {
-                if(subtable.contains(name)){
-                    name_table.put(nameInQuery.getText(), subtable);
-
-                }
-            }
+            name_table.put(nameInQuery.getText(), getTablename(nameInQuery, subtables, false));
         }
         return name_table;
     }
