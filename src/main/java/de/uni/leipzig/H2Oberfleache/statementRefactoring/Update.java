@@ -12,8 +12,14 @@ import java.util.List;
 import java.util.Map;
 
 public class Update extends Update_Delete {
-    private static Map<String, List<Map<String, String>>> table_set_value = new HashMap<>();
-    public static String nf2ToNf1(String sql) throws SQLException {
+    String sql;
+
+    public Update(String sql){
+        this.sql = sql;
+        makeMap(sql);
+    }
+    private Map<String, List<Map<String, String>>> table_set_value = new HashMap<>();
+    public String nf2ToNf1() throws SQLException {
         sql = prepareSQL(sql);
         whichStmt = "update_stmt";
         Map<String, List<RuleContext>> map = SQL_Parser.getParsedMap(sql);
@@ -21,8 +27,8 @@ public class Update extends Update_Delete {
         List<String> subtables = getNF2TableNamesRec(tablename);
         List<String> table = new ArrayList<>();
         table.add(tablename);
-        getTable_set_value(tablename, sql, map.get("set_stmt"), subtables);
-        List<String> querys = createQuerys(table, map.get("update_stmt").get(0), tablename, sql, Update::makeQuerys);
+        getTable_set_value(tablename, map.get("set_stmt"), subtables);
+        List<String> querys = createQuerys(table, map.get("update_stmt").get(0), tablename, sql, this::makeQuerys);
         String result = "";
         for (String query : querys) {
             result += query;
@@ -30,7 +36,7 @@ public class Update extends Update_Delete {
         return result;
     }
 
-    private static void getAllTablenames(RuleContext context, List<String> subtables, String value){
+    private void getAllTablenames(RuleContext context, List<String> subtables, String value){
         String name = "";
         List<String> tablename = new ArrayList<>();
         String[] words = context.getText().split("\\.");
@@ -72,7 +78,7 @@ public class Update extends Update_Delete {
     }
 
 
-    private static void getTable_set_value(String mainTablename, String sql, List<RuleContext> set_stmts, List<String> subtables){
+    private void getTable_set_value(String mainTablename, List<RuleContext> set_stmts, List<String> subtables){
         for (RuleContext set_stmt : set_stmts) {
             RuleContext set = (RuleContext) set_stmt.getChild(0);
             String tablename = mainTablename;
@@ -101,7 +107,7 @@ public class Update extends Update_Delete {
     }
 
     //Todo: richtiges Updatestatement und weiterzu verarebeitendes
-    public static List<String> makeQuerys(List<String> values, List<String> tablenames, String id) throws SQLException {
+    public List<String> makeQuerys(List<String> values, List<String> tablenames, String id) throws SQLException {
         String where = "WHERE " + id + " IN( ";
         Boolean komma = false;
         for (String value : values) {
@@ -117,7 +123,7 @@ public class Update extends Update_Delete {
                 String set = gernerateQuery(false, tablename);
                 newQuery += " " + where + "; ";
                 List<String> subtables = getNF2TableNames(tablename);
-                if (!subtables.isEmpty()) querys.addAll(newQuerys(newQuery, tablename, subtables, Update::makeQuerys));
+                if (!subtables.isEmpty()) querys.addAll(newQuerys(newQuery, tablename, subtables, this::makeQuerys));
                 else if (!set.equals("")) {
                     String update = "UPDATE " + tablename + " SET " + set + " " + where + "; ";
                     querys.add(update);
@@ -127,7 +133,7 @@ public class Update extends Update_Delete {
         return querys;
     }
 
-    private static String gernerateQuery(Boolean allTables, String tablename){
+    private String gernerateQuery(Boolean allTables, String tablename){
         String update = "";
         Boolean komma = false;
         for (Map<String, String> table : table_set_value.get(tablename)) {

@@ -5,11 +5,18 @@ import de.uni.leipzig.H2Oberfleache.controller.BaseController;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class Drop extends Statement{
-    public static String nf2ToNf1(String sql) throws SQLException {
+    String sql;
+
+    public Drop(String sql){
+        this.sql = sql;
+    }
+
+    public String nf2ToNf1() throws SQLException {
         sql = prepareSQL(sql);
-        List<String> tablenames = getDropedTabelnames(sql);
+        List<String> tablenames = getDropedTabelnames();
         List<String> querys = new ArrayList<>();
         if(!sql.endsWith(";")){sql += ";"; }
         for (String tablename : tablenames) {
@@ -24,7 +31,7 @@ public class Drop extends Statement{
         return sql;
     }
 
-    public static List<String> getDropedTabelnames(String sql){
+    public List<String> getDropedTabelnames(){
         String[] parts = sql.split(",");
         List<String> names = new ArrayList<>();
         for(int i = parts.length; i>1; --i){
@@ -35,7 +42,7 @@ public class Drop extends Statement{
         return names;
     }
 
-    public static List<String> createQuerys(List<String> tablenames) throws SQLException {
+    public List<String> createQuerys(List<String> tablenames) throws SQLException {
         List<String> querys = new ArrayList<>();
         for (String tablename : tablenames) {
             querys.add("DROP TABLE " + tablename + ";");

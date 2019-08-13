@@ -11,9 +11,9 @@ import java.util.Map;
 
 public class Insert extends Statement {
     //Todo: baue eingabe ohne name(...)values(...)
-    private static Map<String, List<Map<String, String>>> table_key_value = new HashMap<>();
+    private Map<String, List<Map<String, String>>> table_key_value = new HashMap<>();
 
-    public static String nf2ToNf1(String sql){
+    public String nf2ToNf1(String sql){
         sql = prepareSQL(sql);
         String result = sql;
         Map<String, List<RuleContext>> map = SQL_Parser.getParsedMap(sql);
@@ -34,9 +34,9 @@ public class Insert extends Statement {
         return result;
     }
 
-    private static List<String> generateQuerys(List<RuleContext> children, Map<String, List<RuleContext>> map, String tablename) {
-        List<String> allSubtables = new ArrayList<>();
-        allSubtables = getAllSubtables(tablename, allSubtables);
+    private List<String> generateQuerys(List<RuleContext> children, Map<String, List<RuleContext>> map, String tablename) {
+        List<String> allSubtables;
+        allSubtables = getNF2TableNamesRec(tablename);
         Map<String, String> name_table = findRightTablename(map, allSubtables);
         table_key_value = getKey_Value_forTabels(children, name_table);
         List<Map<String, String>> key_value = table_key_value.get("main");
@@ -44,7 +44,7 @@ public class Insert extends Statement {
         return queries;
     }
 
-    private static List<String> getAllSubtables(String tablename, List<String> subtables){
+    private List<String> getAllSubtables(String tablename, List<String> subtables){
         List<String> tableSubtables = getNF2TableNames(tablename);
         for (String subtable : tableSubtables) {
             subtables.addAll(getAllSubtables(subtable, subtables));
@@ -53,7 +53,7 @@ public class Insert extends Statement {
         return subtables;
     }
 
-    private static List<String> createQuerys(String tablename, List<Map<String, String>> key_value){
+    private List<String> createQuerys(String tablename, List<Map<String, String>> key_value){
         List<String> querys = new ArrayList<>();
         List<String> subtables = getNF2TableNames(tablename);
         if(!subtables.isEmpty()){
@@ -90,16 +90,16 @@ public class Insert extends Statement {
 
 
     //Todo: für rekusive
-    private static Map<String, List<Map<String, String>>> getKey_Value_forTabels(List<RuleContext> children, Map<String, String> name_table){
+    private Map<String, List<Map<String, String>>> getKey_Value_forTabels(List<RuleContext> children, Map<String, String> name_table){
         Map<String, List<Map<String, String>>> table_key_vale = new HashMap<>();
         int stelle = 0;
         for (RuleContext child : children) {
             String tableName = "main";
             int i = 0;
             String ruleName = SQLiteParser.ruleNames[child.getRuleIndex()];
-            if (ruleName.equals("column_name") || ruleName.equals("nf2_point_Noation")) {
+            if (ruleName.equals("column_name") || ruleName.equals("nf2_point_Notation")) {
                 Map<String, String> map = new HashMap<>();
-                if(ruleName.equals("nf2_point_Noation")){
+                if(ruleName.equals("nf2_point_Notation")){
                     tableName = name_table.get(getPointNotationPartAt(child, false));
                 }
                 for (RuleContext child1 : children) {
@@ -127,7 +127,7 @@ public class Insert extends Statement {
         return table_key_vale;
     }
 
-    private static String getPointNotationPartAt(RuleContext pointNotation, Boolean column){
+    private String getPointNotationPartAt(RuleContext pointNotation, Boolean column){
         String[] tabellen = pointNotation.getText().split("\\.");
         String tableNotation = tabellen[tabellen.length-1];
         boolean ersteZeile = true;
@@ -142,7 +142,7 @@ public class Insert extends Statement {
         return tableNotation;
     }
 
-    private static Map<String, String> findRightTablename(Map<String, List<RuleContext>> map, List<String> subtables){
+    private Map<String, String> findRightTablename(Map<String, List<RuleContext>> map, List<String> subtables){
         Map<String, String> name_table = new HashMap<>();
         for (RuleContext nameInQuery : map.get("name_of_subtable")) {
             name_table.put(nameInQuery.getText(), getTablename(nameInQuery, subtables, false));

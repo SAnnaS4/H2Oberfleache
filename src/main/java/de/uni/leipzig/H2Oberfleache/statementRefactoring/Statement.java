@@ -15,11 +15,10 @@ import java.util.Map;
 
 public class Statement {
     public static final String nf2TabName = "NF2_UNTERTABELLEN";
-    static Integer addedToSQL = 0;
-    static Map<Integer, String> position_sql = new HashMap<>();
+    Map<Integer, String> position_sql = new HashMap<>();
 
     // Todo: noch test schreiben!!!
-    private static String deleteBlank(String sql){
+    private String deleteBlank(String sql){
         String newSql = "";
         String[] parts = sql.split("\\(");
         int klammerzahl = parts.length -1;
@@ -35,13 +34,13 @@ public class Statement {
         return newSql;
     }
 
-    protected static String prepareSQL(String sql){
+    protected String prepareSQL(String sql){
         sql.toUpperCase();
         sql = deleteBlank(sql);
         return sql.trim();
     }
 
-    protected static Integer findCloseBracket(String sql, Integer openPosition){
+    protected Integer findCloseBracket(String sql, Integer openPosition){
         Integer closePosition;
         int open = 0;
         int close = 0;
@@ -55,14 +54,14 @@ public class Statement {
         return closePosition;
     }
 
-    protected static String replaceRuleContext(RuleContext context, String replacement){
+    protected String replaceRuleContext(RuleContext context, String replacement){
         ParserRuleContext parserRuleContext = (ParserRuleContext) context;
         Integer start = parserRuleContext.start.getStartIndex();
         Integer stop = parserRuleContext.stop.getStopIndex();
         String newSQL = "";
         for (Map.Entry<Integer, String> entry : position_sql.entrySet()) {
             if(entry.getKey()>=start && entry.getKey()<=stop){
-                if(entry.getKey() == start){
+                if(entry.getKey().equals(start)){
                     newSQL += replacement;
                     position_sql.put(entry.getKey(), replacement);
                 }else {
@@ -73,19 +72,19 @@ public class Statement {
         return newSQL;
     }
 
-    protected static String getTablename(RuleContext nameInQuery, List<String> subtables, Boolean mitColumnname){
+    protected String getTablename(RuleContext nameInQuery, List<String> subtables, Boolean mitColumnname){
         String name = "";
         String tablename = "";
         String[] words = nameInQuery.getText().split("\\.");
         Integer leangeTablename = words.length;
         if(mitColumnname)--leangeTablename;
-        if(words.length > 0) {
+        if(words.length > 1) {
             for (int i = 0; i < leangeTablename; i++) {
                 name += "_" + words[i];
             }
         }else name += "_" + nameInQuery.getText();
         for (String subtable : subtables) {
-            if(subtable.contains(name)){
+            if(subtable.contains(name) && !subtable.contains(name + "_")){
                 tablename = subtable;
 
             }
@@ -93,7 +92,7 @@ public class Statement {
         return tablename;
     }
 
-    protected static List<String> getNF2TableNames(String tablename){
+    public static List<String> getNF2TableNames(String tablename){
         List<String> tablenames = new ArrayList<>();
         try {
             ResultSet rs = getNextTableNames(tablename);
@@ -107,7 +106,7 @@ public class Statement {
         return tablenames;
     }
 
-    protected static List<String> getNF2TableNamesRec(String tablename){
+    public static List<String> getNF2TableNamesRec(String tablename){
         List<String> tablenames = new ArrayList<>();
         try {
             ResultSet rs = getNextTableNames(tablename);
@@ -132,7 +131,7 @@ public class Statement {
         return rs;
     }
 
-    protected static Integer getNextSubID(String tablename) {
+    protected Integer getNextSubID(String tablename) {
         String selection = "SELECT MAX(" + "__" + tablename + "ID) FROM " + tablename;
         Integer maxID = -1;
         try {
@@ -147,7 +146,7 @@ public class Statement {
         return maxID+1;
     }
 
-    protected static Map<String, List<String>> getColumnsPlaces(String tablename, List<RuleContext> werte, Map<String, Integer> nextID) throws SQLException, IllegalAccessException {
+    protected Map<String, List<String>> getColumnsPlaces(String tablename, List<RuleContext> werte, Map<String, Integer> nextID) throws SQLException, IllegalAccessException {
         DbInfo dbInfo = new DbInfo();
         Map<String, List<String>> table_cols = new HashMap<>();
         List<String> subTables = getNF2TableNames(tablename);
@@ -179,7 +178,14 @@ public class Statement {
         return table_cols;
     }
 
-    public static void makeMap(String sql){
+    public String cutFromSQL(RuleContext toCut, String sql){
+        ParserRuleContext parserRuleContext = (ParserRuleContext) toCut;
+        int start = parserRuleContext.start.getStartIndex();
+        int stop = parserRuleContext.stop.getStopIndex();
+        return sql.substring(start, stop+1);
+    }
+
+    public void makeMap(String sql){
         for(int i = 0; i < sql.length(); i++){
             String c = "" + sql.charAt(i);
             position_sql.put(i, c);
@@ -188,21 +194,32 @@ public class Statement {
 
     public static String changeToNF1(String sql) throws SQLException {
         String newSQL = sql;
-        makeMap(sql);
-        if(SQL_Parser.getQueryType(sql).equals("CREATE")){
-            newSQL = Create.nf2ToNf1(newSQL);
-        }else if (SQL_Parser.getQueryType(sql).equals("DROP")){
-            newSQL = Drop.nf2ToNf1(newSQL);
-        }else if (SQL_Parser.getQueryType(sql).equals("INSERT")){
-            newSQL = Insert.nf2ToNf1(newSQL);
-        }else if (SQL_Parser.getQueryType(sql).equals("SELECT")){
-            newSQL = Select.nf2ToNf1(newSQL);
-        }else if (SQL_Parser.getQueryType(sql).equals("UPDATE")){
-            newSQL = Update.nf2ToNf1(newSQL);
-        }else if (SQL_Parser.getQueryType(sql).equals("DELETE")){
-            newSQL = Delete.nf2ToNf1(newSQL);
+        switch (SQL_Parser.getQueryType(sql)) {
+            case "CREATE":
+                Create create = new Create(sql);
+                newSQL = create.nf2ToNf1();
+                break;
+            case "DROP":
+                Drop drop = new Drop(sql);
+                newSQL = drop.nf2ToNf1();
+                break;
+            case "INSERT":
+                Insert insert = new Insert();
+                newSQL = insert.nf2ToNf1(newSQL);
+                break;
+            case "SELECT":
+                Select select = new Select(sql, true);
+                newSQL = select.nf2ToNf1();
+                break;
+            case "UPDATE":
+                Update update = new Update(sql);
+                newSQL = update.nf2ToNf1();
+                break;
+            case "DELETE":
+                Delete delete = new Delete(sql);
+                newSQL = delete.nf2ToNf1();
+                break;
         }
-        position_sql = new HashMap<>();
         return newSQL;
     }
 

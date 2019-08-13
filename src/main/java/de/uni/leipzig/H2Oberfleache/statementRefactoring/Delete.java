@@ -9,7 +9,13 @@ import java.util.List;
 import java.util.Map;
 
 public class Delete extends Update_Delete{
-    public static String nf2ToNf1(String sql) throws SQLException {
+    String sql;
+
+    public Delete(String sql){
+        this.sql = sql;
+        makeMap(sql);
+    }
+    public String nf2ToNf1() throws SQLException {
         sql = prepareSQL(sql);
         whichStmt = "delete_stmt";
         String result = sql;
@@ -20,7 +26,7 @@ public class Delete extends Update_Delete{
         table.add(tablename);
         if(!subtables.isEmpty()) {
             result = "";
-            List<String> querys = createQuerys(table, map.get("delete_stmt").get(0), tablename, sql, Delete::makeQuerys);
+            List<String> querys = createQuerys(table, map.get("delete_stmt").get(0), tablename, sql, this::makeQuerys);
             for (String query : querys) {
                 result += query;
             }
@@ -28,7 +34,7 @@ public class Delete extends Update_Delete{
         return result;
     }
 
-    public static List<String> makeQuerys(List<String> values, List<String> tablenames, String id) throws SQLException {
+    public List<String> makeQuerys(List<String> values, List<String> tablenames, String id) throws SQLException {
         String where = "WHERE " + id + " IN( ";
         Boolean komma = false;
         for (String value : values) {
@@ -43,7 +49,7 @@ public class Delete extends Update_Delete{
             delete += " " + where + "; ";
             List<String> subtables = getNF2TableNames(tablename);
             querys.add(delete);
-            if(!subtables.isEmpty())querys.addAll(newQuerys(delete, tablename, subtables, Delete::makeQuerys));
+            if(!subtables.isEmpty())querys.addAll(newQuerys(delete, tablename, subtables, this::makeQuerys));
         }
         return querys;
     }

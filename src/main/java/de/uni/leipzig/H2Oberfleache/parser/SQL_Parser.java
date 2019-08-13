@@ -65,11 +65,6 @@ public class SQL_Parser {
         return explore(context, 0, map);
     }
 
-    public static Map<String, List<RuleContext>> getChildren(RuleContext ctx){
-        Map<String, List<RuleContext>> map = new HashMap<>();
-        return explore(ctx, 0, map);
-    }
-
     private static Map<String, List<RuleContext>> explore(RuleContext ctx, int indentation, Map<String, List<RuleContext>> map) {
         String ruleName = SQLiteParser.ruleNames[ctx.getRuleIndex()];
         if(!map.containsKey(ruleName)) {
@@ -94,6 +89,28 @@ public class SQL_Parser {
             ParseTree element = ctx.getChild(i);
             if (element instanceof RuleContext) {
                 children.add((RuleContext) element);
+            }
+        }
+        return children;
+    }
+
+    public static Map<String, List<RuleContext>> getChildMap(RuleContext ctx){
+        Map<String, List<RuleContext>> children = new HashMap<>();
+        for (int i = 0; i < ctx.getChildCount(); i++) {
+            ParseTree element = ctx.getChild(i);
+            if (element instanceof RuleContext) {
+                RuleContext newChild = (RuleContext) element;
+                String ruleName = SQLiteParser.ruleNames[newChild.getRuleIndex()];
+                if(children.containsKey(ruleName)){
+                    List<RuleContext> child = children.get(ruleName);
+                    child.add(newChild);
+                    children.put(ruleName, child);
+                }else {
+                    List<RuleContext> child = new ArrayList<>();
+                    child.add(newChild);
+                    children.put(ruleName, child);
+                }
+
             }
         }
         return children;

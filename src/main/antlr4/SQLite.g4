@@ -325,7 +325,7 @@ expr
  : literal_value
  | signed_number
  | BIND_PARAMETER
- | ( table_name '.')? (column_name)? ('.' column_name)*
+ | ( table_name '.')? (column_name)? ('.' column_name)* ('.')? ('*')?
  | unary_operator expr
  | expr '||' expr
  | expr ( '*' | '/' | '%' ) expr
@@ -335,6 +335,7 @@ expr
  | expr ( '=' | '==' | '!=' | '<>' | K_IS | K_IS K_NOT | K_IN | K_LIKE | K_GLOB | K_MATCH | K_REGEXP ) expr
  | expr K_AND expr
  | expr K_OR expr
+ | aggregate '(' ( K_DISTINCT? expr ( ',' expr )* | '*' )? ')'
  | function_name '(' ( K_DISTINCT? expr ( ',' expr )* | '*' )? ')'
  | '(' expr ')'
  | K_CAST '(' expr K_AS type_name ')'
@@ -456,7 +457,7 @@ compound_operator
  ;
 
 cte_table_name
- : table_name ( '(' (column_name|nf2_point_Notation) ( ',' column_name )* (',' nf2_point_Notation)* ')' )?
+ : table_name ( '(' (column_name|nf2_point_Notation) ( ',' column_name|nf2_point_Notation )* ')' )?
  ;
 
 signed_number
@@ -642,6 +643,22 @@ name
 function_name
  : any_name
  ;
+
+aggregate
+ : K_AVG
+  | K_EVERY
+  | K_ANY
+  | K_COUNT
+  | K_LISTAGG
+  | K_MAX
+  | K_MIN
+  | K_SUM
+  | K_SELECTIVITY
+  | K_RANK
+  | K_MEDIAN
+  | K_MODE
+  | K_ENVELOPE
+  ;
 
 database_name
  : any_name
@@ -866,6 +883,20 @@ K_WITH : W I T H;
 K_WITHOUT : W I T H O U T;
 K_NEST : N E S T;
 K_UNNEST : U N N E S T;
+//aggregat
+K_AVG : A V G;
+K_EVERY : E V E R Y;
+K_ANY : A N Y;
+K_COUNT : C O U N T;
+K_LISTAGG : L I S T A G G;
+K_MAX : M A X;
+K_MIN : M I N;
+K_SUM : S U M;
+K_SELECTIVITY : S E L E C T I V I T Y;
+K_RANK : R A N K;
+K_MEDIAN : M E D I A N;
+K_MODE : M O D E;
+K_ENVELOPE : E N V E L O P E;
 
 
 IDENTIFIER

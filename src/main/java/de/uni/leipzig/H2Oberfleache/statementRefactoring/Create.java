@@ -14,14 +14,20 @@ import java.util.List;
 import java.util.Map;
 
 public class Create extends Statement {
-    public static String nf2ToNf1(String sql) {
+    String sql;
+
+    public Create(String sql){
+        this.sql = sql;
+    }
+
+    public String nf2ToNf1() {
         sql = prepareSQL(sql);
         SQLiteLexer lexer = new SQLiteLexer(CharStreams.fromString(sql));
         SQLiteParser parser = new SQLiteParser(new CommonTokenStream(lexer));
         RuleContext stmt = parser.create_table_stmt();
         String result;
         if(sql.contains("CREATE TABLE") && sql.contains("SET(ROW")){
-            List<String> querys = new ArrayList<>();
+            List<String> querys;
             querys = getQuerys(stmt, null);
             result = "CREATE TABLE IF NOT EXISTS " + nf2TabName + "(NAME VARCHAR(60), OBERTABELLE VARCHAR(60));";
             for (String query : querys) {
@@ -33,7 +39,7 @@ public class Create extends Statement {
         return result;
     }
 
-    private static List<String> getQuerys(RuleContext stmt, String higherTablename){
+    private List<String> getQuerys(RuleContext stmt, String higherTablename){
         List<String> querys = new ArrayList<>();
         List<RuleContext> childList = SQL_Parser.getChildList(stmt);
         Map<String, String> columname_type = new HashMap<>();
@@ -83,6 +89,4 @@ public class Create extends Statement {
         querys.add(query);
         return querys;
     }
-
-
 }
