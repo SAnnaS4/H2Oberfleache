@@ -197,12 +197,29 @@ insert_stmt
                 | K_INSERT K_OR K_ABORT
                 | K_INSERT K_OR K_FAIL
                 | K_INSERT K_OR K_IGNORE ) K_INTO
-   ( database_name '.' )? table_name ( '(' (column_name | nf2_point_Notation) ( ',' (column_name | nf2_point_Notation) )* ')' )?
-   ( K_VALUES '(' expr ( ',' expr )* ')' ( ',' '(' expr ( ',' expr )* ')' )*
+   ( database_name '.' )? table_insert
+   ( K_VALUES '(' value_insert ')' ( ',' '(' value_insert ')')*
    | select_stmt
    | K_DEFAULT K_VALUES
    )
  ;
+
+ value_insert
+  : ( row_expr | set_expr | expr) ( ',' ( row_expr | set_expr | expr) )*
+  ;
+
+ row_expr
+  : K_ROW '(' value_insert ')'
+  ;
+
+  set_expr
+   : K_SET '(' value_insert ')'
+   | '{' value_insert '}'
+   ;
+
+ table_insert
+  :table_name ( '(' (column_name | table_insert) ( ',' (column_name | table_insert) )* ')' )?
+  ;
 
 pragma_stmt
  : K_PRAGMA ( database_name '.' )? pragma_name ( '=' pragma_value
@@ -258,7 +275,7 @@ update_stmt
  ;
 
  set_stmt
-  :(column_name|nf2_point_Notation) '=' expr
+  :(column_name|nf2_point_Notation) '=' (row_expr | set_expr | expr)
   ;
 
 update_stmt_limited

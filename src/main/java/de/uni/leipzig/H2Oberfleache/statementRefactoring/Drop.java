@@ -5,7 +5,6 @@ import de.uni.leipzig.H2Oberfleache.controller.BaseController;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class Drop extends Statement{
     String sql;
@@ -21,7 +20,7 @@ public class Drop extends Statement{
         if(!sql.endsWith(";")){sql += ";"; }
         for (String tablename : tablenames) {
             querys.addAll(createQuerys(getNF2TableNamesRec(tablename)));
-            String delete = "DELETE FROM " +nf2TabName + " WHERE NAME = '" + tablename + "'";
+            String delete = "DELETE FROM " + nf2TabName + " WHERE NAME = '" + tablename + "'";
             java.sql.Statement st1 = BaseController.connection.getCon().createStatement();
             st1.executeUpdate(delete);
         }

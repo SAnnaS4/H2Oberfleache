@@ -116,6 +116,14 @@ public class SQL_Parser {
         return children;
     }
 
+    public static RuleContext parseTreeToRuleContext(ParseTree parseTree){
+        RuleContext ruleContext = null;
+        if (parseTree instanceof RuleContext) {
+            ruleContext = (RuleContext) parseTree;
+        }
+        return ruleContext;
+    }
+
     public static List<String> getChildStringList(RuleContext ctx){
         List<String> children = new ArrayList<>();
         for (int i = 0; i < ctx.getChildCount(); i++) {

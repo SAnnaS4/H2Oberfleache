@@ -4,7 +4,6 @@ import de.uni.leipzig.H2Oberfleache.controller.BaseController;
 import de.uni.leipzig.H2Oberfleache.jdbc.ExecuteStatement;
 import de.uni.leipzig.H2Oberfleache.parser.SQL_Parser;
 import de.uni.leipzig.H2Oberfleache.parser.SQLiteParser;
-import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 
@@ -16,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 
 public class Update_Delete extends Statement {
-    String sql;
     String whichStmt = "";
     public List<String> getIDs(String tablename, RuleContext stmt, String sql) throws SQLException {
         String selectStmt = "SELECT __" + tablename + "ID FROM " + tablename + " ";

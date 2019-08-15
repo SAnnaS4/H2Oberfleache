@@ -238,7 +238,7 @@ public class Select extends Statement{
         if(select_or_values.containsKey("where_expr")){
             List<RuleContext> where_exprs = select_or_values.get("where_expr");
             for (RuleContext where_expr : where_exprs) {
-                Where where = new Where(sql, where_expr, alias_tablename, position_sql, haupttables);
+                Where where = new Where(sql, where_expr.parent, alias_tablename, position_sql, haupttables);
                 sql = where.sql;
             }
         }

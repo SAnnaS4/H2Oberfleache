@@ -268,6 +268,46 @@ public interface SQLiteListener extends ParseTreeListener {
 	 */
 	void exitInsert_stmt(SQLiteParser.Insert_stmtContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link SQLiteParser#value_insert}.
+	 * @param ctx the parse tree
+	 */
+	void enterValue_insert(SQLiteParser.Value_insertContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link SQLiteParser#value_insert}.
+	 * @param ctx the parse tree
+	 */
+	void exitValue_insert(SQLiteParser.Value_insertContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link SQLiteParser#row_expr}.
+	 * @param ctx the parse tree
+	 */
+	void enterRow_expr(SQLiteParser.Row_exprContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link SQLiteParser#row_expr}.
+	 * @param ctx the parse tree
+	 */
+	void exitRow_expr(SQLiteParser.Row_exprContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link SQLiteParser#set_expr}.
+	 * @param ctx the parse tree
+	 */
+	void enterSet_expr(SQLiteParser.Set_exprContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link SQLiteParser#set_expr}.
+	 * @param ctx the parse tree
+	 */
+	void exitSet_expr(SQLiteParser.Set_exprContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link SQLiteParser#table_insert}.
+	 * @param ctx the parse tree
+	 */
+	void enterTable_insert(SQLiteParser.Table_insertContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link SQLiteParser#table_insert}.
+	 * @param ctx the parse tree
+	 */
+	void exitTable_insert(SQLiteParser.Table_insertContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link SQLiteParser#pragma_stmt}.
 	 * @param ctx the parse tree
 	 */
@@ -737,6 +777,16 @@ public interface SQLiteListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitFunction_name(SQLiteParser.Function_nameContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link SQLiteParser#aggregate}.
+	 * @param ctx the parse tree
+	 */
+	void enterAggregate(SQLiteParser.AggregateContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link SQLiteParser#aggregate}.
+	 * @param ctx the parse tree
+	 */
+	void exitAggregate(SQLiteParser.AggregateContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link SQLiteParser#database_name}.
 	 * @param ctx the parse tree
