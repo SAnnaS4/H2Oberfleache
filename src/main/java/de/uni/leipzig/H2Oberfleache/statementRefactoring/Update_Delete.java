@@ -3,7 +3,10 @@ package de.uni.leipzig.H2Oberfleache.statementRefactoring;
 import de.uni.leipzig.H2Oberfleache.controller.BaseController;
 import de.uni.leipzig.H2Oberfleache.jdbc.ExecuteStatement;
 import de.uni.leipzig.H2Oberfleache.parser.SQL_Parser;
+import de.uni.leipzig.H2Oberfleache.parser.SQLiteLexer;
 import de.uni.leipzig.H2Oberfleache.parser.SQLiteParser;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 
@@ -19,11 +22,18 @@ public class Update_Delete extends Statement {
     Map<String, List<String>> tablename_ID = new HashMap<>();
     public List<String> getIDs(String tablename, RuleContext stmt, String sql) throws SQLException {
         String id = "__" + tablename + "ID";
+        String tableAlias = "";
         String hauptTable = tablename;
         if(tablename.startsWith("__")){
             String[] tab = tablename.split("_");
-            hauptTable = tab[0];
-            id = tab[tab.length-1] + "." + id;
+            for (String s : tab) {
+                if(!s.equals("")){
+                    hauptTable = s;
+                    break;
+                }
+            }
+            tableAlias = tab[tab.length-1];
+            id = tableAlias + "." + id;
         }
         String selectStmt = "SELECT " + id ;
         String where = "";
@@ -40,6 +50,18 @@ public class Update_Delete extends Statement {
             }
         }
         selectStmt += where;
+        if(!tableAlias.equals("")){
+            makeMap(selectStmt);
+            Map<String, String> alias_tablename = new HashMap<>();
+            alias_tablename.put(tableAlias, tablename);
+            List<String> haupttables = new ArrayList<>();
+            haupttables.add(tablename);
+            SQLiteLexer lexer = new SQLiteLexer(CharStreams.fromString(selectStmt));
+            SQLiteParser parser = new SQLiteParser(new CommonTokenStream(lexer));
+            RuleContext select_stmt = parser.select_or_values();
+            Where updateWhere = new Where(selectStmt,select_stmt, alias_tablename, position_sql, haupttables);
+            selectStmt = updateWhere.sql;
+        }
         position_sql = new HashMap<>();
         Select select = new Select(selectStmt, false);
         selectStmt = select.nf2ToNf1();
@@ -49,6 +71,7 @@ public class Update_Delete extends Statement {
         List<String> tables = new ArrayList<>();
         tables.add(tablename);
         tables.addAll(subtables);
+        makeMap(sql);
         int j = rs.getMetaData().getColumnCount();
         while (rs.next()){
             ids.add(rs.getObject(1).toString());
