@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 public class Insert extends Statement {
+    Map<String, Integer> tablename_nextID = new HashMap<>();
     public String nf2ToNf1(String sql){
         sql = prepareSQL(sql);
         String result = sql;
@@ -41,11 +42,14 @@ public class Insert extends Statement {
         if(obertab != ""){
             tablename = "__" + obertab + "_" + tablename;
         }
-        Boolean hatUntertab = false;
         Boolean tableIsSetted = false;
         Integer ID;
         String IDName = "__" + tablename + "ID";
         for (RuleContext value : valueList) {
+            if(tablename_nextID.containsKey(tablename)){
+                ID = tablename_nextID.get(tablename) + 1;
+            }else ID = getNextSubID(tablename);
+            tablename_nextID.put(tablename, ID);
             Map<RuleContext, RuleContext> element_value = new HashMap<>();
             List<String> values = new ArrayList<>();
             if(SQLiteParser.ruleNames[value.getRuleIndex()].equals("expr")){
@@ -64,12 +68,6 @@ public class Insert extends Statement {
                     if(!tableIsSetted) table.add(entry.getKey().getText());
                     values.add(entry.getValue().getText());
                 }else {
-                    ID = getNextSubID(tablename);
-                    if(!hatUntertab) {
-                        if (!tableIsSetted) table.add(IDName);
-                        values.add(ID.toString());
-                        hatUntertab = true;
-                    }
                     Map<String, List<RuleContext>> childMap = SQL_Parser.getChildMap(entry.getValue());
                     List<RuleContext> row = new ArrayList<>();
                     RuleContext valueInsert = childMap.get("value_insert").get(0);
@@ -81,10 +79,12 @@ public class Insert extends Statement {
                     querys.addAll(createQuerys(tablename, ID, entry.getKey(), row));
                 }
             }
+            values.add(ID.toString());
             if(obertab != "")values.add(nextOTID.toString());
             tupel.add(values);
             tableIsSetted = true;
         }
+        table.add(IDName);
         if(obertab != "")table.add("__" + obertab + "ID");
         querys.addAll(makeInsertQuery(tablename, table, tupel));
         return querys;

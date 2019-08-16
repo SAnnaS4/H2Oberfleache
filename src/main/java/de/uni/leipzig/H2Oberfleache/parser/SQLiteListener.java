@@ -468,12 +468,12 @@ public interface SQLiteListener extends ParseTreeListener {
 	 */
 	void exitConflict_clause(SQLiteParser.Conflict_clauseContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link SQLiteParser#expr}.
+	 * Enter a parse tree produced by .
 	 * @param ctx the parse tree
 	 */
 	void enterExpr(SQLiteParser.ExprContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link SQLiteParser#expr}.
+	 * Exit a parse tree produced by .
 	 * @param ctx the parse tree
 	 */
 	void exitExpr(SQLiteParser.ExprContext ctx);

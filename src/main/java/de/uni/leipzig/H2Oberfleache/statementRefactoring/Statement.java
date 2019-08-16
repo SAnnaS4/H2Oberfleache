@@ -212,6 +212,7 @@ public class Statement {
                 newSQL = select.nf2ToNf1();
                 break;
             case "UPDATE":
+                Update.hauptSQL = sql;
                 Update update = new Update(sql);
                 newSQL = update.nf2ToNf1();
                 break;

@@ -13,12 +13,13 @@ import java.util.Map;
 
 public class Update extends Update_Delete {
     String sql;
+    static String hauptSQL;
 
     public Update(String sql){
         this.sql = sql;
         makeMap(sql);
     }
-    private Map<String, List<Map<String, String>>> table_set_value = new HashMap<>();
+    private Map<String, List<Map<String, RuleContext>>> table_set_value = new HashMap<>();
     public String nf2ToNf1() throws SQLException {
         sql = prepareSQL(sql);
         whichStmt = "update_stmt";
@@ -36,10 +37,9 @@ public class Update extends Update_Delete {
         return result;
     }
 
-    private void getAllTablenames(RuleContext context, List<String> subtables, String value){
+    private void getAllTablenames(RuleContext set, List<String> subtables, RuleContext value){
         String name = "";
-        List<String> tablename = new ArrayList<>();
-        String[] words = context.getText().split("\\.");
+        String[] words = set.getText().split("\\.");
         List<String> genutzeWords = new ArrayList<>();
         Integer leangeTablename = words.length -1;
         if(words.length > 0) {
@@ -57,17 +57,16 @@ public class Update extends Update_Delete {
                     }
                 }
                 genutzeWords.add(words[i]);
-                Map<String, String> map = new HashMap<>();
+                Map<String, RuleContext> map = new HashMap<>();
                 map.put(column ,value);
                 for (String subtable : subtables) {
                     if(subtable.contains(name)){
-                        tablename.add(subtable);
                         if(table_set_value.containsKey(subtable)){
-                            List<Map<String, String>> list = table_set_value.get(subtable);
+                            List<Map<String, RuleContext>> list = table_set_value.get(subtable);
                             list.add(map);
                             table_set_value.put(subtable, list);
                         }else {
-                            List<Map<String, String>> list = new ArrayList<>();
+                            List<Map<String, RuleContext>> list = new ArrayList<>();
                             list.add(map);
                             table_set_value.put(subtable, list);
                         }
@@ -82,24 +81,22 @@ public class Update extends Update_Delete {
         for (RuleContext set_stmt : set_stmts) {
             RuleContext set = (RuleContext) set_stmt.getChild(0);
             String tablename = mainTablename;
-            String columnname = set.getText();
             RuleContext ctx = null;
             ParseTree element = set_stmt.getChild(2);
             if (element instanceof RuleContext) {
                 ctx = (RuleContext) element;
             }
-            String value = cutFromSQL(ctx, sql);
-            if(SQLiteParser.ruleNames[set.getRuleIndex()].equals("nf2_point_Notation")){
-                getAllTablenames(set, subtables, value);
+            if (SQLiteParser.ruleNames[set.getRuleIndex()].equals("nf2_point_Notation")) {
+                getAllTablenames(set, subtables, ctx);
             }
-            Map<String, String> set_value = new HashMap<>();
-            set_value.put(columnname, value);
-            if(table_set_value.containsKey(tablename)){
-                List<Map<String, String>> list = table_set_value.get(tablename);
+            Map<String, RuleContext> set_value = new HashMap<>();
+            set_value.put(set.getText(), ctx);
+            if (table_set_value.containsKey(tablename)) {
+                List<Map<String, RuleContext>> list = table_set_value.get(tablename);
                 list.add(set_value);
                 table_set_value.put(tablename, list);
-            }else {
-                List<Map<String, String>> list = new ArrayList<>();
+            } else {
+                List<Map<String, RuleContext>> list = new ArrayList<>();
                 list.add(set_value);
                 table_set_value.put(tablename, list);
             }
@@ -119,36 +116,45 @@ public class Update extends Update_Delete {
         List<String> querys = new ArrayList<>();
         for (String tablename : tablenames) {
             if(table_set_value.containsKey(tablename)) {
-                String newQuery = "UPDATE " + tablename + " SET " + gernerateQuery(true, tablename);
-                String set = gernerateQuery(false, tablename);
+                String newQuery = "UPDATE " + tablename + " SET " + gernerateQuery(true, tablename, where).get(0);
+                List<String> set = gernerateQuery(false, tablename, where);
                 newQuery += " " + where + "; ";
                 List<String> subtables = getNF2TableNames(tablename);
                 if (!subtables.isEmpty()) querys.addAll(newQuerys(newQuery, tablename, subtables, this::makeQuerys));
-                else if (!set.equals("")) {
-                    String update = "UPDATE " + tablename + " SET " + set + " " + where + "; ";
-                    querys.add(update);
+                else if (!set.get(0).equals("")) {
+                    if(set.size()==1) {
+                        String update = "UPDATE " + tablename + " SET " + set + " " + where + "; ";
+                        querys.add(update);
+                    }else querys.addAll(set);
                 }
             }
         }
         return querys;
     }
 
-    private String gernerateQuery(Boolean allTables, String tablename){
+    private List<String> gernerateQuery(Boolean allTables, String tablename, String where){
+        List<String> queries = new ArrayList<>();
         String update = "";
         Boolean komma = false;
-        for (Map<String, String> table : table_set_value.get(tablename)) {
-            for (Map.Entry<String, String> entry : table.entrySet()) {
+        for (Map<String, RuleContext> table : table_set_value.get(tablename)) {
+            for (Map.Entry<String, RuleContext> entry : table.entrySet()) {
                 if(allTables) {
                     if(komma)update += ", ";
                     komma = true;
-                    update += entry.getKey() + " = " + entry.getValue();
+                    update += entry.getKey() + " = " + cutFromSQL(entry.getValue(),hauptSQL);
                 }else if(!entry.getKey().contains("\\.")){
-                    if(komma)update += ", ";
-                    komma = true;
-                    update += entry.getKey() + " = " + entry.getValue();
+                    if(SQLiteParser.ruleNames[entry.getValue().getRuleIndex()].equals("expr")) {
+                        if (komma) update += ", ";
+                        komma = true;
+                        update += entry.getKey() + " = " + cutFromSQL(entry.getValue(), hauptSQL);
+                    }else {
+                        String newName = "__" + tablename + "_" + entry.getKey();
+                        String Delete = "DELETE FROM " + newName + " " + where + "; ";
+                    }
                 }
             }
+            if(queries.size() == 0)queries.add(update);
         }
-        return update;
+        return queries;
     }
 }

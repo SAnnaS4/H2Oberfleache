@@ -77,10 +77,9 @@ public class Create extends Statement {
         if(containsSubTable || !(higherTablename == null)) {
             newNF2Tables= "INSERT INTO " + nf2TabName + "(NAME, OBERTABELLE) VALUES(" + "'" + tablename + "', '"
                     + higherTablename + "');";
-            if (containsSubTable) query += "__" + tablename + "ID INT";
+            query += "__" + tablename + "ID INT";
             try {
-                if (containsSubTable && !(higherTablename.isEmpty())) query += " ,";
-                if (!(higherTablename.isEmpty())) query += "__" + higherTablename + "ID INT";
+                if (!(higherTablename.isEmpty())) query += ", " + "__" + higherTablename + "ID INT";
             } catch (NullPointerException e) {
             }
         }
