@@ -18,8 +18,8 @@ public class Delete extends Update_Delete{
     public String nf2ToNf1() throws SQLException {
         sql = prepareSQL(sql);
         whichStmt = "delete_stmt";
-        String result = sql;
         Map<String, List<RuleContext>> map = SQL_Parser.getParsedMap(sql);
+        String result = sql;
         String tablename = getTablename(map.get("qualified_table_name").get(0), false);
         List<String> subtables = getNF2TableNamesRec(tablename);
         List<String> table = new ArrayList<>();
@@ -34,23 +34,13 @@ public class Delete extends Update_Delete{
         return result;
     }
 
-    public List<String> makeQuerys(List<String> values, List<String> tablenames, String id) throws SQLException {
-        String where = "WHERE " + id + " IN( ";
-        Boolean komma = false;
-        for (String value : values) {
-            if(komma)where += ", ";
-            komma = true;
-            where += value;
-        }
-        where += ")";
+    public List<String> makeQuerys(String where, String tablename) throws SQLException {
         List<String> querys = new ArrayList<>();
-        for (String tablename : tablenames) {
-            String delete = "DELETE FROM " + tablename + " ";
-            delete += " " + where + "; ";
-            List<String> subtables = getNF2TableNames(tablename);
-            querys.add(delete);
-            if(!subtables.isEmpty())querys.addAll(newQuerys(delete, tablename, subtables, this::makeQuerys));
-        }
+        String delete = "DELETE FROM " + tablename + " ";
+        delete += " " + where + "; ";
+        if(tablename_ID.containsKey(tablename))querys.add(delete);
+        List<String> subtables = getNF2TableNames(tablename);
+        if(!subtables.isEmpty())querys.addAll(newQuerys(delete, tablename, subtables, this::makeQuerys));
         return querys;
     }
 }

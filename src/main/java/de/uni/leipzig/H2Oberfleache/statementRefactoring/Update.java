@@ -24,7 +24,7 @@ public class Update extends Update_Delete {
         sql = prepareSQL(sql);
         whichStmt = "update_stmt";
         Map<String, List<RuleContext>> map = SQL_Parser.getParsedMap(sql);
-        String tablename = getTablename(map.get("qualified_table_name").get(0), false);
+        String tablename = getTablename(map.get("qualified_table_name").get(0), false);;
         List<String> subtables = getNF2TableNamesRec(tablename);
         List<String> table = new ArrayList<>();
         table.add(tablename);
@@ -34,6 +34,7 @@ public class Update extends Update_Delete {
         for (String query : querys) {
             result += query;
         }
+        System.out.println(result);
         return result;
     }
 
@@ -104,17 +105,8 @@ public class Update extends Update_Delete {
     }
 
     //Todo: richtiges Updatestatement und weiterzu verarebeitendes
-    public List<String> makeQuerys(List<String> values, List<String> tablenames, String id) throws SQLException {
-        String where = "WHERE " + id + " IN( ";
-        Boolean komma = false;
-        for (String value : values) {
-            if(komma)where += ", ";
-            komma = true;
-            where += value;
-        }
-        where += ")";
+    public List<String> makeQuerys(String where, String tablename) throws SQLException {
         List<String> querys = new ArrayList<>();
-        for (String tablename : tablenames) {
             if(table_set_value.containsKey(tablename)) {
                 String newQuery = "UPDATE " + tablename + " SET " + gernerateQuery(true, tablename, where).get(0);
                 List<String> set = gernerateQuery(false, tablename, where);
@@ -122,13 +114,12 @@ public class Update extends Update_Delete {
                 List<String> subtables = getNF2TableNames(tablename);
                 if (!subtables.isEmpty()) querys.addAll(newQuerys(newQuery, tablename, subtables, this::makeQuerys));
                 else if (!set.get(0).equals("")) {
-                    if(set.size()==1) {
-                        String update = "UPDATE " + tablename + " SET " + set + " " + where + "; ";
+                    if (set.size() == 1) {
+                        String update = "UPDATE " + tablename + " SET " + set.get(0) + " " + where + "; ";
                         querys.add(update);
-                    }else querys.addAll(set);
+                    } else querys.addAll(set);
                 }
             }
-        }
         return querys;
     }
 
