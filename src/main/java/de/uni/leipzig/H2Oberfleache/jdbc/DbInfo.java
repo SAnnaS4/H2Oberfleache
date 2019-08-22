@@ -11,9 +11,9 @@ import java.util.List;
 import java.util.Map;
 
 public class DbInfo {
-    public List<String> getTables(Boolean autoCommit, String dBName) throws SQLException {
+    public List<String> getTables(Boolean autoCommit, String dBName, String user, String password) throws SQLException {
         List<String> result = new ArrayList<>();
-        DatabaseMetaData meta = DBConnection.getInstance(autoCommit, dBName).getMeta();
+        DatabaseMetaData meta = DBConnection.getInstance(autoCommit, dBName, user, password).getMeta();
         ResultSet resultSet = meta.getTables(null, null, null, new String[]{"TABLE"});
         while(resultSet.next())
         {
@@ -23,8 +23,8 @@ public class DbInfo {
         return result;
     }
 
-    public Map<String, String> getColums(Boolean autoCommit, String dBName, String tableName) throws SQLException, IllegalAccessException {
-        DatabaseMetaData meta = DBConnection.getInstance(autoCommit, dBName).getMeta();
+    public Map<String, String> getColums(Boolean autoCommit, String dBName, String tableName, String user, String password) throws SQLException, IllegalAccessException {
+        DatabaseMetaData meta = DBConnection.getInstance(autoCommit, dBName, user, password).getMeta();
         Map<String, String> result = new HashMap<>();
         ResultSet columns = meta.getColumns(null,null, tableName, null);
         while(columns.next())

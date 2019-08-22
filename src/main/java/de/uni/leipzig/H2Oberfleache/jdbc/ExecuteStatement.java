@@ -18,10 +18,6 @@ public class ExecuteStatement {
     public ResultSet execQuery() throws SQLException {
         Statement st = DBcon.getCon().createStatement();
         ResultSet rs = st.executeQuery(query);
-        String result = "";
-//        while (rs.next()) {
-//            result ="%d %s %d%n" + rs.getInt(1) + rs.getString(2) + rs.getInt(3);
-//        }
         return rs;
     }
 
@@ -31,12 +27,8 @@ public class ExecuteStatement {
         return rs;
     }
 
-    public void conClose(){
-        DBcon.conClose();
-    }
-
-    public ExecuteStatement(String dBName, String query, Boolean autoCommit) throws SQLException {
-        this.DBcon = DBConnection.getInstance(autoCommit, dBName);
+    public ExecuteStatement(String dBName, String query, Boolean autoCommit, String user, String password) throws SQLException {
+        this.DBcon = DBConnection.getInstance(autoCommit, dBName, user, password);
         this.DBcon.setAutoCommit(autoCommit);
         this.query = query;
     }

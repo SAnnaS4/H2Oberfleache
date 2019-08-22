@@ -408,6 +408,16 @@ public interface SQLiteListener extends ParseTreeListener {
 	 */
 	void exitSet_stmt(SQLiteParser.Set_stmtContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link SQLiteParser#set_row_update}.
+	 * @param ctx the parse tree
+	 */
+	void enterSet_row_update(SQLiteParser.Set_row_updateContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link SQLiteParser#set_row_update}.
+	 * @param ctx the parse tree
+	 */
+	void exitSet_row_update(SQLiteParser.Set_row_updateContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link SQLiteParser#update_stmt_limited}.
 	 * @param ctx the parse tree
 	 */
@@ -468,12 +478,12 @@ public interface SQLiteListener extends ParseTreeListener {
 	 */
 	void exitConflict_clause(SQLiteParser.Conflict_clauseContext ctx);
 	/**
-	 * Enter a parse tree produced by .
+	 * Enter a parse tree produced by {@link SQLiteParser#expr}.
 	 * @param ctx the parse tree
 	 */
 	void enterExpr(SQLiteParser.ExprContext ctx);
 	/**
-	 * Exit a parse tree produced by .
+	 * Exit a parse tree produced by {@link SQLiteParser#expr}.
 	 * @param ctx the parse tree
 	 */
 	void exitExpr(SQLiteParser.ExprContext ctx);

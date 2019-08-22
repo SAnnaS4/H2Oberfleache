@@ -30,6 +30,8 @@ public class Delete extends Update_Delete{
             for (String query : querys) {
                 result += query;
             }
+        }else if(map.get("qualified_table_name").get(0).getText().contains(".")){
+           result =  replaceRuleContext(map.get("qualified_table_name").get(0), tablename);
         }
         return result;
     }

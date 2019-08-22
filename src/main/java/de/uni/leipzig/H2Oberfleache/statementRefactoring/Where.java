@@ -1,10 +1,13 @@
 package de.uni.leipzig.H2Oberfleache.statementRefactoring;
 
+import de.uni.leipzig.H2Oberfleache.controller.BaseController;
 import de.uni.leipzig.H2Oberfleache.controller.Tables;
+import de.uni.leipzig.H2Oberfleache.jdbc.DbInfo;
 import de.uni.leipzig.H2Oberfleache.parser.SQL_Parser;
 import de.uni.leipzig.H2Oberfleache.parser.SQLiteParser;
 import org.antlr.v4.runtime.RuleContext;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -79,12 +82,28 @@ public class Where extends Statement{
     public static String getAlias(Map<String, String> alias_tablename, String column, List<String> haupttables){
         for (Map.Entry<String, String> entry : alias_tablename.entrySet()) {
             if(haupttables.contains(entry.getValue())) {
-                List<String> attributes = Tables.getAllAttributes(entry.getValue());
+                List<String> attributes = getAllAttributes(entry.getValue());
                 for (String attribute : attributes) {
                     if (attribute.equals(column)) return entry.getKey();
                 }
             }
         }
         return "";
+    }
+
+    public static List<String> getAllAttributes(String tablename){
+        DbInfo dbInfo = new DbInfo();
+        List<String> attributes = new ArrayList<>();
+        try {
+            Map<String, String> columns = dbInfo.getColums(false,BaseController.dbName,tablename, BaseController.user, BaseController.password);
+            for (Map.Entry<String, String> entry : columns.entrySet()) {
+                attributes.add(entry.getKey());
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        return attributes;
     }
 }

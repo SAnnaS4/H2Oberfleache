@@ -3,7 +3,6 @@ package de.uni.leipzig.H2Oberfleache.controller;
 import de.uni.leipzig.H2Oberfleache.statementRefactoring.Statement;
 import de.uni.leipzig.H2Oberfleache.tables.Table;
 
-import java.sql.SQLException;
 import java.util.*;
 
 public class HtmlBuilder {
@@ -13,7 +12,7 @@ public class HtmlBuilder {
     String highestTablename = "";
     List<Integer> ids = new ArrayList<>();
 
-    public HtmlBuilder(Table table, String sql) throws SQLException {
+    public HtmlBuilder(Table table, String sql) {
         Map<String, List<Table.Attribute>> tabelname_Attribute = new HashMap<>();
         for (Table.Attribute attribute : table.attributes) {
             if(!tabelname_Attribute.containsKey(attribute.getTable())){
@@ -27,42 +26,45 @@ public class HtmlBuilder {
             }
         }
         String head = addHead(table.attributes, tabelname_Attribute);
-        List<List<Table.Inhalt>> inhalt = updateInhalt(table.inhalt, tabelname_Attribute);
-        List<Table.Attribute> attributes = table.attributes;
-        html = makeFinalHtml(inhalt, head, attributes);
+       // List<List<Table.Inhalt>> inhalt = updateInhalt(table.inhalt, tabelname_Attribute);
+        html = makeFinalHtml(table.inhalt, head, table.attributes, tabelname_Attribute);
     }
 
-    //todo: suche alle attributekombinationen einer untertabelle mit der selben obertabID
-    //todo: lösche alle anderen tuple und lösche sie + setzte überflüssige Inhalte = null
-    private List<List<Table.Inhalt>> updateInhalt(List<List<Table.Inhalt>> inhalt, Map<String, List<Table.Attribute>> tabelname_Attribute){
-        List<Integer> untertabAttribute = new ArrayList<>();
+    private Map<String, List<List<Table.Inhalt>>> getTablename_Inhalt(List<List<Table.Inhalt>> inhalt, Map<String, List<Table.Attribute>> tabelname_Attribute){
+        Map<String, List<List<Table.Inhalt>>> tabelname_Inhalte = new HashMap<>();
         for (Map.Entry<String, List<Table.Attribute>> entry : tabelname_Attribute.entrySet()) {
-            if(!entry.getKey().equals(highestTablename)) {
-                List<List<String>> neueInhalte = new ArrayList<>();
-                for (List<Table.Inhalt> inhaltList : inhalt) {
-                    List<String> inhalte = new ArrayList<>();
-                    for (Table.Attribute attribute : entry.getValue()) {
-                        inhalte.add(inhaltList.get(attribute.getNummer()).getWert());
-                        if(!untertabAttribute.contains(attribute.getNummer()))untertabAttribute.add(attribute.getNummer());
-                    }
-                    if(!neueInhalte.contains(inhalte))neueInhalte.add(inhalte);
-                    else {
-                        for (Table.Attribute attribute : entry.getValue()) {
-                            inhaltList.get(attribute.getNummer()).setWert("");
-                        }
-                    }
+            String tablename = entry.getKey();
+            List<List<Table.Inhalt>> tupelList = new ArrayList<>();
+            for (List<Table.Inhalt> list : inhalt) {
+                List<Table.Inhalt> tupel = new ArrayList<>();
+                for (Table.Attribute attribute : entry.getValue()) {
+                    tupel.add(list.get(attribute.getNummer()));
+                }
+                tupelList.add(tupel);
+            }
+            tabelname_Inhalte.put(tablename, tupelList);
+        }
+        Map<String, List<List<Table.Inhalt>>> newtabelname_Inhalte = new HashMap<>();
+        for (Map.Entry<String, List<List<Table.Inhalt>>> table : tabelname_Inhalte.entrySet()) {
+            int schluessel = 0;
+            List<List<Table.Inhalt>> newInhalt = new ArrayList<>();
+            for (Table.Attribute attribute : tabelname_Attribute.get(table.getKey())) {
+                if(attribute.getWert().equals("__" + table.getKey() + "ID"))schluessel=attribute.getNummer();
+            }
+            List<String> schluesselList = new ArrayList<>();
+            for (List<Table.Inhalt> tupel : table.getValue()) {
+                String wert = "";
+                for (Table.Inhalt inhalt1 : tupel) {
+                    if(inhalt1.getAttribute().getWert().equals("__" + table.getKey() + "ID"))wert=inhalt1.getWert();
+                }
+                if(!schluesselList.contains(wert)){
+                    newInhalt.add(tupel);
+                    schluesselList.add(wert);
                 }
             }
+            newtabelname_Inhalte.put(table.getKey(), newInhalt);
         }
-        for (Iterator<List<Table.Inhalt>> iter = inhalt.iterator(); iter.hasNext(); ) {
-            List<Table.Inhalt> element = iter.next();
-            Boolean nurLeer = true;
-            for (Integer integer : untertabAttribute) {
-                if(!element.get(integer).getWert().equals(""))nurLeer = false;
-            }
-            if(nurLeer)iter.remove();
-        }
-        return inhalt;
+        return newtabelname_Inhalte;
     }
 
     private Map<String, Integer> getHoechsteSchachtelung(Map<String, List<Table.Attribute>> tabelname_Attribute, List<Table.Attribute> attribute){
@@ -176,15 +178,57 @@ public class HtmlBuilder {
         return names[names.length-1];
     }
 
-    private Integer getTable_rowspan(Map<String, Map<Integer, List<Table.Inhalt>>> attribut_value_inhalte, String tablename, Integer value){
-        String attributname = "__" + tablename + "ID";
-        return attribut_value_inhalte.get(attributname).get(value).size();
+    private List<Map<Integer, String>> getPosition_value(List<List<Table.Inhalt>> inhalt, Map<String, List<Table.Attribute>> tabelname_Attribute){
+        Map<String, List<List<Table.Inhalt>>> tablename_inhalt = getTablename_Inhalt(inhalt, tabelname_Attribute);
+        List<String> tablenames = new ArrayList<>();
+        tablenames.add(highestTablename);
+        return getTds("", tablenames, "", tablename_inhalt);
     }
 
-    private String addBody(List<List<Table.Inhalt>> inhalt, List<Table.Attribute> attributes){
+    private List<Map<Integer, String>> getTds(String OTschluesselValue, List<String> tablenames, String OTSchluessel,
+                                              Map<String, List<List<Table.Inhalt>>> tablename_inhalt){
+        List<Map<Integer, String>> position_value = new ArrayList<>();
+        Map<String, Map<List<Table.Inhalt>, List<Map<Integer, String>>>> tablename_listInhalt_subValue = new HashMap<>();
+        for (String tablename : tablenames) {
+            String mySchluessel = "__" + tablename + "ID";
+            Map<List<Table.Inhalt>, List<Map<Integer, String>>> listInhalt_subValue = new HashMap<>();
+            for (List<Table.Inhalt> inhaltList : tablename_inhalt.get(tablename)) {
+                List<String> subtables = Statement.getNF2TableNames(tablename);
+                String mySchluesselValue = "";
+                for (Table.Inhalt inhalt : inhaltList) {
+                    if((inhalt.getAttribute().getWert().equals(OTSchluessel) && inhalt.getWert().equals(OTschluesselValue)) || OTSchluessel.equals("")){
+                        for (Table.Inhalt inhalt1 : inhaltList) {
+                            if (inhalt1.getAttribute().getWert().equals(mySchluessel))
+                                mySchluesselValue = inhalt1.getWert();
+                        }
+                    }
+                }
+                List<Map<Integer, String>> subValues = new ArrayList<>();
+                if(!subtables.isEmpty()){
+                    subValues = getTds(mySchluesselValue, subtables, mySchluessel, tablename_inhalt);
+                }
+                listInhalt_subValue.put(inhaltList, subValues);
+            }
+            tablename_listInhalt_subValue.put(tablename, listInhalt_subValue);
+        }
+        Map<Integer, String> map = new HashMap<>();
+        Integer rowspan = 1;
+        for (Table.Inhalt inhalt1 : inhaltList) {
+            String html = "<td rowspan=" + rowspan + ">" + inhalt1.getWert() + "</td>\n";
+            map.put(inhalt1.getAttribute().getNummer(), html);
+            if(!subValues.isEmpty())map.putAll(subValues.get(0));
+        }
+        position_value.add(map);
+        for(int i = 1; i< subValues.size(); i++){
+            Map<Integer, String> map1 = subValues.get(i);
+            position_value.add(map1);
+        }
+        return position_value;
+    }
+
+    private String addBody(List<List<Table.Inhalt>> inhalt, List<Table.Attribute> attributes, Map<String, List<Table.Attribute>> tabelname_Attribute){
         String body = "<tbody>\n";
-        List<String> IDs = new ArrayList<>();
-        List<Map<Integer, String>> trList = getNewTubleList(IDs, attributes, inhalt, 0);
+        List<Map<Integer, String>> trList = getPosition_value(inhalt, tabelname_Attribute);
         Integer counter = 0;
         Integer position = 0;
        for (Map<Integer, String> map : trList) {
@@ -205,101 +249,12 @@ public class HtmlBuilder {
         return body;
     }
 
-    private List<Map<Integer, String>> getNewTubleList(List<String> IDs, List<Table.Attribute> attributes, List<List<Table.Inhalt>> zeilen, Integer ebende){
-        List<Map<Integer, String>> schonGenutzteIDs = new ArrayList<>();
-        List<List<List<Table.Inhalt>>> newTubleList = new ArrayList<>();
-        List<Map<Integer, String>> trs = new ArrayList<>();
-        List<Integer> hauptIDs = new ArrayList<>();
-        List<Table.Attribute> highestAttributes = hirarchie_attributes.get(ebende);
-        for (Table.Attribute attribute : attributes) {
-            if (attribute.isIn(highestAttributes)) {
-                String idName = "__" + attribute.getTable() + "ID";
-                if (attribute.getWert().equals(idName)) {
-                    hauptIDs.add(attribute.getNummer());
-                    IDs.add(attribute.getWert());
-                }
-            }
-        }
-        for (List<Table.Inhalt> inhalt : zeilen) {
-            List<List<Table.Inhalt>> newTuble = new ArrayList<>();
-            Map<Integer, String> id_value = new HashMap<>();
-            for (Integer hauptID : hauptIDs) {
-                id_value.put(hauptID, inhalt.get(hauptID).getWert());
-            }
-            if(!schonGenutzteIDs.contains(id_value) || id_value.isEmpty()) {
-                schonGenutzteIDs.add(id_value);
-                for (List<Table.Inhalt> tuple : zeilen) {
-                    Boolean partOfTuple = true;
-                    for (Map.Entry<Integer, String> entry : id_value.entrySet()) {
-                        if (!tuple.get(entry.getKey()).getWert().equals(entry.getValue())) partOfTuple = false;
-                    }
-                    if (partOfTuple)newTuble.add(tuple);
-                }
-                List<Map<Integer, String>> attribut_tds = new ArrayList<>();
-                Integer rowspan = newTuble.size();
-                if(!hirarchie_attributes.containsKey(ebende+1))rowspan = 1;
-                List<Map<Integer, String>> nextLine = new ArrayList<>();
-                for (Table.Attribute hauptAtt : highestAttributes) {
-                    String html = "";
-                        if (rowspan <= 1) html = "      <td>" + inhalt.get(hauptAtt.getNummer()).getWert() + "</td>\n";
-                        else
-                            html = "      <td rowspan=\" " + rowspan + "\">" + inhalt.get(hauptAtt.getNummer()).getWert() + "</td>\n";
-                        Map<Integer, String> helper = new HashMap<>();
-                        helper.put(hauptAtt.getNummer(), html);
-                        nextLine.add(helper);
-                }
-                if(hirarchie_attributes.containsKey(ebende+1)) {
-                    List<Map<Integer, String>> neu = getNewTubleList(IDs, attributes, newTuble, (ebende+1));
-                    Integer anzahl = 0;
-                    for (Table.Attribute attribute : attributes) {
-                        for (Map<Integer, String> map : neu) {
-                            Integer nummer = 0;
-                            for (Map.Entry<Integer, String> entry : map.entrySet()) {
-                                nummer = entry.getKey();
-                            }
-                            if(nummer == attribute.getNummer()){
-                                attribut_tds.add(map);
-                                anzahl++;
-                                break;
-                            }
-                        }
-                        for (Map<Integer, String> map : nextLine) {
-                            Integer nummer = 0;
-                            for (Map.Entry<Integer, String> entry : map.entrySet()) {
-                                nummer = entry.getKey();
-                            }
-                            if(nummer == attribute.getNummer()){
-                                attribut_tds.add(map);
-                                break;
-                            }
-                        }
-                    }
-                    for (int i = anzahl; i< neu.size(); i++) {
-                        attribut_tds.add(neu.get(i));
-                    }
-                }else attribut_tds = nextLine;
-                //erzeuge HTML Zeilen
-                trs.addAll(attribut_tds);
-                newTubleList.add(newTuble);
-            }
-        }
-        return trs;
-    }
-
-    private List<String> InhaltToString(List<Table.Inhalt> inhalt){
-        List<String> asString = new ArrayList<>();
-        for (Table.Inhalt inhalt1 : inhalt) {
-            asString.add(inhalt1.getWert());
-        }
-        return asString;
-    }
-
-    private String makeFinalHtml(List<List<Table.Inhalt>> inhalt, String head, List<Table.Attribute> attributes){
+    private String makeFinalHtml(List<List<Table.Inhalt>> inhalt, String head, List<Table.Attribute> attributes, Map<String, List<Table.Attribute>> tabelname_Attribute){
         return css +
                 "<table border=\"1\">\n" +
                 head +
                 "\n" +
-                addBody(inhalt, attributes) +
+                addBody(inhalt, attributes, tabelname_Attribute) +
                 "</table>";
     }
 }

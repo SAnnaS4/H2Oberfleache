@@ -27,7 +27,7 @@ public class Tables extends BaseController {
     }
 
     public TreeNode getTree() throws SQLException, IllegalAccessException {
-        List<String> allTables = dbInfo.getTables(autoCommit, dbName);
+        List<String> allTables = dbInfo.getTables(autoCommit, dbName, user, password);
         List<String> tables = new ArrayList<>();
         List<String> subtables = new ArrayList<>();
         TreeNode root = new DefaultTreeNode("ROOT", null);
@@ -60,7 +60,7 @@ public class Tables extends BaseController {
     }
 
     public TreeNode addColumns(TreeNode node, String tablename, Map<String, List<String>> table_subtables) throws SQLException, IllegalAccessException {
-        Map<String, String> columns = dbInfo.getColums(autoCommit,dbName,tablename);
+        Map<String, String> columns = dbInfo.getColums(autoCommit,dbName,tablename, user, password);
         String idName = "__" + tablename + "ID";
         for (Map.Entry<String, String> column : columns.entrySet()) {
             TreeNode node1;
@@ -81,25 +81,11 @@ public class Tables extends BaseController {
         return node;
     }
 
-    public static List<String> getAllAttributes(String tablename){
-        DbInfo dbInfo = new DbInfo();
-        List<String> attributes = new ArrayList<>();
-        try {
-            Map<String, String> columns = dbInfo.getColums(autoCommit,dbName,tablename);
-            for (Map.Entry<String, String> entry : columns.entrySet()) {
-                attributes.add(entry.getKey());
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        }
-        return attributes;
-    }
+
 
     public static Map<String, List<String>> getTable_Subtable() throws SQLException {
         DbInfo dbInfo = new DbInfo();
-        List<String> allTables = dbInfo.getTables(autoCommit, dbName);
+        List<String> allTables = dbInfo.getTables(autoCommit, dbName, user, password);
         List<String> subtables = new ArrayList<>();
         for (String table : allTables) {
             if (table.startsWith("__")) {

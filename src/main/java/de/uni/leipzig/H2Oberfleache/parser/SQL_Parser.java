@@ -6,8 +6,6 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
-import org.antlr.v4.runtime.tree.Tree;
-import org.stringtemplate.v4.gui.JTreeScopeStackModel;
 
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -14,11 +14,25 @@
 
 <h:body>
     <h:form>
-        <p:outputLabel>Database</p:outputLabel>
-        <h:inputText label="Database Name: " value="#{baseController.dbName}"/>
-        <p:selectBooleanCheckbox label="Autocommit" value="#{baseController.autoCommit}"/>
-        <p:commandButton title="Zur Hauptseite" actionListener="#{baseController.goToPage('mainpage')}"/>
-        <p:link dir="http://localhost:8080/mainpage.xhtml" />
+        <p:panel header="Database">
+            <h:panelGrid columns="2" cellpadding="4">
+                <p:outputLabel>Database Name: </p:outputLabel>
+                <h:inputText title="Database Name: " value="#{baseController.dbName}"/>
+
+                <p:outputLabel>Autocommit an: </p:outputLabel>
+                <p:selectBooleanCheckbox label="Autocommit" value="#{baseController.autoCommit}"/>
+
+                <p:outputLabel>Username: </p:outputLabel>
+                <h:inputText label="Username" value="#{baseController.user}"/>
+
+                <p:outputLabel>Passwort: </p:outputLabel>
+                <h:inputText label="Passwort" value="#{baseController.password}"/>
+
+            </h:panelGrid>
+            <p:commandButton title="Zur Hauptseite" actionListener="#{baseController.goToPage('mainpage')}"/>
+        </p:panel>
+
+<!--        <p:link dir="http://localhost:8080/mainpage.xhtml" />-->
     </h:form>
 </h:body>
 </html>

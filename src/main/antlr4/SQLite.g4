@@ -275,8 +275,12 @@ update_stmt
  ;
 
  set_stmt
-  :(column_name|nf2_point_Notation) '=' (row_expr | set_expr | expr)
+  :(column_name|nf2_point_Notation|set_row_update) '=' (row_expr | set_expr | expr)
   ;
+
+  set_row_update
+   :((nf2_point_Notation | column_name) '.')? table_insert
+   ;
 
 update_stmt_limited
  : with_clause? K_UPDATE ( K_OR K_ROLLBACK

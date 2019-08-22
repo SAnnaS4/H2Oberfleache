@@ -12,17 +12,17 @@ public class DBConnection {
 
     private static DBConnection dbConnection;
 
-    public static DBConnection getInstance(Boolean autoCommit, String DbName){
+    public static DBConnection getInstance(Boolean autoCommit, String DbName, String user, String password){
         if(dbConnection == null){
-            dbConnection = new DBConnection(autoCommit, DbName);
+            dbConnection = new DBConnection(autoCommit, DbName, user, password);
         }
         return dbConnection;
     }
 
-    private DBConnection(Boolean autoCommit, String DbName) {
+    private DBConnection(Boolean autoCommit, String DbName, String user, String password) {
         try {
             this.url = "jdbc:h2:~/" + DbName;
-            this.con = DriverManager.getConnection(url,"sa","sa");
+            this.con = DriverManager.getConnection(url,user,password);
             con.setAutoCommit(autoCommit);
         } catch (SQLException e) {
             e.printStackTrace();
@@ -31,10 +31,6 @@ public class DBConnection {
 
     public void setAutoCommit(Boolean autoCommit) throws SQLException {
         this.con.setAutoCommit(autoCommit);
-    }
-
-    public Boolean getAutoCommit() throws SQLException {
-        return con.getAutoCommit();
     }
 
     public Connection getCon(){

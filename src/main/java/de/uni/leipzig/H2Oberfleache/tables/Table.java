@@ -66,7 +66,7 @@ public class Table {
 
     @Getter
     @Setter
-    public class Inhalt {
+    public static class Inhalt {
         private Attribute attribute;
         private String wert;
 

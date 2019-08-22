@@ -35,11 +35,11 @@ public class StatementSQL extends BaseController implements Serializable {
         ExecuteStatement eS = null;
         if(autoCommit){
             for (String neu : changeSQLAutoCommitTrue(sql)) {
-                eS = new ExecuteStatement(dbName, neu, false);
+                eS = new ExecuteStatement(dbName, neu, false, user, password);
                 eS.getDBcon().Commit();
             }
         }else {
-            eS = new ExecuteStatement(dbName, changeSQLAutoCommitFalse(sql), false);
+            eS = new ExecuteStatement(dbName, changeSQLAutoCommitFalse(sql), false, user, password);
             eS.getDBcon().Commit();
         }
         try {
@@ -81,7 +81,7 @@ public class StatementSQL extends BaseController implements Serializable {
     }
 
     public void  closeCon(){
-        DBConnection.getInstance(autoCommit, dbName).conClose();
+        DBConnection.getInstance(autoCommit, dbName, user, password).conClose();
         goToPage("login");
     }
 

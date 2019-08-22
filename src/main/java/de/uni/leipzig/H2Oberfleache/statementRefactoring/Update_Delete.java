@@ -35,7 +35,7 @@ public class Update_Delete extends Statement {
             tableAlias = tab[tab.length-1];
             id = tableAlias + "." + id;
         }
-        String selectStmt = "SELECT " + id ;
+        String selectStmt = "SELECT DISTINCT " + id ;
         String where = "";
         List<String> subtables = getNF2TableNamesRec(tablename);
         for (String subtable : subtables) {
@@ -66,7 +66,7 @@ public class Update_Delete extends Statement {
         Select select = new Select(selectStmt, false);
         selectStmt = select.nf2ToNf1();
         List<String> ids = new ArrayList<>();
-        ExecuteStatement eS = new ExecuteStatement(BaseController.dbName, selectStmt, true);
+        ExecuteStatement eS = new ExecuteStatement(BaseController.dbName, selectStmt, true, BaseController.user, BaseController.password);
         ResultSet rs = eS.execQuery();
         List<String> tables = new ArrayList<>();
         tables.add(tablename);
@@ -74,12 +74,14 @@ public class Update_Delete extends Statement {
         makeMap(sql);
         int j = rs.getMetaData().getColumnCount();
         while (rs.next()){
-            ids.add(rs.getObject(1).toString());
+            if(!ids.contains(rs.getObject(1).toString())) ids.add(rs.getObject(1).toString());
             for(int i= 1; i<=j; i++){
                 if(tablename_ID.containsKey(tables.get(i-1))){
                     List<String> subids = tablename_ID.get(tables.get(i-1));
-                    subids.add(rs.getObject(i).toString());
-                    tablename_ID.put(tables.get(i-1), subids);
+                    if(!subids.contains(rs.getObject(i).toString())) {
+                        subids.add(rs.getObject(i).toString());
+                        tablename_ID.put(tables.get(i - 1), subids);
+                    }
                 }else {
                     List<String> subids = new ArrayList<>();
                     subids.add(rs.getObject(i).toString());

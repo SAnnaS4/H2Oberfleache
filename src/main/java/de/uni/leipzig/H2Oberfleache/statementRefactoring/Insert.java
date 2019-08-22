@@ -14,6 +14,7 @@ import java.util.Map;
 
 public class Insert extends Statement {
     Map<String, Integer> tablename_nextID = new HashMap<>();
+
     public String nf2ToNf1(String sql){
         sql = prepareSQL(sql);
         String result = sql;
@@ -25,7 +26,7 @@ public class Insert extends Statement {
             result = "";
             RuleContext tableInsert = childMap.get("table_insert").get(0);
             List<RuleContext> valueList = childMap.get("value_insert");
-            List<String> queries = createQuerys("", 0, tableInsert, valueList);
+            List<String> queries = createQuerys("", "0" , tableInsert, valueList, this::getNextID);
             for (String query : queries) {
                 result += query;
             }
@@ -33,23 +34,21 @@ public class Insert extends Statement {
         return result;
     }
 
-    private List<String> createQuerys(String obertab, Integer nextOTID, RuleContext tableInsert, List<RuleContext> valueList){
+    public List<String> createQuerys(String obertab, String nextOTID, RuleContext tableInsert, List<RuleContext> valueList, Getter getter){
         Map<String, List<RuleContext>> tableInsertchilds = SQL_Parser.getChildMap(tableInsert);
         String tablename = tableInsertchilds.get("table_name").get(0).getText();
         List<String> querys = new ArrayList<>();
         List<String> table = new ArrayList<>();
-        List<List<String>> tupel = new ArrayList<>();
+        List<List<String>> tupelList = new ArrayList<>();
         if(obertab != ""){
             tablename = "__" + obertab + "_" + tablename;
         }
-        Boolean tableIsSetted = false;
-        Integer ID;
+        boolean tableIsSetted = false;
+        String ID;
         String IDName = "__" + tablename + "ID";
         for (RuleContext value : valueList) {
-            if(tablename_nextID.containsKey(tablename)){
-                ID = tablename_nextID.get(tablename) + 1;
-            }else ID = getNextSubID(tablename);
-            tablename_nextID.put(tablename, ID);
+            ID = getter.getNextID(tablename);
+
             Map<RuleContext, RuleContext> element_value = new HashMap<>();
             List<String> values = new ArrayList<>();
             if(SQLiteParser.ruleNames[value.getRuleIndex()].equals("expr")){
@@ -76,21 +75,21 @@ public class Insert extends Statement {
                     }else {
                         row.add(valueInsert);
                     }
-                    querys.addAll(createQuerys(tablename, ID, entry.getKey(), row));
+                    querys.addAll(createQuerys(tablename, ID, entry.getKey(), row, getter));
                 }
             }
-            values.add(ID.toString());
-            if(obertab != "")values.add(nextOTID.toString());
-            tupel.add(values);
+            values.add(ID);
+            if(obertab != "")values.add(nextOTID);
+            tupelList.add(values);
             tableIsSetted = true;
         }
         table.add(IDName);
         if(obertab != "")table.add("__" + obertab + "ID");
-        querys.addAll(makeInsertQuery(tablename, table, tupel));
+        querys.addAll(makeInsertQuery(tablename, table, tupelList));
         return querys;
     }
 
-    private List<RuleContext> getRows(RuleContext value_insert){
+    public List<RuleContext> getRows(RuleContext value_insert){
         List<RuleContext> rows = new ArrayList<>();
         List<RuleContext> childs = SQL_Parser.getChildList(value_insert);
         if(SQLiteParser.ruleNames[childs.get(0).getRuleIndex()].equals("row_expr")) {
@@ -122,5 +121,19 @@ public class Insert extends Statement {
             insertsQuerys.add(insert);
         }
         return insertsQuerys;
+    }
+
+    public String getNextID(String tablename){
+        Integer ID;
+        if(tablename_nextID.containsKey(tablename)){
+            ID = tablename_nextID.get(tablename) + 1;
+        }else ID = getNextSubID(tablename);
+        tablename_nextID.put(tablename, ID);
+        return ID.toString();
+    }
+
+    @FunctionalInterface
+    public interface Getter {
+        String getNextID(String tablename);
     }
 }

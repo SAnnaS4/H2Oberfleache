@@ -496,6 +496,18 @@ public class SQLiteBaseListener implements SQLiteListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterSet_row_update(SQLiteParser.Set_row_updateContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitSet_row_update(SQLiteParser.Set_row_updateContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterUpdate_stmt_limited(SQLiteParser.Update_stmt_limitedContext ctx) { }
 	/**
 	 * {@inheritDoc}

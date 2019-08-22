@@ -150,7 +150,7 @@ public class Statement {
         DbInfo dbInfo = new DbInfo();
         Map<String, List<String>> table_cols = new HashMap<>();
         List<String> subTables = getNF2TableNames(tablename);
-        Map<String, String> tableColumn = dbInfo.getColums(false, BaseController.dbName, tablename);
+        Map<String, String> tableColumn = dbInfo.getColums(false, BaseController.dbName, tablename, BaseController.user, BaseController.password);
         List<String> values = new ArrayList<>();
         for (Map.Entry<String, String> column : tableColumn.entrySet()) {
             if(column.getKey().length()>= 3){

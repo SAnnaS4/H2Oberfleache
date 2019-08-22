@@ -14,6 +14,8 @@ public class BaseController{
     public static Boolean autoCommit = false;
     public static String dbName = "testdb";
     public static DBConnection connection;
+    public static String user = "sa";
+    public static String password = "sa";
     public static String css =
             "<style>\n" +
                     "table, td, th {border: 2px solid black;" +
@@ -28,11 +30,18 @@ public class BaseController{
 
     public void onPageLoad(){
         try {
-            this.connection = DBConnection.getInstance(autoCommit, dbName);
+            this.connection = DBConnection.getInstance(autoCommit, dbName, user, password);
         }catch (Exception e){
             goToPage("login");
         }
     }
+    public String getUser(){return user; }
+
+    public String getPassword(){return password;}
+
+    public void setUser(String user){BaseController.user = user; }
+
+    public void setPassword(String password){BaseController.password = password; }
 
     public String getDbName() {
         return dbName;
