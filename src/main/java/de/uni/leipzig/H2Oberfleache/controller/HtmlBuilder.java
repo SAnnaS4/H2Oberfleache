@@ -11,7 +11,7 @@ public class HtmlBuilder {
     String html = "";
     String css = BaseController.css;
     Map<Integer, List<Table.Attribute>> hirarchie_attributes = new HashMap<>();
-    String highestTablename = "";
+    List<String> highestTablename = new ArrayList<>();
     List<Integer> ids = new ArrayList<>();
 
     public HtmlBuilder(Table table) {
@@ -73,21 +73,23 @@ public class HtmlBuilder {
         return newtabelname_Inhalte;
     }
 
-    private Map<String, Integer> getHoechsteSchachtelung(Map<String, List<Table.Attribute>> tabelname_Attribute, List<Table.Attribute> attribute){
+    private Map<List<String>, Integer> getHoechsteSchachtelung(Map<String, List<Table.Attribute>> tabelname_Attribute, List<Table.Attribute> attribute){
         List<String> tables = new ArrayList<>();
         Integer tiefe = 0;
-        String highestTable = "";
+        List<String> highestTable = new ArrayList<>();
         for (Table.Attribute attribut : attribute) {
             if(!tables.contains(attribut.getTable())) {
                 Integer neu = tiefe(tabelname_Attribute, attribut.getTable(), "");
+                if (neu==tiefe){if(!highestTable.contains(attribut.getTable()))highestTable.add(attribut.getTable());}
                 if(neu > tiefe){
-                    highestTable = attribut.getTable();
+                    highestTable = new ArrayList<>();
+                    highestTable.add(attribut.getTable());
                     tiefe=neu;
                 }
                 tables.add(attribut.getTable());
             }
         }
-        Map<String, Integer> result = new HashMap<>();
+        Map<List<String>, Integer> result = new HashMap<>();
         result.put(highestTable, tiefe);
         return result;
     }
@@ -112,6 +114,7 @@ public class HtmlBuilder {
         List<String> subtables = Statement.getNF2TableNames(tablename);
         Integer highestSubtable = 0;
         Boolean isNested = false;
+        if(!isNF2Table(tablename))return 0;
         if(tablename.equals(zielTabelle))return 0;
         for (String subtable : subtables) {
             if(subtable.equals(zielTabelle))return 1;
@@ -140,10 +143,10 @@ public class HtmlBuilder {
             }
             if (nurIDs)it.remove();
         }
-        Map<String, Integer> highestTable_hoehe = getHoechsteSchachtelung(tabelname_Attribute, attributes);
+        Map<List<String>, Integer> highestTable_hoehe = getHoechsteSchachtelung(tabelname_Attribute, attributes);
         Integer groessteHoehe = 0;
-        for (Map.Entry<String, Integer> entry : highestTable_hoehe.entrySet()) {
-            highestTablename = entry.getKey();
+        for (Map.Entry<List<String>, Integer> entry : highestTable_hoehe.entrySet()) {
+            highestTablename.addAll(entry.getKey());
             groessteHoehe = entry.getValue();
         }
         Integer attributCounter = 0;
@@ -155,7 +158,7 @@ public class HtmlBuilder {
             head += "    <tr>\n";
             for (Table.Attribute attribute : attributes) {
                 if (tabelname_Attribute.containsKey(attribute.getTable())) {
-                    Integer tiefe = tiefe(tabelname_Attribute, highestTablename, attribute.getTable());
+                    Integer tiefe = tiefe(tabelname_Attribute, highestTablename.get(0), attribute.getTable());
                     if (tiefe == hoehe) {
                         if (!ids.contains(attribute.getNummer())) {
                             head += "<th rowspan=\"" + (groessteHoehe - hoehe + 1) + "\">" + attribute.getWert() + "</th>\n";
@@ -187,9 +190,7 @@ public class HtmlBuilder {
     private String addBody(List<List<Table.Inhalt>> inhalt, List<Table.Attribute> attributes, Map<String, List<Table.Attribute>> tabelname_Attribute){
         Map<String, List<List<Table.Inhalt>>> tablename_inhalt = getTablename_Inhalt(inhalt, tabelname_Attribute);
         Html_TD html_td = new Html_TD(attributes);
-        List<String> tablenames = new ArrayList<>();
-        tablenames.add(highestTablename);
-        return html_td.makeHTML(tablenames, tablename_inhalt);
+        return html_td.makeHTML(highestTablename, tablename_inhalt);
     }
 
     private String makeFinalHtml(List<List<Table.Inhalt>> inhalt, String head, List<Table.Attribute> attributes, Map<String, List<Table.Attribute>> tabelname_Attribute){
