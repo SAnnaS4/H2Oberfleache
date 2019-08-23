@@ -29,10 +29,10 @@ public class Html_TD {
 
     private Integer makeChildList(String OTschluesselValue, List<String> tablenames, String OTSchluessel,
                                                       Map<String, List<List<Table.Inhalt>>> tablename_inhalt){
-        Map<String, List<Integer>> tablename_rowspan = new HashMap<>();
         usedAttributes = new ArrayList<>();
+        Map<String, List<Integer>> table_rowspan = new HashMap<>();
         for (String tablename : tablenames) {
-            tablename_rowspan.put(tablename, new ArrayList<>());
+            table_rowspan.put(tablename, new ArrayList<>());
             List<String> subtables = Statement.getNF2TableNames(tablename);
             String mySchluessel = "__" + tablename + "ID";
             for (List<Table.Inhalt> inhaltList : tablename_inhalt.get(tablename)) {
@@ -55,11 +55,19 @@ public class Html_TD {
                             Html_TD html_td = new Html_TD(rowspan, inhalt1);
                             attribut_td.get(inhalt1.getAttribute().getNummer()).add(html_td);
                         }
-                        tablename_rowspan.get(tablename).add(rowspan);
+                        table_rowspan.get(tablename).add(rowspan);
                         break;
                     }
                 }
             }
+        }
+        Integer maxLineRowspan = 0;
+        for (Map.Entry<String, List<Integer>> entry : table_rowspan.entrySet()) {
+            Integer span = 0;
+            for (Integer html_td : entry.getValue()) {
+                span+=html_td;
+            }
+            if(span>maxLineRowspan)maxLineRowspan=span;
         }
         Integer maxRowspan = 0;
         Map<Integer, Integer> attribut_rowspan = new HashMap<>();
@@ -77,7 +85,7 @@ public class Html_TD {
                 attribut_td.get(entry.getKey()).add(makeLeer(differenz, entry.getKey()));
             }
         }
-        return maxRowspan;
+        return maxLineRowspan;
     }
 
     private Map<Integer, List<Html_TD>> fuelleMap(List<Table.Attribute> attributes){
