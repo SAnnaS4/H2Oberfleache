@@ -1,8 +1,10 @@
 package de.uni.leipzig.H2Oberfleache.controller;
 
+import de.uni.leipzig.H2Oberfleache.jdbc.DbInfo;
 import de.uni.leipzig.H2Oberfleache.statementRefactoring.Statement;
 import de.uni.leipzig.H2Oberfleache.tables.Table;
 
+import java.sql.SQLException;
 import java.util.*;
 
 public class HtmlBuilder {
@@ -45,23 +47,28 @@ public class HtmlBuilder {
         }
         Map<String, List<List<Table.Inhalt>>> newtabelname_Inhalte = new HashMap<>();
         for (Map.Entry<String, List<List<Table.Inhalt>>> table : tabelname_Inhalte.entrySet()) {
-            int schluessel = 0;
-            List<List<Table.Inhalt>> newInhalt = new ArrayList<>();
-            for (Table.Attribute attribute : tabelname_Attribute.get(table.getKey())) {
-                if(attribute.getWert().equals("__" + table.getKey() + "ID"))schluessel=attribute.getNummer();
-            }
-            List<String> schluesselList = new ArrayList<>();
-            for (List<Table.Inhalt> tupel : table.getValue()) {
-                String wert = "";
-                for (Table.Inhalt inhalt1 : tupel) {
-                    if(inhalt1.getAttribute().getWert().equals("__" + table.getKey() + "ID"))wert=inhalt1.getWert();
+            if (!isNF2Table(table.getKey())) {
+                newtabelname_Inhalte.put(table.getKey(), table.getValue());
+            } else {
+                int schluessel = 0;
+                List<List<Table.Inhalt>> newInhalt = new ArrayList<>();
+                for (Table.Attribute attribute : tabelname_Attribute.get(table.getKey())) {
+                    if (attribute.getWert().equals("__" + table.getKey() + "ID")) schluessel = attribute.getNummer();
                 }
-                if(!schluesselList.contains(wert)){
-                    newInhalt.add(tupel);
-                    schluesselList.add(wert);
+                List<String> schluesselList = new ArrayList<>();
+                for (List<Table.Inhalt> tupel : table.getValue()) {
+                    String wert = "";
+                    for (Table.Inhalt inhalt1 : tupel) {
+                        if (inhalt1.getAttribute().getWert().equals("__" + table.getKey() + "ID"))
+                            wert = inhalt1.getWert();
+                    }
+                    if (!schluesselList.contains(wert)) {
+                        newInhalt.add(tupel);
+                        schluesselList.add(wert);
+                    }
                 }
+                newtabelname_Inhalte.put(table.getKey(), newInhalt);
             }
-            newtabelname_Inhalte.put(table.getKey(), newInhalt);
         }
         return newtabelname_Inhalte;
     }
@@ -192,5 +199,19 @@ public class HtmlBuilder {
                 "\n" +
                 addBody(inhalt, attributes, tabelname_Attribute) +
                 "</table>";
+    }
+
+    private Boolean isNF2Table(String tablename){
+        DbInfo dbInfo = new DbInfo();
+        Map<String, String> columns = new HashMap<>();
+        try {
+            columns = dbInfo.getColums(false,BaseController.dbName,tablename, BaseController.user, BaseController.password);
+        } catch (SQLException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        for (Map.Entry<String, String> entry : columns.entrySet()) {
+            if(entry.getKey().equals("__" + tablename + "ID"))return true;
+        }
+        return false;
     }
 }
