@@ -12,7 +12,7 @@ public class HtmlBuilder {
     String highestTablename = "";
     List<Integer> ids = new ArrayList<>();
 
-    public HtmlBuilder(Table table, String sql) {
+    public HtmlBuilder(Table table) {
         Map<String, List<Table.Attribute>> tabelname_Attribute = new HashMap<>();
         for (Table.Attribute attribute : table.attributes) {
             if(!tabelname_Attribute.containsKey(attribute.getTable())){
@@ -26,7 +26,6 @@ public class HtmlBuilder {
             }
         }
         String head = addHead(table.attributes, tabelname_Attribute);
-       // List<List<Table.Inhalt>> inhalt = updateInhalt(table.inhalt, tabelname_Attribute);
         html = makeFinalHtml(table.inhalt, head, table.attributes, tabelname_Attribute);
     }
 
@@ -178,75 +177,12 @@ public class HtmlBuilder {
         return names[names.length-1];
     }
 
-    private List<Map<Integer, String>> getPosition_value(List<List<Table.Inhalt>> inhalt, Map<String, List<Table.Attribute>> tabelname_Attribute){
+    private String addBody(List<List<Table.Inhalt>> inhalt, List<Table.Attribute> attributes, Map<String, List<Table.Attribute>> tabelname_Attribute){
         Map<String, List<List<Table.Inhalt>>> tablename_inhalt = getTablename_Inhalt(inhalt, tabelname_Attribute);
+        Html_TD html_td = new Html_TD(attributes);
         List<String> tablenames = new ArrayList<>();
         tablenames.add(highestTablename);
-        return getTds("", tablenames, "", tablename_inhalt);
-    }
-
-    private List<Map<Integer, String>> getTds(String OTschluesselValue, List<String> tablenames, String OTSchluessel,
-                                              Map<String, List<List<Table.Inhalt>>> tablename_inhalt){
-        List<Map<Integer, String>> position_value = new ArrayList<>();
-        Map<String, Map<List<Table.Inhalt>, List<Map<Integer, String>>>> tablename_listInhalt_subValue = new HashMap<>();
-        for (String tablename : tablenames) {
-            String mySchluessel = "__" + tablename + "ID";
-            Map<List<Table.Inhalt>, List<Map<Integer, String>>> listInhalt_subValue = new HashMap<>();
-            for (List<Table.Inhalt> inhaltList : tablename_inhalt.get(tablename)) {
-                List<String> subtables = Statement.getNF2TableNames(tablename);
-                String mySchluesselValue = "";
-                for (Table.Inhalt inhalt : inhaltList) {
-                    if((inhalt.getAttribute().getWert().equals(OTSchluessel) && inhalt.getWert().equals(OTschluesselValue)) || OTSchluessel.equals("")){
-                        for (Table.Inhalt inhalt1 : inhaltList) {
-                            if (inhalt1.getAttribute().getWert().equals(mySchluessel))
-                                mySchluesselValue = inhalt1.getWert();
-                        }
-                    }
-                }
-                List<Map<Integer, String>> subValues = new ArrayList<>();
-                if(!subtables.isEmpty()){
-                    subValues = getTds(mySchluesselValue, subtables, mySchluessel, tablename_inhalt);
-                }
-                listInhalt_subValue.put(inhaltList, subValues);
-            }
-            tablename_listInhalt_subValue.put(tablename, listInhalt_subValue);
-        }
-        Map<Integer, String> map = new HashMap<>();
-        Integer rowspan = 1;
-        for (Table.Inhalt inhalt1 : inhaltList) {
-            String html = "<td rowspan=" + rowspan + ">" + inhalt1.getWert() + "</td>\n";
-            map.put(inhalt1.getAttribute().getNummer(), html);
-            if(!subValues.isEmpty())map.putAll(subValues.get(0));
-        }
-        position_value.add(map);
-        for(int i = 1; i< subValues.size(); i++){
-            Map<Integer, String> map1 = subValues.get(i);
-            position_value.add(map1);
-        }
-        return position_value;
-    }
-
-    private String addBody(List<List<Table.Inhalt>> inhalt, List<Table.Attribute> attributes, Map<String, List<Table.Attribute>> tabelname_Attribute){
-        String body = "<tbody>\n";
-        List<Map<Integer, String>> trList = getPosition_value(inhalt, tabelname_Attribute);
-        Integer counter = 0;
-        Integer position = 0;
-       for (Map<Integer, String> map : trList) {
-            for (Map.Entry<Integer, String> entry : map.entrySet()) {
-                if(position >= entry.getKey()){
-                    if(counter != 0) body += "    </tr><tr>\n";
-                    else body += "    <tr>\n";
-                    counter++;
-                }
-                position = entry.getKey();
-                if(!ids.contains(position)) {
-                    body += entry.getValue();
-                }
-            }
-        }
-
-        body += "  </tbody>\n ";
-        return body;
+        return html_td.makeHTML(tablenames, tablename_inhalt);
     }
 
     private String makeFinalHtml(List<List<Table.Inhalt>> inhalt, String head, List<Table.Attribute> attributes, Map<String, List<Table.Attribute>> tabelname_Attribute){

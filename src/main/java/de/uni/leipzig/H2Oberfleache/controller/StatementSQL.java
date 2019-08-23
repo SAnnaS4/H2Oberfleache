@@ -47,7 +47,7 @@ public class StatementSQL extends BaseController implements Serializable {
             else {
                 rs = eS.execQuery();
                 this.table = readResultSet(rs);
-                HtmlBuilder htmlBuilder = new HtmlBuilder(table, sql);
+                HtmlBuilder htmlBuilder = new HtmlBuilder(table);
                 this.html = htmlBuilder.html;
             }
         } catch (NullPointerException e) {
