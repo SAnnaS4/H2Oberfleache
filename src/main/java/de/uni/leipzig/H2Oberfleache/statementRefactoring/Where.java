@@ -62,7 +62,7 @@ public class Where extends Statement{
 
     public static String changeExpr(RuleContext expr, Map<String, String> alias_tablename, List<String> haupttables){
         Map<String, List<RuleContext>> childs = SQL_Parser.getChildMap(expr);
-        if(!childs.containsKey("table_name") && !childs.containsKey("function_name")){
+        if(!childs.containsKey("table_name") && !childs.containsKey("function_name") && !alias_tablename.containsKey(expr.getText())){
             return getAlias(alias_tablename, expr.getText(), haupttables) + "." + expr.getText();
         }
         if(childs.containsKey("function_name")){

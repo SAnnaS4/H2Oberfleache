@@ -106,8 +106,23 @@ public class Html_TD {
                 && attributes.get(entry.getKey()).getWert().endsWith("ID"));
     }
 
+    private List<String> concernedTables(List<String> tables, Map<String, List<List<Table.Inhalt>>> tablename_inhalt){
+        List<String> tablenames = new ArrayList<>();
+        for (String table : tables) {
+            if(tablename_inhalt.containsKey(table))tablenames.add(table);
+        }
+        if(tablenames.isEmpty()){
+            for (String table : tables) {
+                tablenames.addAll(Statement.getNF2TableNames(table));
+            }
+            tablenames = concernedTables(tablenames, tablename_inhalt);
+        }
+        return tablenames;
+    }
+
     public String makeHTML(List<String> tablenames, Map<String, List<List<Table.Inhalt>>> tablename_inhalt){
         String body = "<tbody>\n";
+     //   List<String> tablenames = concernedTables(tables, tablename_inhalt);
         Map<Integer, Integer> attribut_position = new HashMap<>();
         Map<Integer, Integer> nochInRowspan = new HashMap<>();
         for (Table.Attribute attribute : attributes) {

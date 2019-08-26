@@ -42,7 +42,7 @@ public class StatementSQL extends BaseController implements Serializable {
             eS = new ExecuteStatement(dbName, changeSQLAutoCommitFalse(sql), false, user, password);
             eS.getDBcon().Commit();
         }
-        try {
+       // try {
             if(isUpdate())update = eS.execUpdate();
             else {
                 rs = eS.execQuery();
@@ -50,8 +50,8 @@ public class StatementSQL extends BaseController implements Serializable {
                 HtmlBuilder htmlBuilder = new HtmlBuilder(table);
                 this.html = htmlBuilder.html;
             }
-        } catch (NullPointerException e) {
-        }
+        //} catch (NullPointerException e) {
+       // }
         PrimeFaces.current().ajax().update("mainForm");
     }
     private List<String> changeSQLAutoCommitTrue(String sql) throws SQLException {

@@ -27,8 +27,9 @@ public class HtmlBuilder {
                 tabelname_Attribute.put(attribute.getTable(), attributes);
             }
         }
+        Map<String, List<Table.Attribute>> alletabelname_Attribute = new HashMap<>(tabelname_Attribute);
         String head = addHead(table.attributes, tabelname_Attribute);
-        html = makeFinalHtml(table.inhalt, head, table.attributes, tabelname_Attribute);
+        html = makeFinalHtml(table.inhalt, head, table.attributes, alletabelname_Attribute);
     }
 
     private Map<String, List<List<Table.Inhalt>>> getTablename_Inhalt(List<List<Table.Inhalt>> inhalt, Map<String, List<Table.Attribute>> tabelname_Attribute){
@@ -188,9 +189,14 @@ public class HtmlBuilder {
     }
 
     private String addBody(List<List<Table.Inhalt>> inhalt, List<Table.Attribute> attributes, Map<String, List<Table.Attribute>> tabelname_Attribute){
+        Map<List<String>, Integer> highestTable_hoehe = getHoechsteSchachtelung(tabelname_Attribute, attributes);
+        List<String> tables = new ArrayList<>();
+        for (Map.Entry<List<String>, Integer> entry : highestTable_hoehe.entrySet()) {
+            tables.addAll(entry.getKey());
+        }
         Map<String, List<List<Table.Inhalt>>> tablename_inhalt = getTablename_Inhalt(inhalt, tabelname_Attribute);
         Html_TD html_td = new Html_TD(attributes);
-        return html_td.makeHTML(highestTablename, tablename_inhalt);
+        return html_td.makeHTML(tables, tablename_inhalt);
     }
 
     private String makeFinalHtml(List<List<Table.Inhalt>> inhalt, String head, List<Table.Attribute> attributes, Map<String, List<Table.Attribute>> tabelname_Attribute){

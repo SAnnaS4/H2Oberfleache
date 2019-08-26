@@ -17,39 +17,36 @@
         <p:growl id="messages"/>
 
         <p:menubar>
-            <p:submenu label="File" icon="pi pi-file">
-            </p:submenu>
-
-            <p:submenu label="Edit" icon="pi pi-pencil">
-            </p:submenu>
-
-            <p:menuitem value="Quit" url="http://www.primefaces.org" icon="pi pi-times" />
-
             <f:facet name="options">
                 <p:commandButton actionListener="#{statementSQL.closeCon()}" value="Logout" icon="pi pi-home" />
             </f:facet>
         </p:menubar>
     </h:form>
     <h:form id="mainForm">
-            <h3>Tables</h3>
-            <p:tree value="#{tables.tree}" var="node" dynamic="true">
-                <p:treeNode>
-                    <h:outputText value="#{node}" />
-                </p:treeNode>
-            </p:tree>
+        <p:layout>
+            <p:layoutUnit position="west" resizable="true">
+                <h3>Tables</h3>
+                <p:tree value="#{tables.tree}" var="node" dynamic="true">
+                    <p:treeNode>
+                        <h:outputText value="#{node}" />
+                    </p:treeNode>
+                </p:tree>
+            </p:layoutUnit>
 
-            <p:inputTextarea rows="6" cols="33" value="#{statementSQL.sql}" />
-            <p:commandButton value="Submit" actionListener="#{statementSQL.submit()}"/>
-
-       <h:outputText id="htmlStuff" value="#{statementSQL.html}" escape="false"/>
-        <p:dataTable id="tables" var="table" value="#{statementSQL.getTable().inhalt}" widgetVar="Ttable" >
-            <p:columns value="#{statementSQL.table.attribute}" var="attribut" columnIndexVar="colIndex" sortBy="#{table[attribut]}" filterBy="#{table[attribut]}">
-                <f:facet name="header">
-                    <h:outputText value="#{attribut.wert}" />
-                </f:facet>
-                <h:outputText value="#{table[attribut.nummer].wert}" />
-            </p:columns>
-        </p:dataTable>
+            <p:layoutUnit position="center" resizable="true">
+                <p:inputTextarea rows="7" cols="35" autoResize="true" value="#{statementSQL.sql}" />
+                <p:commandButton value="Submit" actionListener="#{statementSQL.submit()}"/>
+                <h:outputText id="htmlStuff" value="#{statementSQL.html}" escape="false"/>
+                <p:dataTable id="tables" var="table" value="#{statementSQL.getTable().inhalt}" widgetVar="Ttable" >
+                    <p:columns value="#{statementSQL.table.attribute}" var="attribut" columnIndexVar="colIndex" sortBy="#{table[attribut]}" filterBy="#{table[attribut]}">
+                        <f:facet name="header">
+                            <h:outputText value="#{attribut.wert}" />
+                        </f:facet>
+                        <h:outputText value="#{table[attribut.nummer].wert}" />
+                    </p:columns>
+                </p:dataTable>
+            </p:layoutUnit>
+        </p:layout>
     </h:form>
 </h:body>
 </html>

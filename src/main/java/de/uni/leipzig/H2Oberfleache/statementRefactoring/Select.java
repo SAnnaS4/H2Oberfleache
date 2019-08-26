@@ -41,6 +41,10 @@ public class Select extends Statement{
             }
             for (String untertabAlias : entry.getValue()) {
                 idsToQuery += ", " + untertabAlias + "." + id;
+                if(!oberTabAlias_untertabAlias.containsKey(untertabAlias)){
+                    String subid = "__" + alias_tablename.get(untertabAlias) + "ID";
+                    idsToQuery += ", " + untertabAlias + "." + subid;
+                }
             }
         }
         return idsToQuery;
@@ -173,13 +177,18 @@ public class Select extends Statement{
             untertabAlias.add(alias);
             oberTabAlias_untertabAlias.put(tablename_or_alias, untertabAlias);
         }
+        alias_tablename.put(alias, subtablename);
         return result + subtableinhalt + " " + alias + " ON " + tablename_or_alias + "." + IDName + " = " + alias + "." + IDName;
     }
 
     private String updateAllTable(RuleContext result_column){
         String tablename = "";
-        String newAllTable = result_column.getText();
-        String aliasname = result_column.getChild(0).getText();
+        String newAllTable = ""; //result_column.getText();
+        String[] tables = result_column.getText().split("\\.");
+        if(tables.length > 1) {
+            newAllTable = tables[tables.length - 2] + "." + tables[tables.length - 1];
+        }
+        String aliasname = result_column.getChild(result_column.getChildCount()-3).getText();
         if(alias_tablename.containsKey(aliasname)){
             tablename = alias_tablename.get(aliasname);
         }else {

@@ -19,10 +19,9 @@ public class BaseController{
     public static String css =
             "<style>\n" +
                     "table, td, th {border: 2px solid black;" +
-                    "  font-size: 18px;" +
                     "  text-align: center;}\n" +
                     "table {border-collapse: collapse;\n" +
-                    "  width: 100%;}\n" +
+                    "  width: 70%;}\n" +
                     "\n" +
                     "th, td {padding: 5px;}\n" +
                     "th {background-color: #f2f2f2;}\n" +
