@@ -53,7 +53,7 @@ public class Where extends Statement{
                 exprs.add(context.getParent());
             }
             if(SQLiteParser.ruleNames[context.getRuleIndex()].equals("select_stmt")){
-                Select select = new Select(this.sql, false);
+                Select select = new Select(position_sql, this.sql, false);
                 this.sql = select.nf2ToNf1(context, alias_tablename);
             }
         }

@@ -28,6 +28,12 @@ public class Select extends Statement{
         makeMap(sql);
     }
 
+    public Select(Map<Integer, String> position_sql, String sql, Boolean zurAusgabe){
+        this.sql = sql;
+        this.zurAusgabe = zurAusgabe;
+        this.position_sql = position_sql;
+    }
+
     public String addIDSToQuery(){
         String idsToQuery = "";
         for (Map.Entry<String, List<String>> entry : oberTabAlias_untertabAlias.entrySet()) {
