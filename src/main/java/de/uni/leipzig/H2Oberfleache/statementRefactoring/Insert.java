@@ -13,34 +13,34 @@ import java.util.List;
 import java.util.Map;
 
 public class Insert extends Statement {
-    Map<String, Integer> tablename_nextID = new HashMap<>();
+    private Map<String, Integer> tablename_nextID = new HashMap<>();
 
     public String nf2ToNf1(String sql){
         sql = prepareSQL(sql);
-        String result = sql;
+        StringBuilder result = new StringBuilder(sql);
         SQLiteLexer lexer = new SQLiteLexer(CharStreams.fromString(sql));
         SQLiteParser parser = new SQLiteParser(new CommonTokenStream(lexer));
         RuleContext context = parser.insert_stmt();
         Map<String, List<RuleContext>> childMap = SQL_Parser.getChildMap(context);
         if(childMap.containsKey("table_insert")){
-            result = "";
+            result = new StringBuilder();
             RuleContext tableInsert = childMap.get("table_insert").get(0);
             List<RuleContext> valueList = childMap.get("value_insert");
-            List<String> queries = createQuerys("", "0" , tableInsert, valueList, this::getNextID);
+            List<String> queries = createQueries("", "0" , tableInsert, valueList, this::getNextID);
             for (String query : queries) {
-                result += query;
+                result.append(query);
             }
         }
-        return result;
+        return result.toString();
     }
 
-    public List<String> createQuerys(String obertab, String nextOTID, RuleContext tableInsert, List<RuleContext> valueList, Getter getter){
+    public List<String> createQueries(String obertab, String nextOTID, RuleContext tableInsert, List<RuleContext> valueList, Getter getter){
         Map<String, List<RuleContext>> tableInsertchilds = SQL_Parser.getChildMap(tableInsert);
         String tablename = tableInsertchilds.get("table_name").get(0).getText();
-        List<String> querys = new ArrayList<>();
+        List<String> queries = new ArrayList<>();
         List<String> table = new ArrayList<>();
-        List<List<String>> tupelList = new ArrayList<>();
-        if(obertab != ""){
+        List<List<String>> tupleList = new ArrayList<>();
+        if(!obertab.equals("")){
             tablename = "__" + obertab + "_" + tablename;
         }
         boolean tableIsSetted = false;
@@ -51,12 +51,11 @@ public class Insert extends Statement {
 
             Map<RuleContext, RuleContext> element_value = new HashMap<>();
             List<String> values = new ArrayList<>();
+            List<RuleContext> tableChild = SQL_Parser.getChildList(tableInsert);
             if(SQLiteParser.ruleNames[value.getRuleIndex()].equals("expr")){
-                List<RuleContext> tableChild = SQL_Parser.getChildList(tableInsert);
                 element_value.put(tableChild.get(1), value);
             }else {
                 List<RuleContext> valueChild = SQL_Parser.getChildList(value);
-                List<RuleContext> tableChild = SQL_Parser.getChildList(tableInsert);
                 for (int i = 0; i < valueChild.size(); i++) {
                     element_value.put(SQL_Parser.parseTreeToRuleContext(tableChild.get(i + 1)),
                             SQL_Parser.parseTreeToRuleContext(valueChild.get(i)));
@@ -75,55 +74,55 @@ public class Insert extends Statement {
                     }else {
                         row.add(valueInsert);
                     }
-                    querys.addAll(createQuerys(tablename, ID, entry.getKey(), row, getter));
+                    queries.addAll(createQueries(tablename, ID, entry.getKey(), row, getter));
                 }
             }
             values.add(ID);
-            if(obertab != "")values.add(nextOTID);
-            tupelList.add(values);
+            if(!obertab.equals(""))values.add(nextOTID);
+            tupleList.add(values);
             tableIsSetted = true;
         }
         table.add(IDName);
-        if(obertab != "")table.add("__" + obertab + "ID");
-        querys.addAll(makeInsertQuery(tablename, table, tupelList));
-        return querys;
+        if(!obertab.equals(""))table.add("__" + obertab + "ID");
+        queries.addAll(makeInsertQuery(tablename, table, tupleList));
+        return queries;
     }
 
     public List<RuleContext> getRows(RuleContext value_insert){
         List<RuleContext> rows = new ArrayList<>();
-        List<RuleContext> childs = SQL_Parser.getChildList(value_insert);
-        if(SQLiteParser.ruleNames[childs.get(0).getRuleIndex()].equals("row_expr")) {
-            for (RuleContext child : childs) {
+        List<RuleContext> children = SQL_Parser.getChildList(value_insert);
+        if(SQLiteParser.ruleNames[children.get(0).getRuleIndex()].equals("row_expr")) {
+            for (RuleContext child : children) {
                 rows.addAll(SQL_Parser.getChildList(child));
             }
-        }else rows = childs;
+        }else rows = children;
         return rows;
     }
 
     private List<String> makeInsertQuery(String tablename, List<String> table, List<List<String>> tupel){
-        List<String> insertsQuerys = new ArrayList<>();
+        List<String> insertsQueries = new ArrayList<>();
         for (List<String> strings : tupel) {
-            String insert = "INSERT INTO " + tablename + "( ";
-            boolean komma = false;
+            StringBuilder insert = new StringBuilder("INSERT INTO " + tablename + "( ");
+            boolean comma = false;
             for (String s : table) {
-                if(komma) insert += ",";
-                komma = true;
-                insert += s;
+                if(comma) insert.append(",");
+                comma = true;
+                insert.append(s);
             }
-            insert += ") VALUES( ";
-            komma = false;
+            insert.append(") VALUES( ");
+            comma = false;
             for (String s : strings) {
-                if(komma) insert += ",";
-                komma = true;
-                insert += s;
+                if(comma) insert.append(",");
+                comma = true;
+                insert.append(s);
             }
-            insert += ");";
-            insertsQuerys.add(insert);
+            insert.append(");");
+            insertsQueries.add(insert.toString());
         }
-        return insertsQuerys;
+        return insertsQueries;
     }
 
-    public String getNextID(String tablename){
+    private String getNextID(String tablename){
         Integer ID;
         if(tablename_nextID.containsKey(tablename)){
             ID = tablename_nextID.get(tablename) + 1;

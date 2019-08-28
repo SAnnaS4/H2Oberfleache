@@ -20,62 +20,62 @@ import java.util.Map;
 public class Update_Delete extends Statement {
     String whichStmt = "";
     Map<String, List<String>> tablename_ID = new HashMap<>();
-    public List<String> getIDs(String tablename, RuleContext stmt, String sql) throws SQLException {
+    private List<String> getIDs(String tablename, RuleContext stmt, String sql) throws SQLException {
         String id = "__" + tablename + "ID";
         String tableAlias = "";
-        String hauptTable = tablename;
+        String mainTable = tablename;
         if(tablename.startsWith("__")){
             String[] tab = tablename.split("_");
             for (String s : tab) {
                 if(!s.equals("")){
-                    hauptTable = s;
+                    mainTable = s;
                     break;
                 }
             }
             tableAlias = tab[tab.length-1];
             id = tableAlias + "." + id;
         }
-        String selectStmt = "SELECT DISTINCT " + id ;
+        StringBuilder selectStmt = new StringBuilder("SELECT DISTINCT " + id);
         String where = "";
         List<String> subtables = getNF2TableNamesRec(tablename);
         for (String subtable : subtables) {
             String alias = subtable.split("_")[subtable.split("_").length-1];
             String idName = "__" + subtable + "ID";
-            selectStmt += ", " + alias + "." + idName;
+            selectStmt.append(", ").append(alias).append(".").append(idName);
         }
-        selectStmt += " FROM " + hauptTable + " ";
+        selectStmt.append(" FROM ").append(mainTable).append(" ");
         for (RuleContext context : SQL_Parser.getChildList(stmt)) {
             if(SQLiteParser.ruleNames[context.getRuleIndex()].equals("where_expr")){
                 where = cutFromSQL(context, sql);
             }
         }
-        selectStmt += where;
+        selectStmt.append(where);
         if(!tableAlias.equals("")){
-            makeMap(selectStmt);
+            makeMap(selectStmt.toString());
             Map<String, String> alias_tablename = new HashMap<>();
             alias_tablename.put(tableAlias, tablename);
-            List<String> haupttables = new ArrayList<>();
-            haupttables.add(tablename);
-            SQLiteLexer lexer = new SQLiteLexer(CharStreams.fromString(selectStmt));
+            List<String> maintables = new ArrayList<>();
+            maintables.add(tablename);
+            SQLiteLexer lexer = new SQLiteLexer(CharStreams.fromString(selectStmt.toString()));
             SQLiteParser parser = new SQLiteParser(new CommonTokenStream(lexer));
             RuleContext select_stmt = parser.select_or_values();
-            Where updateWhere = new Where(selectStmt,select_stmt, alias_tablename, position_sql, haupttables);
-            selectStmt = updateWhere.sql;
+            Where updateWhere = new Where(selectStmt.toString(),select_stmt, alias_tablename, position_sql, maintables);
+            selectStmt = new StringBuilder(updateWhere.sql);
         }
         position_sql = new HashMap<>();
-        Select select = new Select(selectStmt, false);
-        selectStmt = select.nf2ToNf1();
+        Select select = new Select(selectStmt.toString(), false);
+        selectStmt = new StringBuilder(select.nf2ToNf1());
         List<String> ids = new ArrayList<>();
-        ExecuteStatement eS = new ExecuteStatement(BaseController.dbName, selectStmt, true, BaseController.user, BaseController.password);
+        ExecuteStatement eS = new ExecuteStatement(BaseController.dbName, selectStmt.toString(), true, BaseController.user, BaseController.password);
         ResultSet rs = eS.execQuery();
         List<String> tables = new ArrayList<>();
         tables.add(tablename);
         tables.addAll(subtables);
         makeMap(sql);
-        int j = rs.getMetaData().getColumnCount();
+        int columnCount = rs.getMetaData().getColumnCount();
         while (rs.next()){
             if(!ids.contains(rs.getObject(1).toString())) ids.add(rs.getObject(1).toString());
-            for(int i= 1; i<=j; i++){
+            for(int i= 1; i<=columnCount; i++){
                 if(tablename_ID.containsKey(tables.get(i-1))){
                     List<String> subids = tablename_ID.get(tables.get(i-1));
                     if(!subids.contains(rs.getObject(i).toString())) {
@@ -93,7 +93,7 @@ public class Update_Delete extends Statement {
         return ids;
     }
 
-    public List<String> newQuerys(String sql, String tablename, List<String> subtables, Foo foo) throws SQLException {
+    public List<String> newQueries(String sql, String tablename, List<String> subtables, SpezificFunction foo) throws SQLException {
         Map<String, List<RuleContext>> map = SQL_Parser.getParsedMap(sql);
         RuleContext stmt;
         if(map.containsKey(whichStmt + "_limited")) stmt = map.get(whichStmt + "_limited").get(0);
@@ -101,34 +101,34 @@ public class Update_Delete extends Statement {
         return createQuerys(subtables, stmt, tablename, sql, foo);
     }
 
-    public List<String> createQuerys(List<String> subtables, RuleContext stmt, String tablename, String sql, Foo foo) throws SQLException {
+    public List<String> createQuerys(List<String> subtables, RuleContext stmt, String tablename, String sql, SpezificFunction foo) throws SQLException {
         List<String> queries = new ArrayList<>();
         if (!subtables.isEmpty()) {
             List<String> ids;
             if(tablename_ID.containsKey(tablename))ids = tablename_ID.get(tablename);
             else ids = getIDs(tablename, stmt, sql);
             String id = "__" + tablename +"ID";
-            String whereAnfang = "WHERE " + id + " IN( ";
-            Boolean komma = false;
+            StringBuilder whereStart = new StringBuilder("WHERE " + id + " IN( ");
+            boolean komma = false;
             for (String value : ids) {
-                if(komma)whereAnfang += ", ";
+                if(komma) whereStart.append(", ");
                 komma = true;
-                whereAnfang += value;
+                whereStart.append(value);
             }
-            whereAnfang += ")";
+            whereStart.append(")");
             for (String subtable : subtables) {
-                String where = whereAnfang;
+                StringBuilder where = new StringBuilder(whereStart.toString());
                 if (tablename_ID.containsKey(subtable)) {
-                    where += " AND __" + subtable + "ID IN( ";
+                    where.append(" AND __").append(subtable).append("ID IN( ");
                     komma = false;
                     for (String s : tablename_ID.get(subtable)) {
-                        if (komma) where += ", ";
+                        if (komma) where.append(", ");
                         komma = true;
-                        where += s;
+                        where.append(s);
                     }
-                    where += ")";
+                    where.append(")");
                 }
-                queries.addAll(foo.method(where, subtable));
+                queries.addAll(foo.createStats(where.toString(), subtable));
             }
         }else queries.add(sql);
         return queries;
@@ -149,7 +149,7 @@ public class Update_Delete extends Statement {
 
 
     @FunctionalInterface
-    public interface Foo {
-        List<String> method(String where, String tablename) throws SQLException;
+    public interface SpezificFunction {
+        List<String> createStats(String where, String tablename) throws SQLException;
     }
 }

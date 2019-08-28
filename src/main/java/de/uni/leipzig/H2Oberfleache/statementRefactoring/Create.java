@@ -7,7 +7,6 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RuleContext;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,67 +24,67 @@ public class Create extends Statement {
         SQLiteLexer lexer = new SQLiteLexer(CharStreams.fromString(sql));
         SQLiteParser parser = new SQLiteParser(new CommonTokenStream(lexer));
         RuleContext stmt = parser.create_table_stmt();
-        String result;
+        StringBuilder result;
         if(sql.contains("CREATE TABLE") && sql.contains("SET(ROW")){
-            List<String> querys;
-            querys = getQuerys(stmt, null);
-            result = "CREATE TABLE IF NOT EXISTS " + nf2TabName + "(NAME VARCHAR(60), OBERTABELLE VARCHAR(60));";
-            for (String query : querys) {
-                result += query;
+            List<String> queries;
+            queries = getQueries(stmt, null);
+            result = new StringBuilder("CREATE TABLE IF NOT EXISTS " + nf2TabName + "(NAME VARCHAR(60), OBERTABELLE VARCHAR(60));");
+            for (String query : queries) {
+                result.append(query);
             }
         }else{
-            result = sql;
+            result = new StringBuilder(sql);
         }
-        return result;
+        return result.toString();
     }
 
-    private List<String> getQuerys(RuleContext stmt, String higherTablename){
-        List<String> querys = new ArrayList<>();
+    private List<String> getQueries(RuleContext stmt, String higherTablename){
+        List<String> queries = new ArrayList<>();
         List<RuleContext> childList = SQL_Parser.getChildList(stmt);
         Map<String, String> columname_type = new HashMap<>();
-        Boolean containsSubTable = false;
+        boolean containsSubTable = false;
         String tablename = "";
         for (RuleContext context : childList) {
-            String contextTyp = SQLiteParser.ruleNames[context.getRuleIndex()];
-            if(contextTyp.equals("table_name") || contextTyp.equals("subtable_name")){
-                if(contextTyp.equals("subtable_name")) {
+            String contexttype = SQLiteParser.ruleNames[context.getRuleIndex()];
+            if(contexttype.equals("table_name") || contexttype.equals("subtable_name")){
+                if(contexttype.equals("subtable_name")) {
                     tablename = "__" + higherTablename + "_" + context.getText();
                 }else tablename = context.getText();
             }
-            if(contextTyp.equals("set_row_create")){
-                querys.addAll(getQuerys(context, tablename));
+            if(contexttype.equals("set_row_create")){
+                queries.addAll(getQueries(context, tablename));
                 containsSubTable = true;
             }
-            if(contextTyp.equals("column_def")){
+            if(contexttype.equals("column_def")){
                 List<RuleContext> column = SQL_Parser.getChildList(context);
                 String columnName = "";
-                String columnTyp = "";
+                String columntype = "";
                 for (RuleContext ruleContext : column) {
-                    contextTyp = SQLiteParser.ruleNames[ruleContext.getRuleIndex()];
-                    if(contextTyp.equals("column_name"))columnName = ruleContext.getText();
-                    if(contextTyp.equals("type_name"))columnTyp = ruleContext.getText();
+                    contexttype = SQLiteParser.ruleNames[ruleContext.getRuleIndex()];
+                    if(contexttype.equals("column_name"))columnName = ruleContext.getText();
+                    if(contexttype.equals("type_name"))columntype = ruleContext.getText();
                 }
-                columname_type.put(columnName, columnTyp);
+                columname_type.put(columnName, columntype);
             }
         }
         String newNF2Tables= "INSERT INTO " + nf2TabName + "(NAME, OBERTABELLE) VALUES(" + "'" + tablename + "', '"
                 + higherTablename + "');";
-        String query = "CREATE TABLE " + tablename + "(";
+        StringBuilder query = new StringBuilder("CREATE TABLE " + tablename + "(");
         for (Map.Entry<String, String> column : columname_type.entrySet()) {
-            query += column.getKey() + " " + column.getValue() + ", ";
+            query.append(column.getKey()).append(" ").append(column.getValue()).append(", ");
         }
         if(containsSubTable || !(higherTablename == null)) {
             newNF2Tables= "INSERT INTO " + nf2TabName + "(NAME, OBERTABELLE) VALUES(" + "'" + tablename + "', '"
                     + higherTablename + "');";
-            query += "__" + tablename + "ID INT";
+            query.append("__").append(tablename).append("ID INT");
             try {
-                if (!(higherTablename.isEmpty())) query += ", " + "__" + higherTablename + "ID INT";
+                if (!(higherTablename.isEmpty())) query.append(", " + "__").append(higherTablename).append("ID INT");
             } catch (NullPointerException e) {
             }
         }
-        query += ");";
-        querys.add(newNF2Tables);
-        querys.add(query);
-        return querys;
+        query.append(");");
+        queries.add(newNF2Tables);
+        queries.add(query.toString());
+        return queries;
     }
 }

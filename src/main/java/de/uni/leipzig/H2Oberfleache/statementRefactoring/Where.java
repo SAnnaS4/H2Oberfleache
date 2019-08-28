@@ -1,7 +1,6 @@
 package de.uni.leipzig.H2Oberfleache.statementRefactoring;
 
 import de.uni.leipzig.H2Oberfleache.controller.BaseController;
-import de.uni.leipzig.H2Oberfleache.controller.Tables;
 import de.uni.leipzig.H2Oberfleache.jdbc.DbInfo;
 import de.uni.leipzig.H2Oberfleache.parser.SQL_Parser;
 import de.uni.leipzig.H2Oberfleache.parser.SQLiteParser;
@@ -14,7 +13,7 @@ import java.util.Map;
 
 public class Where extends Statement{
     String sql;
-    Map<String, String> alias_tablename;
+    private Map<String, String> alias_tablename;
     public Where(String sql, RuleContext context, Map<String, String> alias_tablename, Map<Integer, String> position_sql, List<String> haupttables){
         this.sql = sql;
         this.alias_tablename = alias_tablename;
@@ -43,7 +42,7 @@ public class Where extends Statement{
         }
     }
 
-    public List<RuleContext> exploreExpr(RuleContext expr){
+    private List<RuleContext> exploreExpr(RuleContext expr){
         List<RuleContext> exprs = new ArrayList<>();
         for (RuleContext context : SQL_Parser.getChildList(expr)) {
             if(SQLiteParser.ruleNames[context.getRuleIndex()].equals("expr")){
@@ -60,15 +59,15 @@ public class Where extends Statement{
         return exprs;
     }
 
-    public static String changeExpr(RuleContext expr, Map<String, String> alias_tablename, List<String> haupttables){
+    public static String changeExpr(RuleContext expr, Map<String, String> alias_tablename, List<String> maintables){
         Map<String, List<RuleContext>> childs = SQL_Parser.getChildMap(expr);
         if(!childs.containsKey("table_name") && !childs.containsKey("function_name") && !alias_tablename.containsKey(expr.getText())){
-            return getAlias(alias_tablename, expr.getText(), haupttables) + "." + expr.getText();
+            return getAlias(alias_tablename, expr.getText(), maintables) + "." + expr.getText();
         }
         if(childs.containsKey("function_name")){
             Map<String, List<RuleContext>> child = SQL_Parser.getChildMap(childs.get("function_name").get(0));
             if(child.containsKey("expr")){
-                return changeExpr(child.get("expr").get(0), alias_tablename, haupttables);
+                return changeExpr(child.get("expr").get(0), alias_tablename, maintables);
             }
         }
         String[] tables = expr.getText().split("\\.");
@@ -79,9 +78,9 @@ public class Where extends Statement{
         return result;
     }
 
-    public static String getAlias(Map<String, String> alias_tablename, String column, List<String> haupttables){
+    private static String getAlias(Map<String, String> alias_tablename, String column, List<String> maintables){
         for (Map.Entry<String, String> entry : alias_tablename.entrySet()) {
-            if(haupttables.contains(entry.getValue())) {
+            if(maintables.contains(entry.getValue())) {
                 List<String> attributes = getAllAttributes(entry.getValue());
                 for (String attribute : attributes) {
                     if (attribute.equals(column)) return entry.getKey();
@@ -91,7 +90,7 @@ public class Where extends Statement{
         return "";
     }
 
-    public static List<String> getAllAttributes(String tablename){
+    private static List<String> getAllAttributes(String tablename){
         DbInfo dbInfo = new DbInfo();
         List<String> attributes = new ArrayList<>();
         try {
@@ -99,9 +98,7 @@ public class Where extends Statement{
             for (Map.Entry<String, String> entry : columns.entrySet()) {
                 attributes.add(entry.getKey());
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
+        } catch (SQLException | IllegalAccessException e) {
             e.printStackTrace();
         }
         return attributes;

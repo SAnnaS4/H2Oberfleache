@@ -12,30 +12,29 @@ import java.util.Map;
 public class Table {
     public String name = "result";
     public List<Attribute> attributes = new ArrayList<>();
-    public List<List<Inhalt>> inhalt;
+    public List<List<Content>> content;
     public List<Map<String, String>> oldAttributes;
-    public List<List<Object>> oldInhalt;
+    public List<List<Object>> oldContent;
 
-    public Table(List<Map<String, String>> attributes_tablenames, List<List<Object>> inhalt){
+    public Table(List<Map<String, String>> attributes_tablenames, List<List<Object>> content){
         oldAttributes = attributes_tablenames;
-        oldInhalt = inhalt;
+        oldContent = content;
         int size = attributes_tablenames.size();
         for (int i = 0; i<size; i++){
             for (Map.Entry<String, String> entry : attributes_tablenames.get(i).entrySet()) {
                 this.attributes.add(new Attribute(i, entry.getKey(), entry.getValue()));
             }
         }
-        List<List<Inhalt>> tabelle = new ArrayList<>();
-        for (List<Object> objects : inhalt) {
-            List<Inhalt> liste = new ArrayList<>();
+        List<List<Content>> table = new ArrayList<>();
+        for (List<Object> objects : content) {
+            List<Content> list = new ArrayList<>();
             for (Attribute attribute : this.attributes) {
-                String convertedToString = String.valueOf(objects.get(attribute.getNummer()));
-                Inhalt inhalt1 = new Inhalt(attribute, convertedToString);
-                liste.add(inhalt1);
+                Content content1 = new Content(attribute, String.valueOf(objects.get(attribute.getNumber())));
+                list.add(content1);
             }
-            tabelle.add(liste);
+            table.add(list);
         }
-        this.inhalt = tabelle;
+        this.content = table;
     }
 
     public List<Attribute> getAttribute(){
@@ -45,20 +44,20 @@ public class Table {
     @Getter
     @Setter
     public class Attribute {
-        private int nummer;
-        private String wert;
+        private int number;
+        private String name;
         private String table;
 
-        public Attribute(int nummer, String wert, String tablename){
-            this.nummer = nummer;
-            this.wert = wert;
+        private Attribute(int number, String name, String tablename){
+            this.number = number;
+            this.name = name;
             this.table = tablename;
         }
 
         public Boolean isIn(List<Attribute> list){
-            Boolean isIn = false;
+            boolean isIn = false;
             for (Attribute attribute : list) {
-                if(attribute.getWert().equals(this.getWert()) && attribute.getTable().equals(this.getTable())) isIn =true;
+                if(attribute.getName().equals(this.getName()) && attribute.getTable().equals(this.getTable())) isIn =true;
             }
             return isIn;
         }
@@ -66,17 +65,17 @@ public class Table {
 
     @Getter
     @Setter
-    public static class Inhalt {
+    public static class Content {
         private Attribute attribute;
-        private String wert;
+        private String value;
 
-        public Inhalt(Attribute attribute, String wert){
+        public Content(Attribute attribute, String value){
             this.attribute = attribute;
-            this.wert = wert;
+            this.value = value;
         }
 
-        public boolean equals(Inhalt inhalt2){
-            return (this.getWert().equals(inhalt2.getWert()) && (this.getAttribute().getNummer() == inhalt2.getAttribute().getNummer()));
+        public boolean equals(Content content2){
+            return (this.getValue().equals(content2.getValue()) && (this.getAttribute().getNumber() == content2.getAttribute().getNumber()));
         }
     }
 }

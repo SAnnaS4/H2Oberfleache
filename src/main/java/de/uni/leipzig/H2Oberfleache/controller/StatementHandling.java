@@ -2,6 +2,7 @@ package de.uni.leipzig.H2Oberfleache.controller;
 
 import de.uni.leipzig.H2Oberfleache.jdbc.DBConnection;
 import de.uni.leipzig.H2Oberfleache.jdbc.ExecuteStatement;
+import de.uni.leipzig.H2Oberfleache.presentation.HtmlBuilder;
 import de.uni.leipzig.H2Oberfleache.statementRefactoring.Statement;
 import de.uni.leipzig.H2Oberfleache.tables.Table;
 import lombok.Getter;
@@ -9,7 +10,6 @@ import lombok.Setter;
 import org.primefaces.PrimeFaces;
 import org.springframework.stereotype.Component;
 
-import javax.enterprise.context.SessionScoped;
 import java.io.Serializable;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -21,10 +21,10 @@ import java.util.Map;
 @Getter
 @Setter
 @Component
-@SessionScoped
-public class StatementSQL extends BaseController implements Serializable {
-    String sql = "update nf set nf1.alter = 7 where name = 4";
-    String result;
+//@SessionScoped
+public class StatementHandling extends BaseController implements Serializable {
+    String sql;
+    //String result;
     int update;
     ResultSet rs;
     public Table table = new Table(new ArrayList<>(), new ArrayList<>());
@@ -42,18 +42,19 @@ public class StatementSQL extends BaseController implements Serializable {
             eS = new ExecuteStatement(dbName, changeSQLAutoCommitFalse(sql), false, user, password);
             eS.getDBcon().Commit();
         }
-       // try {
+        try {
             if(isUpdate())update = eS.execUpdate();
             else {
                 rs = eS.execQuery();
                 this.table = readResultSet(rs);
                 HtmlBuilder htmlBuilder = new HtmlBuilder(table);
-                this.html = htmlBuilder.html;
+                this.html = htmlBuilder.getHtml();
             }
-        //} catch (NullPointerException e) {
-       // }
+        } catch (NullPointerException e) {
+        }
         PrimeFaces.current().ajax().update("mainForm");
     }
+    
     private List<String> changeSQLAutoCommitTrue(String sql) throws SQLException {
         List<String> newSQL = new ArrayList<>();
         String[] parts = sql.split(";");
@@ -64,20 +65,19 @@ public class StatementSQL extends BaseController implements Serializable {
     }
 
     private String changeSQLAutoCommitFalse(String sql) throws SQLException {
-        String newSQL = "";
+        StringBuilder newSQL = new StringBuilder();
         String[] parts = sql.split(";");
         boolean erstes = true;
         for (String part : parts) {
-            if(!erstes)newSQL += "; ";
+            if(!erstes) newSQL.append("; ");
             erstes = false;
-            newSQL += Statement.changeToNF1(part);
+            newSQL.append(Statement.changeToNF1(part));
         }
-        return newSQL;
+        return newSQL.toString();
     }
 
-    private Boolean isUpdate (){
-        if(sql.startsWith("CREATE")|| sql.startsWith("UPDATE") || sql.startsWith("DROP") || sql.startsWith("INSERT") || sql.startsWith("DELETE"))return true;
-        return false;
+    private Boolean isUpdate(){
+        return sql.startsWith("CREATE") || sql.startsWith("UPDATE") || sql.startsWith("DROP") || sql.startsWith("INSERT") || sql.startsWith("DELETE");
     }
 
     public void  closeCon(){
@@ -86,26 +86,24 @@ public class StatementSQL extends BaseController implements Serializable {
     }
 
     private Table readResultSet(ResultSet rs) throws SQLException {
-        List<List<Object>> table = new ArrayList<>();
+        List<List<Object>> content = new ArrayList<>();
         List<Map<String, String>> lables_tablename = new ArrayList<>();
         int j = rs.getMetaData().getColumnCount();
         for(int i= 1; i<=j; i++){
             String label = rs.getMetaData().getColumnLabel(i);
             String tablename = rs.getMetaData().getTableName(i);
-            if(tablename.equals("")){
-                if(label.startsWith("__") && label.endsWith("ID"))tablename = label.substring(2, label.length()-2);
-            }
+            if(tablename.equals("") && label.startsWith("__") && label.endsWith("ID"))tablename = label.substring(2, label.length()-2);
             Map<String, String> entry = new HashMap<>();
             entry.put(label, tablename);
             lables_tablename.add(entry);
         }
         while (rs.next()){
-            List<Object> liste = new ArrayList<>();
+            List<Object> tuple = new ArrayList<>();
             for(int i= 1; i<=j; i++){
-                liste.add(rs.getObject(i));
+                tuple.add(rs.getObject(i));
             }
-            table.add(liste);
+            content.add(tuple);
         }
-        return new Table(lables_tablename, table);
+        return new Table(lables_tablename, content);
     }
 }

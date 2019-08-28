@@ -28,52 +28,51 @@ public class Update extends Update_Delete {
         List<String> table = new ArrayList<>();
         table.add(tablename);
         getTable_set_value(tablename, map.get("set_stmt"), subtables);
-        List<String> querys = createQuerys(table, map.get("update_stmt").get(0), tablename, sql, this::makeQuerys);
-        String result = "";
-        for (String query : querys) {
-            result += query;
+        List<String> queries = createQuerys(table, map.get("update_stmt").get(0), tablename, sql, this::makeQueries);
+        StringBuilder result = new StringBuilder();
+        for (String query : queries) {
+            result.append(query);
         }
         System.out.println(result);
-        return result;
+        return result.toString();
     }
 
     private void getAllTablenames(RuleContext set, List<String> subtables, RuleContext value){
         String name = "";
         String[] words = set.getText().split("\\.");
-        List<String> genutzeWords = new ArrayList<>();
-        Integer leangeTablename = words.length;
+        List<String> usedWords = new ArrayList<>();
         if(words.length > 0) {
-            genutzeWords.add(words[0]);
-            for (int i = 0; i < leangeTablename; i++) {
-                if(words[i].contains("(")){
-                    name += "_" + words[i].split("\\(")[0];
-                 }else name += "_" + words[i];
-                String column = "";
-                Boolean punkt = false;
+            usedWords.add(words[0]);
+            for (String s : words) {
+                if (s.contains("(")) {
+                    name += "_" + s.split("\\(")[0];
+                } else name += "_" + s;
+                StringBuilder column = new StringBuilder();
+                boolean point = false;
                 for (String word : words) {
-                    if(punkt)column += ".";
-                    if(!genutzeWords.contains(word) || word.contains("(")){
-                        if(punkt)column += ".";
-                        column += word;
-                        punkt = true;
+                    if (point) column.append(".");
+                    if (!usedWords.contains(word) || word.contains("(")) {
+                        if (point) column.append(".");
+                        column.append(word);
+                        point = true;
                     }
                 }
-                genutzeWords.add(words[i]);
+                usedWords.add(s);
                 Map<String, RuleContext> map = new HashMap<>();
-                map.put(column ,value);
+                map.put(column.toString(), value);
                 for (String subtable : subtables) {
-                    if(subtable.contains(name)){
-                        if(table_set_value.containsKey(subtable)){
+                    if (subtable.contains(name)) {
+                        if (table_set_value.containsKey(subtable)) {
                             List<Map<String, RuleContext>> list = table_set_value.get(subtable);
                             list.add(map);
                             table_set_value.put(subtable, list);
-                        }else {
+                        } else {
                             List<Map<String, RuleContext>> list = new ArrayList<>();
                             list.add(map);
                             table_set_value.put(subtable, list);
                         }
-                        if(!column.contains("\\.") && !SQLiteParser.ruleNames[value.getRuleIndex()].equals("expr")){
-                            table_tableInsert.put(subtable, getTableInsert(set));
+                        if (!column.toString().contains("\\.") && !SQLiteParser.ruleNames[value.getRuleIndex()].equals("expr")) {
+                            table_tableInsert.put(subtable, SQL_Parser.getChildMap(set).get("table_insert").get(0));
                         }
                     }
                 }
@@ -81,15 +80,9 @@ public class Update extends Update_Delete {
         }
     }
 
-    private RuleContext getTableInsert(RuleContext set){
-        return SQL_Parser.getChildMap(set).get("table_insert").get(0);
-    }
-
-
     private void getTable_set_value(String mainTablename, List<RuleContext> set_stmts, List<String> subtables){
         for (RuleContext set_stmt : set_stmts) {
             RuleContext set = (RuleContext) set_stmt.getChild(0);
-            String tablename = mainTablename;
             RuleContext ctx = null;
             ParseTree element = set_stmt.getChild(set_stmt.getChildCount()-1);
             if (element instanceof RuleContext) {
@@ -100,40 +93,40 @@ public class Update extends Update_Delete {
             }
             Map<String, RuleContext> set_value = new HashMap<>();
             set_value.put(set.getText(), ctx);
-            if (table_set_value.containsKey(tablename)) {
-                List<Map<String, RuleContext>> list = table_set_value.get(tablename);
+            if (table_set_value.containsKey(mainTablename)) {
+                List<Map<String, RuleContext>> list = table_set_value.get(mainTablename);
                 list.add(set_value);
-                table_set_value.put(tablename, list);
+                table_set_value.put(mainTablename, list);
             } else {
                 List<Map<String, RuleContext>> list = new ArrayList<>();
                 list.add(set_value);
-                table_set_value.put(tablename, list);
+                table_set_value.put(mainTablename, list);
             }
         }
     }
 
-    public List<String> makeQuerys(String where, String tablename) throws SQLException {
-        List<String> querys = new ArrayList<>();
+    private List<String> makeQueries(String where, String tablename) throws SQLException {
+        List<String> queries = new ArrayList<>();
             if(table_set_value.containsKey(tablename)) {
                 String newQuery = "UPDATE " + tablename + " SET " + gernerateQuery(true, tablename, where).get(0);
                 List<String> set = gernerateQuery(false, tablename, where);
                 newQuery += " " + where + "; ";
                 List<String> subtables = getNF2TableNames(tablename);
-                if (!subtables.isEmpty()) querys.addAll(newQuerys(newQuery, tablename, subtables, this::makeQuerys));
+                if (!subtables.isEmpty()) queries.addAll(newQueries(newQuery, tablename, subtables, this::makeQueries));
                 if (!set.get(0).equals("")) {
                     if (set.size() == 1) {
                         String update = "UPDATE " + tablename + " SET " + set.get(0) + " " + where + "; ";
-                        querys.add(update);
-                    } else querys.addAll(set);
+                        queries.add(update);
+                    } else queries.addAll(set);
                 }
             }
-        return querys;
+        return queries;
     }
 
     private List<String> gernerateQuery(Boolean allTables, String tablename, String where) throws SQLException {
         List<String> queries = new ArrayList<>();
         String update = "";
-        Boolean komma = false;
+        boolean komma = false;
         String remove = "";
         for (Map<String, RuleContext> table : table_set_value.get(tablename)) {
             for (Map.Entry<String, RuleContext> entry : table.entrySet()) {
@@ -161,16 +154,16 @@ public class Update extends Update_Delete {
 
     private List<String> getNewInsert(String oberTabName, String tablename, RuleContext value, String where) throws SQLException {
         RuleContext set = table_tableInsert.get(tablename);
-        //List<RuleContext> valueList = new ArrayList<>(SQL_Parser.getChildMap(value).get("value_insert"));
+        //List<RuleContext> valueList = new ArrayList<>(SQL_Parser.getChildMap(name).get("value_insert"));
         List<String> inserts = new ArrayList<>();
         String[] names = tablename.split("_");
-        String pointTable = "";
+        StringBuilder pointTable = new StringBuilder();
         boolean point = false;
         for (String name : names) {
             if(!name.equals("")){
-                if (point)pointTable += ".";
+                if (point) pointTable.append(".");
                 point = true;
-                pointTable += name;
+                pointTable.append(name);
             }
         }
         String delete_stmt = "DELETE FROM " + pointTable + " " + where + "; ";
@@ -178,7 +171,6 @@ public class Update extends Update_Delete {
         delete_stmt = delete.nf2ToNf1();
         inserts.add(delete_stmt);
         List<String> otIds = tablename_ID.get(oberTabName);
-        List<String> Id = tablename_ID.get(tablename);
         Insert insert1 = new Insert();
         Map<String, List<RuleContext>> childMap = SQL_Parser.getChildMap(value);
         List<RuleContext> valueList = new ArrayList<>();
@@ -189,7 +181,7 @@ public class Update extends Update_Delete {
             valueList.add(valueInsert);
         }
         for (String otId : otIds) {
-            inserts.addAll(insert1.createQuerys(oberTabName, otId, set, valueList, this::getNextID));
+            inserts.addAll(insert1.createQueries(oberTabName, otId, set, valueList, this::getNextID));
         }
         return inserts;
     }
@@ -200,7 +192,7 @@ public class Update extends Update_Delete {
     private String getNextID(String tablename){
         String id;
         List<String> ids = tablename_ID.get(tablename);
-        Integer position = 0;
+        Integer position;
         position = table_IdPosition.getOrDefault(tablename, 0);
         if(ids.size() > position) {
             id = ids.get(position);

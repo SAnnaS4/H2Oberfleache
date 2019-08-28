@@ -1,7 +1,6 @@
 package de.uni.leipzig.H2Oberfleache.statementRefactoring;
 
 import de.uni.leipzig.H2Oberfleache.controller.BaseController;
-import de.uni.leipzig.H2Oberfleache.jdbc.DbInfo;
 import de.uni.leipzig.H2Oberfleache.parser.SQL_Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.RuleContext;
@@ -19,72 +18,58 @@ public class Statement {
 
     // Todo: noch test schreiben!!!
     private String deleteBlank(String sql){
-        String newSql = "";
+        StringBuilder newSql = new StringBuilder();
         String[] parts = sql.split("\\(");
-        int klammerzahl = parts.length -1;
+        int clipNumber = parts.length -1;
         int i = 0;
         for (String part : parts) {
             part = part.trim();
-            newSql += part;
-            if(i<klammerzahl){
-                newSql += "(";
+            newSql.append(part);
+            if(i<clipNumber){
+                newSql.append("(");
                 i++;
             }
         }
-        return newSql;
+        return newSql.toString();
     }
 
     protected String prepareSQL(String sql){
-        sql.toUpperCase();
+        sql = sql.toUpperCase();
         sql = deleteBlank(sql);
         return sql.trim();
-    }
-
-    protected Integer findCloseBracket(String sql, Integer openPosition){
-        Integer closePosition;
-        int open = 0;
-        int close = 0;
-        int position = openPosition + 1;
-        do{
-            if(sql.charAt(position) == '(') open++;
-            if(sql.charAt(position) == ')') close++;
-            position++;
-        }while (open >= close);
-        closePosition = position;
-        return closePosition;
     }
 
     protected String replaceRuleContext(RuleContext context, String replacement){
         ParserRuleContext parserRuleContext = (ParserRuleContext) context;
         Integer start = parserRuleContext.start.getStartIndex();
         Integer stop = parserRuleContext.stop.getStopIndex();
-        String newSQL = "";
+        StringBuilder newSQL = new StringBuilder();
         for (Map.Entry<Integer, String> entry : position_sql.entrySet()) {
             if(entry.getKey()>=start && entry.getKey()<=stop){
                 if(entry.getKey().equals(start)){
-                    newSQL += replacement;
+                    newSQL.append(replacement);
                     position_sql.put(entry.getKey(), replacement);
                 }else {
                     position_sql.put(entry.getKey(), "");
                 }
-            }else newSQL += entry.getValue();
+            }else newSQL.append(entry.getValue());
         }
-        return newSQL;
+        return newSQL.toString();
     }
 
     protected String getTablename(RuleContext nameInQuery, List<String> subtables, Boolean mitColumnname){
-        String name = "";
+        StringBuilder name = new StringBuilder();
         String tablename = "";
         String[] words = nameInQuery.getText().split("\\.");
-        Integer leangeTablename = words.length;
-        if(mitColumnname)--leangeTablename;
+        int lengthTablename = words.length;
+        if(mitColumnname)--lengthTablename;
         if(words.length > 1) {
-            for (int i = 0; i < leangeTablename; i++) {
-                name += "_" + words[i];
+            for (int i = 0; i < lengthTablename; i++) {
+                name.append("_").append(words[i]);
             }
-        }else name += "_" + nameInQuery.getText();
+        }else name.append("_").append(nameInQuery.getText());
         for (String subtable : subtables) {
-            if(subtable.contains(name) && !subtable.contains(name + "_")){
+            if(subtable.contains(name.toString()) && !subtable.contains(name + "_")){
                 tablename = subtable;
 
             }
@@ -127,13 +112,12 @@ public class Statement {
     private static ResultSet getNextTableNames(String tablename) throws SQLException {
         String selection = "SELECT NAME FROM " + nf2TabName + " WHERE OBERTABELLE = '" + tablename + "'";
         java.sql.Statement st = BaseController.connection.getCon().createStatement();
-        ResultSet rs = st.executeQuery(selection);
-        return rs;
+        return st.executeQuery(selection);
     }
 
     protected Integer getNextSubID(String tablename) {
         String selection = "SELECT MAX(" + "__" + tablename + "ID) FROM " + tablename;
-        Integer maxID = -1;
+        int maxID = -1;
         try {
             java.sql.Statement st = BaseController.connection.getCon().createStatement();
             ResultSet rs = st.executeQuery(selection);
@@ -144,38 +128,6 @@ public class Statement {
             e.printStackTrace();
         }
         return maxID+1;
-    }
-
-    protected Map<String, List<String>> getColumnsPlaces(String tablename, List<RuleContext> werte, Map<String, Integer> nextID) throws SQLException, IllegalAccessException {
-        DbInfo dbInfo = new DbInfo();
-        Map<String, List<String>> table_cols = new HashMap<>();
-        List<String> subTables = getNF2TableNames(tablename);
-        Map<String, String> tableColumn = dbInfo.getColums(false, BaseController.dbName, tablename, BaseController.user, BaseController.password);
-        List<String> values = new ArrayList<>();
-        for (Map.Entry<String, String> column : tableColumn.entrySet()) {
-            if(column.getKey().length()>= 3){
-                String subtablename = "__" + tablename + "_" + column.getKey().substring(0, column.getKey().length()-2);
-                if(subTables.contains(subtablename)){
-                    values.add(String.valueOf(nextID.get(subtablename)));
-                    table_cols.putAll(getColumnsPlaces(subtablename, werte, nextID));
-                }else {
-                    if(column.getKey().equals(tablename + "ID") && nextID.containsKey(tablename)){
-                        values.add(String.valueOf(nextID.get(tablename)));
-                    }else {
-                        if (!werte.isEmpty()) {
-                            values.add(werte.get(0).getText());
-                            werte.remove(0);
-                        }
-                    }
-                }}else {
-                if(!werte.isEmpty()) {
-                    values.add(werte.get(0).getText());
-                    werte.remove(0);
-                }
-            }
-        }
-        table_cols.put(tablename, values);
-        return table_cols;
     }
 
     public String cutFromSQL(RuleContext toCut, String sql){
@@ -223,7 +175,50 @@ public class Statement {
         }
         return newSQL;
     }
-
-
-
 }
+
+//    protected Map<String, List<String>> getColumnsPlaces(String tablename, List<RuleContext> werte, Map<String, Integer> nextID) throws SQLException, IllegalAccessException {
+//        DbInfo dbInfo = new DbInfo();
+//        Map<String, List<String>> table_cols = new HashMap<>();
+//        List<String> subTables = getNF2TableNames(tablename);
+//        Map<String, String> tableColumn = dbInfo.getColums(false, BaseController.dbName, tablename, BaseController.user, BaseController.password);
+//        List<String> values = new ArrayList<>();
+//        for (Map.Entry<String, String> column : tableColumn.entrySet()) {
+//            if(column.getKey().length()>= 3){
+//                String subtablename = "__" + tablename + "_" + column.getKey().substring(0, column.getKey().length()-2);
+//                if(subTables.contains(subtablename)){
+//                    values.add(String.valueOf(nextID.get(subtablename)));
+//                    table_cols.putAll(getColumnsPlaces(subtablename, werte, nextID));
+//                }else {
+//                    if(column.getKey().equals(tablename + "ID") && nextID.containsKey(tablename)){
+//                        values.add(String.valueOf(nextID.get(tablename)));
+//                    }else {
+//                        if (!werte.isEmpty()) {
+//                            values.add(werte.get(0).getText());
+//                            werte.remove(0);
+//                        }
+//                    }
+//                }}else {
+//                if(!werte.isEmpty()) {
+//                    values.add(werte.get(0).getText());
+//                    werte.remove(0);
+//                }
+//            }
+//        }
+//        table_cols.put(tablename, values);
+//        return table_cols;
+//    }
+
+/*    protected Integer findCloseBracket(String sql, Integer openPosition){
+        Integer closePosition;
+        int open = 0;
+        int close = 0;
+        int position = openPosition + 1;
+        do{
+            if(sql.charAt(position) == '(') open++;
+            if(sql.charAt(position) == ')') close++;
+            position++;
+        }while (open >= close);
+        closePosition = position;
+        return closePosition;
+    }*/

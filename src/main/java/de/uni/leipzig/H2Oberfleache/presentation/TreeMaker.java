@@ -1,5 +1,6 @@
-package de.uni.leipzig.H2Oberfleache.controller;
+package de.uni.leipzig.H2Oberfleache.presentation;
 
+import de.uni.leipzig.H2Oberfleache.controller.BaseController;
 import de.uni.leipzig.H2Oberfleache.jdbc.DbInfo;
 import lombok.Getter;
 import lombok.Setter;
@@ -19,11 +20,11 @@ import java.util.Map;
 @Setter
 @Getter
 @ViewScoped
-public class Tables extends BaseController {
+public class TreeMaker extends BaseController {
     DatabaseMetaData dBData = connection.getMeta();
     DbInfo dbInfo = new DbInfo();
 
-    public Tables() throws SQLException {
+    public TreeMaker() throws SQLException {
     }
 
     public TreeNode getTree() throws SQLException, IllegalAccessException {
@@ -41,13 +42,13 @@ public class Tables extends BaseController {
         Map<String, List<String>> table_subtables = getTable_Subtable(subtables, allTables);
         for (String table : tables) {
             TreeNode node = new DefaultTreeNode(table, null);
-            node = addColumns(node, table, table_subtables);
+            addColumns(node, table, table_subtables);
             root.getChildren().add(node);
         }
         return root;
     }
 
-    public Map<String, List<String>> getTable_Subtable(List<String> subtables, List<String> allTables) {
+    private Map<String, List<String>> getTable_Subtable(List<String> subtables, List<String> allTables) {
         Map<String, List<String>> table_subtables = new HashMap<>();
         for (String table : allTables) {
             List<String> mySubtables = new ArrayList<>();
@@ -59,7 +60,7 @@ public class Tables extends BaseController {
         return table_subtables;
     }
 
-    public TreeNode addColumns(TreeNode node, String tablename, Map<String, List<String>> table_subtables) throws SQLException, IllegalAccessException {
+    private void addColumns(TreeNode node, String tablename, Map<String, List<String>> table_subtables) throws SQLException, IllegalAccessException {
         Map<String, String> columns = dbInfo.getColums(autoCommit,dbName,tablename, user, password);
         String idName = "__" + tablename + "ID";
         for (Map.Entry<String, String> column : columns.entrySet()) {
@@ -70,7 +71,7 @@ public class Tables extends BaseController {
                     String[] namen = subTable.split("_");
                     name = namen[namen.length-1];
                     node1 = new DefaultTreeNode(name);
-                    node1 = addColumns(node1, subTable, table_subtables);
+                    addColumns(node1, subTable, table_subtables);
                     node.getChildren().add(node1);
                 }
             }else if(!column.getKey().startsWith("__")){
@@ -78,34 +79,26 @@ public class Tables extends BaseController {
                 node.getChildren().add(node1);
             }
         }
-        return node;
     }
-
-
-
-    public static Map<String, List<String>> getTable_Subtable() throws SQLException {
-        DbInfo dbInfo = new DbInfo();
-        List<String> allTables = dbInfo.getTables(autoCommit, dbName, user, password);
-        List<String> subtables = new ArrayList<>();
-        for (String table : allTables) {
-            if (table.startsWith("__")) {
-                subtables.add(table);
-            }
-        }
-        Map<String, List<String>> table_subtables = new HashMap<>();
-        for (String table : allTables) {
-            List<String> mySubtables = new ArrayList<>();
-            for (String subtable : subtables) {
-                if(subtable.startsWith("__" + table))mySubtables.add(subtable);
-            }
-            if(!subtables.isEmpty()) {
-                table_subtables.put(table, mySubtables);
-            }
-        }
-        return table_subtables;
-    }
-
-
-
-
 }
+//    public static Map<String, List<String>> getTable_Subtable() throws SQLException {
+//        DbInfo dbInfo = new DbInfo();
+//        List<String> allTables = dbInfo.getTables(autoCommit, dbName, user, password);
+//        List<String> subtables = new ArrayList<>();
+//        for (String table : allTables) {
+//            if (table.startsWith("__")) {
+//                subtables.add(table);
+//            }
+//        }
+//        Map<String, List<String>> table_subtables = new HashMap<>();
+//        for (String table : allTables) {
+//            List<String> mySubtables = new ArrayList<>();
+//            for (String subtable : subtables) {
+//                if(subtable.startsWith("__" + table))mySubtables.add(subtable);
+//            }
+//            if(!subtables.isEmpty()) {
+//                table_subtables.put(table, mySubtables);
+//            }
+//        }
+//        return table_subtables;
+//    }

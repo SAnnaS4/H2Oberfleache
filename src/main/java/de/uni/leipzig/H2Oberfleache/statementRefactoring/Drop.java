@@ -16,15 +16,15 @@ public class Drop extends Statement{
     public String nf2ToNf1() throws SQLException {
         sql = prepareSQL(sql);
         List<String> tablenames = getDropedTabelnames();
-        List<String> querys = new ArrayList<>();
+        List<String> queries = new ArrayList<>();
         if(!sql.endsWith(";")){sql += ";"; }
         for (String tablename : tablenames) {
-            querys.addAll(createQuerys(getNF2TableNamesRec(tablename)));
+            queries.addAll(createQueries(getNF2TableNamesRec(tablename)));
             String delete = "DELETE FROM " + nf2TabName + " WHERE NAME = '" + tablename + "'";
             java.sql.Statement st1 = BaseController.connection.getCon().createStatement();
             st1.executeUpdate(delete);
         }
-        for (String query : querys) {
+        for (String query : queries) {
             sql += query;
         }
         return sql;
@@ -41,14 +41,14 @@ public class Drop extends Statement{
         return names;
     }
 
-    public List<String> createQuerys(List<String> tablenames) throws SQLException {
-        List<String> querys = new ArrayList<>();
+    public List<String> createQueries(List<String> tablenames) throws SQLException {
+        List<String> queries = new ArrayList<>();
         for (String tablename : tablenames) {
-            querys.add("DROP TABLE " + tablename + ";");
+            queries.add("DROP TABLE " + tablename + ";");
             String delete = "DELETE FROM " +nf2TabName + " WHERE NAME = '" + tablename + "'";
             java.sql.Statement st1 = BaseController.connection.getCon().createStatement();
             st1.executeUpdate(delete);
         }
-        return querys;
+        return queries;
     }
 }

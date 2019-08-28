@@ -39,7 +39,7 @@ public class SQL_Parser {
         return parser.name().getText();
     }
 
-    public static void print(RuleContext ctx) {
+    private static void print(RuleContext ctx) {
         Map<String, List<RuleContext>> map = new HashMap<>();
         map = explore(ctx, 0, map);
         for (Map.Entry<String, List<RuleContext>> entry : map.entrySet()) {

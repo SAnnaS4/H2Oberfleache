@@ -42,7 +42,7 @@ public class Select1 extends Statement{
             for(int i = 0; i<selects.length; i++){
                 if(selects[i].contains(entry.getKey())) {
                     String[] teile = selects[i].split("FROM");
-                    selects[i] = teile[0] + " FROM " + entry.getValue();
+                    selects[i] = teile[0] + " FROM " + entry.getName();
                     for (int j = 1; j < teile.length; j++) selects[i] += teile[j];
                 }
             }
@@ -53,7 +53,7 @@ public class Select1 extends Statement{
         }
         for (Map.Entry<String, String> entry : column_newselect.entrySet()) {
             if(query.contains(entry.getKey())) {
-                query = query.replace(entry.getKey(), entry.getValue());
+                query = query.replace(entry.getKey(), entry.getName());
             }
         }
         return query;

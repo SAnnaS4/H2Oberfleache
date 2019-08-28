@@ -6,10 +6,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class DBConnection {
-
     private Connection con;
-    String url;
-
     private static DBConnection dbConnection;
 
     public static DBConnection getInstance(Boolean autoCommit, String DbName, String user, String password){
@@ -21,7 +18,7 @@ public class DBConnection {
 
     private DBConnection(Boolean autoCommit, String DbName, String user, String password) {
         try {
-            this.url = "jdbc:h2:~/" + DbName;
+            String url = "jdbc:h2:~/" + DbName;
             this.con = DriverManager.getConnection(url,user,password);
             con.setAutoCommit(autoCommit);
         } catch (SQLException e) {
@@ -29,7 +26,7 @@ public class DBConnection {
         }
     }
 
-    public void setAutoCommit(Boolean autoCommit) throws SQLException {
+    void setAutoCommit(Boolean autoCommit) throws SQLException {
         this.con.setAutoCommit(autoCommit);
     }
 

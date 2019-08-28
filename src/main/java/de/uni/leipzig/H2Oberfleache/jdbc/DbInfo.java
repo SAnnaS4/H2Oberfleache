@@ -36,14 +36,11 @@ public class DbInfo {
         return result;
     }
 
-    public Map<Integer, String> getAllJdbcTypeNames() throws IllegalAccessException {
-
+    private Map<Integer, String> getAllJdbcTypeNames() throws IllegalAccessException {
         Map<Integer, String> result = new HashMap<>();
-
         for (Field field : Types.class.getFields()) {
             result.put((Integer)field.get(null), field.getName());
         }
-
         return result;
     }
 }

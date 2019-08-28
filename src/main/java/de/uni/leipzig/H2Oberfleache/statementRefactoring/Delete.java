@@ -19,30 +19,30 @@ public class Delete extends Update_Delete{
         sql = prepareSQL(sql);
         whichStmt = "delete_stmt";
         Map<String, List<RuleContext>> map = SQL_Parser.getParsedMap(sql);
-        String result = sql;
+        StringBuilder result = new StringBuilder(sql);
         String tablename = getTablename(map.get("qualified_table_name").get(0), false);
         List<String> subtables = getNF2TableNamesRec(tablename);
         List<String> table = new ArrayList<>();
         table.add(tablename);
         if(!subtables.isEmpty()) {
-            result = "";
-            List<String> querys = createQuerys(table, map.get("delete_stmt").get(0), tablename, sql, this::makeQuerys);
-            for (String query : querys) {
-                result += query;
+            result = new StringBuilder();
+            List<String> queries = createQuerys(table, map.get("delete_stmt").get(0), tablename, sql, this::makeQuerys);
+            for (String query : queries) {
+                result.append(query);
             }
         }else if(map.get("qualified_table_name").get(0).getText().contains(".")){
-           result =  replaceRuleContext(map.get("qualified_table_name").get(0), tablename);
+           result = new StringBuilder(replaceRuleContext(map.get("qualified_table_name").get(0), tablename));
         }
-        return result;
+        return result.toString();
     }
 
-    public List<String> makeQuerys(String where, String tablename) throws SQLException {
-        List<String> querys = new ArrayList<>();
+    private List<String> makeQuerys(String where, String tablename) throws SQLException {
+        List<String> queries = new ArrayList<>();
         String delete = "DELETE FROM " + tablename + " ";
         delete += " " + where + "; ";
-        if(tablename_ID.containsKey(tablename))querys.add(delete);
+        if(tablename_ID.containsKey(tablename))queries.add(delete);
         List<String> subtables = getNF2TableNames(tablename);
-        if(!subtables.isEmpty())querys.addAll(newQuerys(delete, tablename, subtables, this::makeQuerys));
-        return querys;
+        if(!subtables.isEmpty())queries.addAll(newQueries(delete, tablename, subtables, this::makeQuerys));
+        return queries;
     }
 }

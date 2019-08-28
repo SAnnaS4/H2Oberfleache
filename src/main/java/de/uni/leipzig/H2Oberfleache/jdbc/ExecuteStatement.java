@@ -17,14 +17,12 @@ public class ExecuteStatement {
 
     public ResultSet execQuery() throws SQLException {
         Statement st = DBcon.getCon().createStatement();
-        ResultSet rs = st.executeQuery(query);
-        return rs;
+        return st.executeQuery(query);
     }
 
     public int execUpdate() throws SQLException {
         Statement st = DBcon.getCon().createStatement();
-        int rs = st.executeUpdate(query);
-        return rs;
+        return st.executeUpdate(query);
     }
 
     public ExecuteStatement(String dBName, String query, Boolean autoCommit, String user, String password) throws SQLException {

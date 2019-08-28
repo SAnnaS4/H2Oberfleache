@@ -16,24 +16,17 @@ public class BaseController{
     public static DBConnection connection;
     public static String user = "sa";
     public static String password = "sa";
-    public static String css =
-            "<style>\n" +
-                    "table, td, th {border: 2px solid black;" +
-                    "  text-align: center;}\n" +
-                    "table {border-collapse: collapse;\n" +
-                    "  width: 70%;}\n" +
-                    "\n" +
-                    "th, td {padding: 5px;}\n" +
-                    "th {background-color: #f2f2f2;}\n" +
-                    "</style>";
 
     public void onPageLoad(){
         try {
-            this.connection = DBConnection.getInstance(autoCommit, dbName, user, password);
+            connection = DBConnection.getInstance(autoCommit, dbName, user, password);
         }catch (Exception e){
             goToPage("login");
         }
     }
+
+
+
     public String getUser(){return user; }
 
     public String getPassword(){return password;}
