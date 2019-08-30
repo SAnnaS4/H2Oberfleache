@@ -78,7 +78,7 @@ public class Where extends Statement{
         return result;
     }
 
-    private static String getAlias(Map<String, String> alias_tablename, String column, List<String> maintables){
+    public static String getAlias(Map<String, String> alias_tablename, String column, List<String> maintables){
         for (Map.Entry<String, String> entry : alias_tablename.entrySet()) {
             if(maintables.contains(entry.getValue())) {
                 List<String> attributes = getAllAttributes(entry.getValue());
@@ -90,7 +90,7 @@ public class Where extends Statement{
         return "";
     }
 
-    private static List<String> getAllAttributes(String tablename){
+    public static List<String> getAllAttributes(String tablename){
         DbInfo dbInfo = new DbInfo();
         List<String> attributes = new ArrayList<>();
         try {
