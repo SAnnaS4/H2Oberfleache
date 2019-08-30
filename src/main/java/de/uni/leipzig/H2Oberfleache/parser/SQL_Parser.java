@@ -17,7 +17,7 @@ public class SQL_Parser {
         String sql1 = "CREATE TABLE NF(NB INT, NF1 SET(ROW(NS VARCHAR(10), NAME INT)), NF2 SET(ROW(NS VARCHAR(10), NAME INT)))";
         String sql2 = "CREATE TABLE Abteilung (AbtNr Int, Mitarbeiter SET( ROW( MaNr Int, Funktion String, Projekt " +
                 "SET( ROW(ProjNr Int, ProjName String)))), Ausstattung SET( ROW (Anzahl Int, Typ String)))";
-        String sql = "select nf.nf2, nf.*, a.b";
+        String sql = "select count(nf.nf2), nf.*, a.b from nf";
         Map<String, List<RuleContext>> map = getParsedMap(sql);
         SQLiteLexer lexer = new SQLiteLexer(CharStreams.fromString(sql));
         SQLiteParser parser = new SQLiteParser(new CommonTokenStream(lexer));

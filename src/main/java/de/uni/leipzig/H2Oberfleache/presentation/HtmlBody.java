@@ -106,20 +106,6 @@ public class HtmlBody {
                 && attributes.get(entry.getKey()).getName().endsWith("ID"));
     }
 
-    private List<String> concernedTables(List<String> tables, Map<String, List<List<Table.Content>>> tablename_content){
-        List<String> tablenames = new ArrayList<>();
-        for (String table : tables) {
-            if(tablename_content.containsKey(table))tablenames.add(table);
-        }
-        if(tablenames.isEmpty()){
-            for (String table : tables) {
-                tablenames.addAll(Statement.getNF2TableNames(table));
-            }
-            tablenames = concernedTables(tablenames, tablename_content);
-        }
-        return tablenames;
-    }
-
     public String makeHTML(List<String> tablenames, Map<String, List<List<Table.Content>>> tablename_inhalt){
         StringBuilder body = new StringBuilder("<tbody>\n");
         Map<Integer, Integer> attribut_position = new HashMap<>();
@@ -146,3 +132,17 @@ public class HtmlBody {
         return body.toString();
     }
 }
+
+//    private List<String> concernedTables(List<String> tables, Map<String, List<List<Table.Content>>> tablename_content){
+//        List<String> tablenames = new ArrayList<>();
+//        for (String table : tables) {
+//            if(tablename_content.containsKey(table))tablenames.add(table);
+//        }
+//        if(tablenames.isEmpty()){
+//            for (String table : tables) {
+//                tablenames.addAll(Statement.getNF2TableNames(table));
+//            }
+//            tablenames = concernedTables(tablenames, tablename_content);
+//        }
+//        return tablenames;
+//    }

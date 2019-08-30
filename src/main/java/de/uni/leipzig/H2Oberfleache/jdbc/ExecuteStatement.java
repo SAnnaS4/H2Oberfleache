@@ -1,6 +1,5 @@
 package de.uni.leipzig.H2Oberfleache.jdbc;
 
-import de.uni.leipzig.H2Oberfleache.jdbc.DBConnection;
 import lombok.Getter;
 import lombok.Setter;
 
