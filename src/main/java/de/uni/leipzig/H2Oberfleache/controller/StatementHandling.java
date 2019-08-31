@@ -1,8 +1,10 @@
 package de.uni.leipzig.H2Oberfleache.controller;
 
 import de.uni.leipzig.H2Oberfleache.jdbc.DBConnection;
+import de.uni.leipzig.H2Oberfleache.jdbc.DbInfo;
 import de.uni.leipzig.H2Oberfleache.jdbc.ExecuteStatement;
 import de.uni.leipzig.H2Oberfleache.presentation.HtmlBuilder;
+import de.uni.leipzig.H2Oberfleache.statementRefactoring.Grouping;
 import de.uni.leipzig.H2Oberfleache.statementRefactoring.Statement;
 import de.uni.leipzig.H2Oberfleache.tables.Table;
 import lombok.Getter;
@@ -86,13 +88,21 @@ public class StatementHandling extends BaseController implements Serializable {
     }
 
     private Table readResultSet(ResultSet rs) throws SQLException {
+        DbInfo dbInfo = new DbInfo();
+        List<String> tables = dbInfo.getTables(false, dbName, user, password);
         List<List<Object>> content = new ArrayList<>();
         List<Map<String, String>> lables_tablename = new ArrayList<>();
         int j = rs.getMetaData().getColumnCount();
         for(int i= 1; i<=j; i++){
             String label = rs.getMetaData().getColumnLabel(i);
             String tablename = rs.getMetaData().getTableName(i);
-            if(tablename.equals("") && label.startsWith("__") && label.endsWith("ID"))tablename = label.substring(2, label.length()-2);
+            if(tablename.equals("") && label.startsWith("__") && label.endsWith("ID"))
+                tablename = label.substring(2, label.length()-2);
+            if(!tables.contains(tablename)){
+                tablename = Grouping.columnname_tables.get(label).get(0);
+                Grouping.columnname_tables.get(label).remove(0);
+                if(Grouping.columnname_tables.get(label).size() == 1)Grouping.columnname_tables.remove(label);
+            }
             Map<String, String> entry = new HashMap<>();
             entry.put(label, tablename);
             lables_tablename.add(entry);

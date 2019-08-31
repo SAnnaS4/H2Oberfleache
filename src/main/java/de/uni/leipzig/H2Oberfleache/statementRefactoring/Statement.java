@@ -134,7 +134,11 @@ public class Statement {
         ParserRuleContext parserRuleContext = (ParserRuleContext) toCut;
         int start = parserRuleContext.start.getStartIndex();
         int stop = parserRuleContext.stop.getStopIndex();
-        return sql.substring(start, stop+1);
+        String newSQL = "";
+        for(int i = start; i<=stop; i++){
+            newSQL += position_sql.get(i);
+        }
+        return newSQL;
     }
 
     public void makeMap(String sql){

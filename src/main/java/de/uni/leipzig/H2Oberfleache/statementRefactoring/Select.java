@@ -228,6 +228,7 @@ public class Select extends Statement{
             List<RuleContext> result_columns = select_or_values.get("result_column");
             for (RuleContext result_column : result_columns) {
                 if(!result_column.getText().equals("*")) {
+                    Boolean updated = false;
                     String newExp = "";
                     RuleContext expr = null;
                     ParseTree element = result_column.getChild(0);
@@ -235,7 +236,12 @@ public class Select extends Statement{
                         expr = (RuleContext) element;
                     }
                     assert expr != null;
-                    if(SQLiteParser.ruleNames[expr.getRuleIndex()].equals("aggregate")){
+                    Map<String, List<RuleContext>> childs = SQL_Parser.getChildMap(expr);
+                    if(childs.containsKey("aggregate")){
+                        Grouping grouping = new Grouping(position_sql, alias_tablename, maintables, sql);
+                        grouping.aggregateInSelect(expr, select_or_values);
+                        sql = grouping.sql;
+                        updated = true;
                         //immer + entsprechender nf2-schlüssel
                         //wenn * * weg
                     }else if (result_column.getText().contains("*")) {
@@ -248,7 +254,7 @@ public class Select extends Statement{
                             notAdded = false;
                         }
                     }
-                    sql = replaceRuleContext(expr, newExp);
+                    if(!updated)sql = replaceRuleContext(expr, newExp);
                 }
             }
         }
