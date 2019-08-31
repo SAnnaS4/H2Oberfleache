@@ -23,7 +23,7 @@ public class Where extends Statement{
             if(ruleName.equals("where_expr")){
                 List<RuleContext> exprs = exploreExpr((RuleContext) ruleContext.getChild(1));
                 for (RuleContext expr : exprs) {
-                        String newExpr = changeExpr(expr, alias_tablename, haupttables);
+                        String newExpr = changeExpr(expr, alias_tablename, haupttables, position_sql, sql);
                         if (!newExpr.equals(expr.getText())) {
                             this.sql = replaceRuleContext(expr, newExpr);
                         }
@@ -32,7 +32,7 @@ public class Where extends Statement{
             if(SQLiteParser.ruleNames[ruleContext.getRuleIndex()].equals("group_by")){
                 for (RuleContext context1 : SQL_Parser.getChildList(ruleContext)) {
                     if(SQLiteParser.ruleNames[context1.getRuleIndex()].equals("expr")){
-                        String newExpr = changeExpr(context1, alias_tablename, haupttables);
+                        String newExpr = changeExpr(context1, alias_tablename, haupttables, position_sql, sql);
                         if(!newExpr.equals(context.getText())){
                             this.sql = replaceRuleContext(context, newExpr);
                         }
@@ -44,6 +44,10 @@ public class Where extends Statement{
 
     private List<RuleContext> exploreExpr(RuleContext expr){
         List<RuleContext> exprs = new ArrayList<>();
+        Map<String, List<RuleContext>> children = SQL_Parser.getChildMap(expr);
+        if(children.containsKey("aggregate")){
+            exprs.add(expr);
+        }else if(children.containsKey("expr"))
         for (RuleContext context : SQL_Parser.getChildList(expr)) {
             if(SQLiteParser.ruleNames[context.getRuleIndex()].equals("expr")){
                 exprs.addAll(exploreExpr(context));
@@ -59,16 +63,21 @@ public class Where extends Statement{
         return exprs;
     }
 
-    public static String changeExpr(RuleContext expr, Map<String, String> alias_tablename, List<String> maintables){
-        Map<String, List<RuleContext>> childs = SQL_Parser.getChildMap(expr);
-        if(!childs.containsKey("table_name") && !childs.containsKey("function_name") && !alias_tablename.containsKey(expr.getText())){
-            return getAlias(alias_tablename, expr.getText(), maintables) + "." + expr.getText();
+    public static String changeExpr(RuleContext expr, Map<String, String> alias_tablename,
+                                    List<String> maintables, Map<Integer, String> position_sql, String sql){
+        Map<String, List<RuleContext>> children = SQL_Parser.getChildMap(expr);
+        if(children.containsKey("aggregate")){
+            Grouping grouping = new Grouping(position_sql, alias_tablename, maintables, sql);
+            return grouping.aggragateInWhere(expr);
         }
-        if(childs.containsKey("function_name")){
-            Map<String, List<RuleContext>> child = SQL_Parser.getChildMap(childs.get("function_name").get(0));
+        if(children.containsKey("function_name")){
+            Map<String, List<RuleContext>> child = SQL_Parser.getChildMap(children.get("function_name").get(0));
             if(child.containsKey("expr")){
-                return changeExpr(child.get("expr").get(0), alias_tablename, maintables);
+                return changeExpr(child.get("expr").get(0), alias_tablename, maintables, position_sql, sql);
             }
+        }
+        if(!children.containsKey("table_name") && !children.containsKey("function_name") && !alias_tablename.containsKey(expr.getText())){
+            return getAlias(alias_tablename, expr.getText(), maintables) + "." + expr.getText();
         }
         String[] tables = expr.getText().split("\\.");
         String result = expr.getText();
@@ -78,7 +87,7 @@ public class Where extends Statement{
         return result;
     }
 
-    public static String getAlias(Map<String, String> alias_tablename, String column, List<String> maintables){
+    private static String getAlias(Map<String, String> alias_tablename, String column, List<String> maintables){
         for (Map.Entry<String, String> entry : alias_tablename.entrySet()) {
             if(maintables.contains(entry.getValue())) {
                 List<String> attributes = getAllAttributes(entry.getValue());

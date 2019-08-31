@@ -219,7 +219,7 @@ public class Select extends Statement{
             List<RuleContext> ordering_terms = context.get("ordering_term");
             for (RuleContext ordering_term : ordering_terms) {
                 RuleContext expr = (RuleContext) ordering_term.getChild(0);
-                String newExp = Where.changeExpr(expr, alias_tablename, maintables);
+                String newExp = Where.changeExpr(expr, alias_tablename, maintables, position_sql, sql);
                 sql = replaceRuleContext(expr, newExp);
             }
         }
@@ -248,7 +248,7 @@ public class Select extends Statement{
                         newExp = addAllSubtables(expr);
 
                     }else{
-                        newExp = Where.changeExpr(expr, alias_tablename, maintables);
+                        newExp = Where.changeExpr(expr, alias_tablename, maintables, position_sql, sql);
                         if (notAdded && zurAusgabe) {
                             newExp += addIDSToQuery();
                             notAdded = false;
