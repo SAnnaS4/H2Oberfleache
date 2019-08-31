@@ -80,7 +80,10 @@ public class Grouping extends Statement{
         String obertabkey = "__" + obertab + "ID";
         String tabkey = "__" + tablename + "ID";
         String column;
-        if(!expr1.getText().contains("*"))column = childs.get("column_name").get(0).getText();
+        if(!expr1.getText().contains("*")){
+            List<RuleContext> columns = childs.get("column_name");
+            column = columns.get(columns.size()-1).getText();
+        }
         else column = tabkey;
         from += "_OT." + obertabkey + " AS ID, " + functionName + "(" + distinct + "_UT." + column + ") AS " + functionName + " FROM " +
                 obertab + " _OT, " + tablename + " _UT WHERE _OT." + obertabkey + " = _UT." + obertabkey +
