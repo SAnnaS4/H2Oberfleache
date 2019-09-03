@@ -114,18 +114,5 @@ public class Grouping extends Statement{
         this.sql = replaceRuleContext(lastFrom, newFrom);
     }
 
-    private static String getObertabelle(String tablename) {
-        String obertab = "";
-        String selection = "SELECT OBERTABELLE FROM " + nf2TabName + " WHERE NAME = '" + tablename + "'";
-        try {
-            java.sql.Statement st = BaseController.connection.getCon().createStatement();
-            ResultSet rs = st.executeQuery(selection);
-            while (rs.next()) {
-                obertab = rs.getString(1);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return obertab;
-    }
+
 }

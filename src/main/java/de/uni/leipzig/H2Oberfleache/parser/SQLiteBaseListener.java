@@ -712,6 +712,18 @@ public class SQLiteBaseListener implements SQLiteListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterUn_nest_stmt(SQLiteParser.Un_nest_stmtContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitUn_nest_stmt(SQLiteParser.Un_nest_stmtContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterTable_or_subquery(SQLiteParser.Table_or_subqueryContext ctx) { }
 	/**
 	 * {@inheritDoc}

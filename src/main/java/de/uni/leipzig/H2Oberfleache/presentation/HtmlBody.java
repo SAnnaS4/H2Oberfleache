@@ -85,6 +85,15 @@ public class HtmlBody {
                 attribut_td.get(entry.getKey()).add(makeEmpty(difference, entry.getKey()));
             }
         }
+        for (String tablename : tablenames) {
+            if(table_rowspan.get(tablename).isEmpty()){
+                for (Table.Attribute attribute : attributes) {
+                    if(attribute.getTable().equals(tablename)){
+                        attribut_td.get(attribute.getNumber()).add(makeEmpty(1, attribute.getNumber()));
+                    }
+                }
+            }
+        }
         return maxLineRowspan;
     }
 

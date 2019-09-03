@@ -258,7 +258,7 @@ select_stmt
  ;
 
 select_or_values
- : K_SELECT ( K_DISTINCT | K_ALL )? result_column ( ',' result_column )*
+ : K_SELECT ( K_DISTINCT | K_ALL )? (result_column) ( ',' result_column )*
    ( K_FROM ( table_or_subquery ( ',' table_or_subquery )* | join_clause ) )?
    ( where_expr )?
    ( group_by )?
@@ -431,8 +431,12 @@ common_table_expression
 
 result_column
  : '*'
- | expr ( K_AS? column_alias )?
+ | (un_nest_stmt|expr) ( K_AS? column_alias )?
  ;
+
+  un_nest_stmt
+   : (K_NEST|K_UNNEST) table_name K_ON '(' (column_name|un_nest_stmt)(',' (column_name|un_nest_stmt))* ')'
+   ;
 
 table_or_subquery
  : table_name ('.' column_name|'.' nf2_point_Notation)? ( K_AS? table_alias )?

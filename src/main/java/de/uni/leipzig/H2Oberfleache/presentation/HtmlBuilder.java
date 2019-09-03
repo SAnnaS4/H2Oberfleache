@@ -6,6 +6,7 @@ import de.uni.leipzig.H2Oberfleache.statementRefactoring.Statement;
 import de.uni.leipzig.H2Oberfleache.tables.Table;
 import lombok.Getter;
 import lombok.Setter;
+import org.antlr.v4.runtime.RuleContext;
 
 import java.sql.SQLException;
 import java.util.*;
@@ -52,26 +53,39 @@ public class HtmlBuilder {
         }
         Map<String, List<List<Table.Content>>> newtabelname_content = new HashMap<>();
         for (Map.Entry<String, List<List<Table.Content>>> table : tabelname_Inhalte.entrySet()) {
-            if (!isNF2Table(table.getKey())) {
+
+            if (!isNF2Table(table.getKey()) || !hasNF2Schluessel(tabelname_Attribute.get(table.getKey()), table.getKey())) {
                 newtabelname_content.put(table.getKey(), table.getValue());
             } else {
                 List<List<Table.Content>> newContent = new ArrayList<>();
-                List<String> keyList = new ArrayList<>();
-                for (List<Table.Content> tupel : table.getValue()) {
-                    String value = "";
-                    for (Table.Content content1 : tupel) {
+                List<List<String>> keyList = new ArrayList<>();
+                for (List<Table.Content> tuple : table.getValue()) {
+                    List<String> values = new ArrayList<>();
+                    for (Table.Content content1 : tuple) {
                         if (content1.getAttribute().getName().equals("__" + table.getKey() + "ID"))
-                            value = content1.getValue();
+                            values.add(content1.getValue());
+                        if(content1.getAttribute().getName().equals("__" + Statement.getObertabelle(table.getKey()) + "ID"))
+                            values.add(content1.getValue());
                     }
-                    if (!keyList.contains(value)) {
-                        newContent.add(tupel);
-                        keyList.add(value);
+                    if (!keyList.contains(values)) {
+                        newContent.add(tuple);
+                        keyList.add(values);
                     }
                 }
                 newtabelname_content.put(table.getKey(), newContent);
             }
         }
         return newtabelname_content;
+    }
+
+    private List<String> getObertables(String tablename){
+        List<String> tablenames = new ArrayList<>();
+        String obertab = Statement.getObertabelle(tablename);
+        if(!obertab.equals("")){
+            tablenames.add(obertab);
+            tablenames.addAll(getObertables(obertab));
+        }
+        return tablenames;
     }
 
     private Map<List<String>, Integer> getHighestNesting(Map<String, List<Table.Attribute>> tabelname_Attribute, List<Table.Attribute> attribute){
@@ -227,5 +241,14 @@ public class HtmlBuilder {
             if(entry.getKey().equals("__" + tablename + "ID"))return true;
         }
         return false;
+    }
+
+    private Boolean hasNF2Schluessel(List<Table.Attribute> attributes, String tablename){
+        String schluessel = "__" + tablename + "ID";
+        boolean hasSchluessel = false;
+        for (Table.Attribute attribute : attributes) {
+            if(attribute.getName().equals(schluessel))hasSchluessel = true;
+        }
+        return hasSchluessel;
     }
 }

@@ -14,9 +14,9 @@ public class Table {
     public List<Attribute> attributes = new ArrayList<>();
     public List<List<Content>> content;
     public List<Map<String, String>> oldAttributes;
-    public List<List<Object>> oldContent;
+    public List<List<String>> oldContent;
 
-    public Table(List<Map<String, String>> attributes_tablenames, List<List<Object>> content){
+    public Table(List<Map<String, String>> attributes_tablenames, List<List<String>> content){
         oldAttributes = attributes_tablenames;
         oldContent = content;
         int size = attributes_tablenames.size();
@@ -26,7 +26,7 @@ public class Table {
             }
         }
         List<List<Content>> table = new ArrayList<>();
-        for (List<Object> objects : content) {
+        for (List<String> objects : content) {
             List<Content> list = new ArrayList<>();
             for (Attribute attribute : this.attributes) {
                 Content content1 = new Content(attribute, String.valueOf(objects.get(attribute.getNumber())));

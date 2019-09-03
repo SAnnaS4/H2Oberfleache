@@ -237,7 +237,9 @@ public class Select extends Statement{
                     }
                     assert expr != null;
                     Map<String, List<RuleContext>> childs = SQL_Parser.getChildMap(expr);
-                    if(childs.containsKey("aggregate")){
+                    if(SQLiteParser.ruleNames[expr.getRuleIndex()].equals("un_nest_stmt")){
+                        newExp =setNestUnnestAttributes(expr, childs);
+                    }else if(childs.containsKey("aggregate")){
                         Grouping grouping = new Grouping(position_sql, alias_tablename, maintables, sql);
                         grouping.aggregateInSelect(expr, select_or_values);
                         sql = grouping.sql;
@@ -266,6 +268,27 @@ public class Select extends Statement{
             }
         }
         return sql;
+    }
+
+    private String setNestUnnestAttributes(RuleContext un_nest_stmt, Map<String, List<RuleContext>> children){
+        String aliasStart = un_nest_stmt.getChild(0).getText().equals("NEST")? "n_" : "un_";
+        String tablename = children.get("table_name").get(0).getText();
+        if(!alias_tablename.containsKey(tablename)) {
+            for (Map.Entry<String, String> entry : alias_tablename.entrySet()) {
+                if (entry.getValue().equals(tablename)) tablename = entry.getKey();
+            }
+        }
+        List<RuleContext> column_name = children.getOrDefault("column_name", new ArrayList<>());
+        List<RuleContext> nests = children.getOrDefault("un_nest_stmt", new ArrayList<>());
+        StringBuilder result = new StringBuilder();
+        for (RuleContext ruleContext : column_name) {
+            result.append(tablename).append(".").append(ruleContext.getText()).append(" AS ").append(aliasStart).append(ruleContext.getText()).append(" , ");
+        }
+        for (RuleContext ruleContext : nests) {
+            result.append(setNestUnnestAttributes(ruleContext, SQL_Parser.getChildMap(ruleContext)));
+        }
+        result = new StringBuilder(result.substring(0, result.length() - 2));
+        return result.toString();
     }
 
 }

@@ -141,6 +141,21 @@ public class Statement {
         return newSQL;
     }
 
+    public static String getObertabelle(String tablename) {
+        String obertab = "";
+        String selection = "SELECT OBERTABELLE FROM " + nf2TabName + " WHERE NAME = '" + tablename + "'";
+        try {
+            java.sql.Statement st = BaseController.connection.getCon().createStatement();
+            ResultSet rs = st.executeQuery(selection);
+            while (rs.next()) {
+                obertab = rs.getString(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return obertab;
+    }
+
     public void makeMap(String sql){
         for(int i = 0; i < sql.length(); i++){
             String c = "" + sql.charAt(i);

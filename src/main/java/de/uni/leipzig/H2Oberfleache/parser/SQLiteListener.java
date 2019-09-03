@@ -588,6 +588,16 @@ public interface SQLiteListener extends ParseTreeListener {
 	 */
 	void exitResult_column(SQLiteParser.Result_columnContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link SQLiteParser#un_nest_stmt}.
+	 * @param ctx the parse tree
+	 */
+	void enterUn_nest_stmt(SQLiteParser.Un_nest_stmtContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link SQLiteParser#un_nest_stmt}.
+	 * @param ctx the parse tree
+	 */
+	void exitUn_nest_stmt(SQLiteParser.Un_nest_stmtContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link SQLiteParser#table_or_subquery}.
 	 * @param ctx the parse tree
 	 */
