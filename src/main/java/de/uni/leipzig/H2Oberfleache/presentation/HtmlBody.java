@@ -32,31 +32,35 @@ public class HtmlBody {
         usedAttributes = new ArrayList<>();
         Map<String, List<Integer>> table_rowspan = new HashMap<>();
         for (String tablename : tablenames) {
-            table_rowspan.put(tablename, new ArrayList<>());
-            List<String> subtables = Statement.getNF2TableNames(tablename);
-            String mySchluessel = "__" + tablename + "ID";
-            for (List<Table.Content> contentList : tablename_inhalt.get(tablename)) {
-                String mySchluesselValue = "";
-               // List<List<Table.Content>> myValues = new ArrayList<>();
-                for (Table.Content content : contentList) {
-                    if((content.getAttribute().getName().equals(OTSchluessel) && content.getValue().equals(OTschluesselValue)) || OTSchluessel.equals("")){
-                        for (Table.Content content1 : contentList) {
-                            if(!usedAttributes.contains(content1.getAttribute().getNumber()))usedAttributes.add(content1.getAttribute().getNumber());
-                            if (content1.getAttribute().getName().equals(mySchluessel))mySchluesselValue = content1.getValue();
+                table_rowspan.put(tablename, new ArrayList<>());
+            if (tablename_inhalt.containsKey(tablename)) {
+                List<String> subtables = Statement.getNF2TableNames(tablename);
+                String mySchluessel = "__" + tablename + "ID";
+                for (List<Table.Content> contentList : tablename_inhalt.get(tablename)) {
+                    String mySchluesselValue = "";
+                    // List<List<Table.Content>> myValues = new ArrayList<>();
+                    for (Table.Content content : contentList) {
+                        if ((content.getAttribute().getName().equals(OTSchluessel) && content.getValue().equals(OTschluesselValue)) || OTSchluessel.equals("")) {
+                            for (Table.Content content1 : contentList) {
+                                if (!usedAttributes.contains(content1.getAttribute().getNumber()))
+                                    usedAttributes.add(content1.getAttribute().getNumber());
+                                if (content1.getAttribute().getName().equals(mySchluessel))
+                                    mySchluesselValue = content1.getValue();
+                            }
+                            //myValues.add(contentList);
+                            Integer rowspan = 1;
+                            if (!subtables.isEmpty()) {
+                                List<Integer> usedAttributesAlt = usedAttributes;
+                                rowspan = makeChildList(mySchluesselValue, subtables, mySchluessel, tablename_inhalt);
+                                usedAttributes.addAll(usedAttributesAlt);
+                            }
+                            for (Table.Content content1 : contentList) {
+                                HtmlBody html_td = new HtmlBody(rowspan, content1);
+                                attribut_td.get(content1.getAttribute().getNumber()).add(html_td);
+                            }
+                            table_rowspan.get(tablename).add(rowspan);
+                            break;
                         }
-                        //myValues.add(contentList);
-                        Integer rowspan = 1;
-                        if(!subtables.isEmpty()){
-                            List<Integer> usedAttributesAlt = usedAttributes;
-                            rowspan= makeChildList(mySchluesselValue, subtables, mySchluessel, tablename_inhalt);
-                            usedAttributes.addAll(usedAttributesAlt);
-                        }
-                        for (Table.Content content1 : contentList) {
-                            HtmlBody html_td = new HtmlBody(rowspan, content1);
-                            attribut_td.get(content1.getAttribute().getNumber()).add(html_td);
-                        }
-                        table_rowspan.get(tablename).add(rowspan);
-                        break;
                     }
                 }
             }
@@ -86,7 +90,7 @@ public class HtmlBody {
             }
         }
         for (String tablename : tablenames) {
-            if(table_rowspan.get(tablename).isEmpty()){
+            if(table_rowspan.getOrDefault(tablename, new ArrayList<>()).isEmpty()){
                 for (Table.Attribute attribute : attributes) {
                     if(attribute.getTable().equals(tablename)){
                         attribut_td.get(attribute.getNumber()).add(makeEmpty(1, attribute.getNumber()));

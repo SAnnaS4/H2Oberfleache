@@ -174,16 +174,16 @@ public class HtmlBuilder {
             for (Table.Attribute attribute : attributes) {
                 if (tabelname_Attribute.containsKey(attribute.getTable())) {
                     Integer depth = depth(tabelname_Attribute, highestTablenames.get(0), attribute.getTable());
-                    if (Objects.equals(depth, height)) {
-                        if (!ids.contains(attribute.getNumber())) {
+                    if (!ids.contains(attribute.getNumber())) {
+                        if (Objects.equals(depth, height)) {
                             head.append("<th rowspan=\"").append(highest - height + 1).append("\">").append(attribute.getName()).append("</th>\n");
                             attributCounter++;
+                            newAttributList.add(attribute);
                         }
-                        newAttributList.add(attribute);
-                    }
-                    if (depth == height + 1 && !includedTables.contains(attribute.getTable())) {
-                        head.append("<th colspan=\"").append(getColspan(tabelname_Attribute, attribute.getTable())).append("\">").append(getTablename(attribute.getTable())).append("</th>");
-                        includedTables.add(attribute.getTable());
+                        if (depth == height + 1 && !includedTables.contains(attribute.getTable())) {
+                            head.append("<th colspan=\"").append(getColspan(tabelname_Attribute, attribute.getTable())).append("\">").append(getTablename(attribute.getTable())).append("</th>");
+                            includedTables.add(attribute.getTable());
+                        }
                     }
                 }
             }

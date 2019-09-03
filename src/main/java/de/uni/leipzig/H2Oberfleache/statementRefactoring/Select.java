@@ -19,6 +19,7 @@ public class Select extends Statement{
     private Map<String, List<String>> parentTabAlias_childTabAliases = new HashMap<>();
     private List<String> maintables = new ArrayList<>();
     String sql;
+    private List<String> schluessel = new ArrayList<>();
     private Boolean zurAusgabe;
     private Map<String, List<RuleContext>> select_or_values = new HashMap<>();
 
@@ -68,6 +69,7 @@ public class Select extends Statement{
         StringBuilder idsToQuery = new StringBuilder();
         for (Map.Entry<String, List<String>> entry : parentTabAlias_childTabAliases.entrySet()) {
             String id = "__" + alias_tablename.get(entry.getKey()) + "ID";
+            schluessel.add(id);
             if(maintables.contains(alias_tablename.get(entry.getKey()))) {
                 idsToQuery.append(", ").append(entry.getKey()).append(".").append(id);
             }else {
@@ -79,6 +81,7 @@ public class Select extends Statement{
                 idsToQuery.append(", ").append(childtabAlias).append(".").append(id);
                 if(!parentTabAlias_childTabAliases.containsKey(childtabAlias)){
                     String subid = "__" + alias_tablename.get(childtabAlias) + "ID";
+                    schluessel.add(subid);
                     idsToQuery.append(", ").append(childtabAlias).append(".").append(subid);
                 }
             }
@@ -228,7 +231,7 @@ public class Select extends Statement{
             List<RuleContext> result_columns = select_or_values.get("result_column");
             for (RuleContext result_column : result_columns) {
                 if(!result_column.getText().equals("*")) {
-                    Boolean updated = false;
+                    boolean updated = false;
                     String newExp = "";
                     RuleContext expr = null;
                     ParseTree element = result_column.getChild(0);
@@ -238,14 +241,16 @@ public class Select extends Statement{
                     assert expr != null;
                     Map<String, List<RuleContext>> childs = SQL_Parser.getChildMap(expr);
                     if(SQLiteParser.ruleNames[expr.getRuleIndex()].equals("un_nest_stmt")){
-                        newExp =setNestUnnestAttributes(expr, childs);
+                        newExp =setNestUnnestAttributes(expr, childs, "");
+                        if (notAdded && zurAusgabe) {
+                            newExp += addIDSToQuery();
+                            notAdded = false;
+                        }
                     }else if(childs.containsKey("aggregate")){
                         Grouping grouping = new Grouping(position_sql, alias_tablename, maintables, sql);
                         grouping.aggregateInSelect(expr, select_or_values);
                         sql = grouping.sql;
                         updated = true;
-                        //immer + entsprechender nf2-schlüssel
-                        //wenn * * weg
                     }else if (result_column.getText().contains("*")) {
                         newExp = addAllSubtables(expr);
 
@@ -270,8 +275,8 @@ public class Select extends Statement{
         return sql;
     }
 
-    private String setNestUnnestAttributes(RuleContext un_nest_stmt, Map<String, List<RuleContext>> children){
-        String aliasStart = un_nest_stmt.getChild(0).getText().equals("NEST")? "n_" : "un_";
+    private String setNestUnnestAttributes(RuleContext un_nest_stmt, Map<String, List<RuleContext>> children, String start){
+        String aliasStart = un_nest_stmt.getChild(0).getText().equals("NEST")? start + "n_" : start + "un_";
         String tablename = children.get("table_name").get(0).getText();
         if(!alias_tablename.containsKey(tablename)) {
             for (Map.Entry<String, String> entry : alias_tablename.entrySet()) {
@@ -285,7 +290,7 @@ public class Select extends Statement{
             result.append(tablename).append(".").append(ruleContext.getText()).append(" AS ").append(aliasStart).append(ruleContext.getText()).append(" , ");
         }
         for (RuleContext ruleContext : nests) {
-            result.append(setNestUnnestAttributes(ruleContext, SQL_Parser.getChildMap(ruleContext)));
+            result.append(setNestUnnestAttributes(ruleContext, SQL_Parser.getChildMap(ruleContext), aliasStart));
         }
         result = new StringBuilder(result.substring(0, result.length() - 2));
         return result.toString();
