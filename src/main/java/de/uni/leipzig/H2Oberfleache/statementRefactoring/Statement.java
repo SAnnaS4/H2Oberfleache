@@ -134,11 +134,11 @@ public class Statement {
         ParserRuleContext parserRuleContext = (ParserRuleContext) toCut;
         int start = parserRuleContext.start.getStartIndex();
         int stop = parserRuleContext.stop.getStopIndex();
-        String newSQL = "";
+        StringBuilder newSQL = new StringBuilder();
         for(int i = start; i<=stop; i++){
-            newSQL += position_sql.get(i);
+            newSQL.append(position_sql.get(i));
         }
-        return newSQL;
+        return newSQL.toString();
     }
 
     public static String getObertabelle(String tablename) {
@@ -156,7 +156,7 @@ public class Statement {
         return obertab;
     }
 
-    public void makeMap(String sql){
+    public void makePosition_sql(String sql){
         for(int i = 0; i < sql.length(); i++){
             String c = "" + sql.charAt(i);
             position_sql.put(i, c);

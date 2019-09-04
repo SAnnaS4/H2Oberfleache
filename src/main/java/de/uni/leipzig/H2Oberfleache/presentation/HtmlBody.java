@@ -1,5 +1,6 @@
 package de.uni.leipzig.H2Oberfleache.presentation;
 
+import de.uni.leipzig.H2Oberfleache.controller.StatementHandling;
 import de.uni.leipzig.H2Oberfleache.statementRefactoring.Statement;
 import de.uni.leipzig.H2Oberfleache.tables.Table;
 import lombok.Getter;
@@ -28,7 +29,7 @@ public class HtmlBody {
     }
 
     private Integer makeChildList(String OTschluesselValue, List<String> tablenames, String OTSchluessel,
-                                                      Map<String, List<List<Table.Content>>> tablename_inhalt){
+                                                      Map<String, List<List<Table.Content>>> tablename_inhalt, List<Table.Attribute> attributes){
         usedAttributes = new ArrayList<>();
         Map<String, List<Integer>> table_rowspan = new HashMap<>();
         for (String tablename : tablenames) {
@@ -49,9 +50,20 @@ public class HtmlBody {
                             }
                             //myValues.add(contentList);
                             Integer rowspan = 1;
-                            if (!subtables.isEmpty()) {
+                            if (!subtables.isEmpty() || StatementHandling.ober_untertabelle.containsKey(tablename)) {
                                 List<Integer> usedAttributesAlt = usedAttributes;
-                                rowspan = makeChildList(mySchluesselValue, subtables, mySchluessel, tablename_inhalt);
+                                rowspan = makeChildList(mySchluesselValue, subtables, mySchluessel, tablename_inhalt, attributes);
+                                if(StatementHandling.ober_untertabelle.containsKey(tablename)){
+                                    List<String> subtable = new ArrayList<>();
+                                    subtable.add(StatementHandling.ober_untertabelle.get(tablename));
+                                    String nestSchluessel = "__" + subtable.get(0) + "ID";
+                                    String nestMySchluessel = "";
+                                    for (Table.Content attribute : contentList) {
+                                        if(attribute.getAttribute().getName().equals(nestSchluessel))nestMySchluessel = attribute.getValue();
+                                    }
+                                    rowspan = makeChildList(nestMySchluessel, subtable, nestSchluessel, tablename_inhalt, attributes);
+                                    usedAttributes.addAll(usedAttributesAlt);
+                                }
                                 usedAttributes.addAll(usedAttributesAlt);
                             }
                             for (Table.Content content1 : contentList) {
@@ -119,7 +131,7 @@ public class HtmlBody {
                 && attributes.get(entry.getKey()).getName().endsWith("ID"));
     }
 
-    public String makeHTML(List<String> tablenames, Map<String, List<List<Table.Content>>> tablename_inhalt){
+    public String makeHTML(List<String> tablenames, Map<String, List<List<Table.Content>>> tablename_inhalt, List<Table.Attribute> attributes){
         StringBuilder body = new StringBuilder("<tbody>\n");
         Map<Integer, Integer> attribut_position = new HashMap<>();
         Map<Integer, Integer> nochInRowspan = new HashMap<>();
@@ -127,7 +139,7 @@ public class HtmlBody {
             attribut_position.put(attribute.getNumber(), 0);
             nochInRowspan.put(attribute.getNumber(), 0);
         }
-        Integer laenge = makeChildList("", tablenames, "", tablename_inhalt);
+        Integer laenge = makeChildList("", tablenames, "", tablename_inhalt, attributes);
         cleanMap();
         for(int i = 0; i<laenge; i++){
             body.append("<tr>\n");

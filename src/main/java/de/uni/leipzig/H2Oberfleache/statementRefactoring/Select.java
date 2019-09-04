@@ -1,5 +1,7 @@
 package de.uni.leipzig.H2Oberfleache.statementRefactoring;
 
+import de.uni.leipzig.H2Oberfleache.controller.BaseController;
+import de.uni.leipzig.H2Oberfleache.jdbc.DbInfo;
 import de.uni.leipzig.H2Oberfleache.parser.SQL_Parser;
 import de.uni.leipzig.H2Oberfleache.parser.SQLiteLexer;
 import de.uni.leipzig.H2Oberfleache.parser.SQLiteParser;
@@ -8,14 +10,16 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class Select extends Statement{
-    private boolean order = false;
-    private List<String> orderAttributes = new ArrayList<>();
+    private boolean nested = false;
+    private Map<String, String> nestedTables_alias = new HashMap<>();
+    private Map<String, List<String>> nestedTable_oberNestedTab = new HashMap<>();
     private static Integer aliasCounter = 0;
     private Map<String, String> alias_tablename = new HashMap<>();
     private Map<String, List<String>> parentTabAlias_childTabAliases = new HashMap<>();
@@ -28,7 +32,7 @@ public class Select extends Statement{
     public Select(String sql, Boolean zurAusgabe){
         this.sql = sql;
         this.zurAusgabe = zurAusgabe;
-        makeMap(sql);
+        makePosition_sql(sql);
     }
 
     public Select(Map<Integer, String> position_sql, String sql, Boolean zurAusgabe){
@@ -121,25 +125,87 @@ public class Select extends Statement{
             }
         }
         sql = updateWhereExpr(select_stmt, sql);
-        if(order){
-            sql = updateOrder(select_stmt, sql);
+        if(nested){
+            sql = updateOrder(sql);
         }
         return sql;
     }
-    private String updateOrder(RuleContext sql_stmt, String sql){
-        StringBuilder newOrderingTerms = new StringBuilder();
-        boolean komma = false;
-        for (String orderAttribute : orderAttributes) {
-            if(komma) newOrderingTerms.append(", ");
-            komma = true;
-            newOrderingTerms.append(orderAttribute);
+
+    private List<String> getAllChildAlias(String alias){
+        List<String> allAlias = new ArrayList<>();
+        allAlias.add(alias);
+        for (String s : parentTabAlias_childTabAliases.getOrDefault(alias, new ArrayList<>())) {
+            allAlias.addAll(getAllChildAlias(s));
         }
-        List<RuleContext> orderingTerm = SQL_Parser.getChildMap(sql_stmt).getOrDefault("ordering_term", new ArrayList<>());
-        if(orderingTerm.isEmpty()){
-            sql += " ORDER BY " + newOrderingTerms.toString();
-        }else {
-            String newOrder = newOrderingTerms + ", " + orderingTerm.get(0).getText();
-            sql = replaceRuleContext(orderingTerm.get(0), newOrder);
+        return allAlias;
+    }
+
+    private Map<String, List<String>> getAlias_Attributes(String alias){
+        Map<String, List<String>> alias_Attributes = new HashMap<>();
+        try {
+            alias_Attributes.put(alias, DbInfo.getColumnList(false, BaseController.dbName, alias_tablename.get(alias), BaseController.user, BaseController.password));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            System.out.println("Exception at Select getAlias_Attributes");
+            //e.printStackTrace();
+        }
+//        for (String s : parentTabAlias_childTabAliases.getOrDefault(alias, new ArrayList<>())) {
+//            alias_Attributes.putAll(getAlias_Attributes(s));
+//        }
+        return alias_Attributes;
+    }
+
+    private String updateOrder(String sql){
+        SQLiteLexer lexer = new SQLiteLexer(CharStreams.fromString(sql));
+        SQLiteParser parser = new SQLiteParser(new CommonTokenStream(lexer));
+        RuleContext context = parser.select_or_values();
+        List<RuleContext> result_columns = SQL_Parser.getChildMap(context).get("result_column");
+        makePosition_sql(sql);
+        for (Map.Entry<String, String> nestedTable : nestedTables_alias.entrySet()) {
+            List<String> nestedObertabs = nestedTable_oberNestedTab.get(nestedTable.getKey());
+            RuleContext tochange = null;
+            StringBuilder rank = new StringBuilder("RANK() OVER (ORDER BY ");
+            boolean komma = false;
+            String schluessel;
+            String newKey = "";
+            for (String nestedObertab : nestedObertabs) {
+                newKey += nestedObertab + "_";
+            }
+            newKey = newKey.substring(0, newKey.length()-1);
+            if(alias_tablename.containsKey(nestedTable.getValue())) {
+                schluessel = "_n___" + alias_tablename.get(nestedTable.getValue()) + "_" + newKey;
+                List<String> notNeeded = new ArrayList<>();
+                for (RuleContext column : result_columns) {
+                    if (column.getText().contains("_n_" + nestedTable.getKey())) {
+                        notNeeded.add(column.getChild(0).getText());
+                        tochange = column;
+                    }
+                }
+                Map<String, List<String>> alias_Attributes = getAlias_Attributes(nestedTable.getValue());
+                for (Map.Entry<String, List<String>> entry : alias_Attributes.entrySet()) {
+                    for (String attribute : entry.getValue()) {
+                        if (!attribute.contains("__") && !attribute.contains("ID") && !notNeeded.contains(entry.getKey() + "." + attribute)) {
+                            if (komma) rank.append(", ");
+                            komma = true;
+                            rank.append(entry.getKey()).append(".").append(attribute);
+                        }
+                    }
+                }
+            }else {
+                schluessel = "_n_" + newKey;
+                for (RuleContext column : result_columns) {
+                    if (column.getText().contains("_n_" + nestedTable.getKey())) {
+                        tochange = column;
+                    } else if (!column.getText().contains("__") && !column.getText().contains("ID")) {
+                        if (komma) rank.append(", ");
+                        komma = true;
+                        rank.append(cutFromSQL(column, sql));
+                    }
+                }
+            }
+            rank.append(") AS ").append(schluessel).append(", ").append(cutFromSQL(tochange, sql));
+           sql = replaceRuleContext(tochange, rank.toString());
         }
         return sql;
     }
@@ -263,11 +329,14 @@ public class Select extends Statement{
                     assert expr != null;
                     Map<String, List<RuleContext>> childs = SQL_Parser.getChildMap(expr);
                     if(SQLiteParser.ruleNames[expr.getRuleIndex()].equals("un_nest_stmt")){
-                        newExp =setNestUnnestAttributes(expr, childs, "");
+                        newExp =setNestUnnestAttributes(result_column, expr, childs, "");
+                        nestedSubTables = new ArrayList<>();
                         if (notAdded && zurAusgabe) {
                             newExp += addIDSToQuery();
                             notAdded = false;
                         }
+                        sql = replaceRuleContext(result_column, newExp);
+                        updated = true;
                     }else if(childs.containsKey("aggregate")){
                         Grouping grouping = new Grouping(position_sql, alias_tablename, maintables, sql);
                         grouping.aggregateInSelect(expr, select_or_values);
@@ -297,34 +366,44 @@ public class Select extends Statement{
         return sql;
     }
 
-    private String setNestUnnestAttributes(RuleContext un_nest_stmt, Map<String, List<RuleContext>> children, String start){
+    private List<String> nestedSubTables = new ArrayList<>();
+    private String setNestUnnestAttributes(RuleContext result_column, RuleContext un_nest_stmt, Map<String, List<RuleContext>> children, String start){
         String aliasStart;
-        if(un_nest_stmt.getChild(0).getText().equals("NEST")){
-            aliasStart = start + "n_";
-            order = true;
-        }else aliasStart = start + "un_";
+        String nestedTableAlias = "";
+        for (Map.Entry<String, List<RuleContext>> entry : SQL_Parser.getChildMap(result_column).entrySet()) {
+            if(entry.getKey().equals("column_alias"))nestedTableAlias = entry.getValue().get(0).getText();
+        }
         String tablealias = children.get("table_name").get(0).getText();
-        String tablename = "";
         if(!alias_tablename.containsKey(tablealias)) {
             for (Map.Entry<String, String> entry : alias_tablename.entrySet()) {
                 if (entry.getValue().equals(tablealias)){
                     tablealias = entry.getKey();
-                    tablename = entry.getValue();
                 }
             }
-        }else tablename = alias_tablename.get(tablealias);
-        String obertabSchluessel = tablealias + ". __" + tablename + "ID";
-        orderAttributes.add(obertabSchluessel);
-        List<RuleContext> column_name = children.getOrDefault("column_name", new ArrayList<>());
-        List<RuleContext> nests = children.getOrDefault("un_nest_stmt", new ArrayList<>());
+        }
+        if(un_nest_stmt.getChild(0).getText().equals("NEST")){
+            aliasStart = start + "_n_" + nestedTableAlias + "_";
+            nestedTables_alias.put(nestedTableAlias, tablealias);
+            nestedSubTables.add(nestedTableAlias);
+            List<String> mySubNests = new ArrayList<>(nestedSubTables);
+            nestedTable_oberNestedTab.put(nestedTableAlias, mySubNests);
+            nested =true;
+        }else aliasStart = start + "_un_";
+        List<RuleContext> resultColumn = children.getOrDefault("result_column", new ArrayList<>());
+        List<RuleContext> column_name = new ArrayList<>();
+        List<RuleContext> nests = new ArrayList<>();
+        for (RuleContext ruleContext : resultColumn) {
+            Map<String, List<RuleContext>> child = SQL_Parser.getChildMap(ruleContext);
+            column_name.addAll(child.getOrDefault("expr", new ArrayList<>()));
+            nests.addAll(child.getOrDefault("un_nest_stmt", new ArrayList<>()));
+        }
         StringBuilder result = new StringBuilder();
         for (RuleContext ruleContext : column_name) {
             String attribute = tablealias + "." + ruleContext.getText() + " AS " + aliasStart + ruleContext.getText();
             result.append(attribute).append(" , ");
-            orderAttributes.add(attribute);
         }
         for (RuleContext ruleContext : nests) {
-            result.append(setNestUnnestAttributes(ruleContext, SQL_Parser.getChildMap(ruleContext), aliasStart));
+            result.append(setNestUnnestAttributes(ruleContext.parent, ruleContext, SQL_Parser.getChildMap(ruleContext), aliasStart));
         }
         result = new StringBuilder(result.substring(0, result.length() - 2));
         return result.toString();

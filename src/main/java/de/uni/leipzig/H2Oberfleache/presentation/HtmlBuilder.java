@@ -1,6 +1,7 @@
 package de.uni.leipzig.H2Oberfleache.presentation;
 
 import de.uni.leipzig.H2Oberfleache.controller.BaseController;
+import de.uni.leipzig.H2Oberfleache.controller.StatementHandling;
 import de.uni.leipzig.H2Oberfleache.jdbc.DbInfo;
 import de.uni.leipzig.H2Oberfleache.statementRefactoring.Statement;
 import de.uni.leipzig.H2Oberfleache.tables.Table;
@@ -81,6 +82,7 @@ public class HtmlBuilder {
     private List<String> getObertables(String tablename){
         List<String> tablenames = new ArrayList<>();
         String obertab = Statement.getObertabelle(tablename);
+        if(obertab.equals(""))obertab = StatementHandling.getObertab(tablename);
         if(!obertab.equals("")){
             tablenames.add(obertab);
             tablenames.addAll(getObertables(obertab));
@@ -115,6 +117,7 @@ public class HtmlBuilder {
             if(!ids.contains(attribute.getNumber()))++colspan;
         }
         List<String> subtables = Statement.getNF2TableNamesRec(tablename);
+        if(StatementHandling.ober_untertabelle.containsKey(tablename))subtables.add(StatementHandling.ober_untertabelle.get(tablename));
         for (String subtable : subtables) {
             if(tabelname_Attribute.containsKey(subtable)){
                 for (Table.Attribute attribute : tabelname_Attribute.get(subtable)) {
@@ -127,6 +130,8 @@ public class HtmlBuilder {
 
     private Integer depth(Map<String, List<Table.Attribute>> tabelname_Attribute, String tablename, String targetTable){
         List<String> subtables = Statement.getNF2TableNames(tablename);
+        String subbtable = StatementHandling.ober_untertabelle.getOrDefault(tablename, "");
+        if(!subbtable.equals(""))subtables.add(subbtable);
         Integer highestSubtable = 0;
         boolean isNested = false;
         if(!isNF2Table(tablename))return 0;
@@ -209,7 +214,7 @@ public class HtmlBuilder {
         }
         Map<String, List<List<Table.Content>>> tablename_content = getTablename_Content(inhalt, tabelname_Attribute);
         HtmlBody htmlBody = new HtmlBody(attributes);
-        return htmlBody.makeHTML(tables, tablename_content);
+        return htmlBody.makeHTML(tables, tablename_content, attributes);
     }
 
     private String makeFinalHtml(List<List<Table.Content>> inhalt, String head, List<Table.Attribute> attributes, Map<String, List<Table.Attribute>> tabelname_Attribute){
@@ -230,17 +235,13 @@ public class HtmlBuilder {
     }
 
     private Boolean isNF2Table(String tablename){
-        DbInfo dbInfo = new DbInfo();
-        Map<String, String> columns = new HashMap<>();
+        List<String> columns = new ArrayList<>();
         try {
-            columns = dbInfo.getColums(false,BaseController.dbName,tablename, BaseController.user, BaseController.password);
+            columns = DbInfo.getColumnList(false,BaseController.dbName,tablename, BaseController.user, BaseController.password);
         } catch (SQLException | IllegalAccessException e) {
             e.printStackTrace();
         }
-        for (Map.Entry<String, String> entry : columns.entrySet()) {
-            if(entry.getKey().equals("__" + tablename + "ID"))return true;
-        }
-        return false;
+        return columns.contains("__" + tablename + "ID");
     }
 
     private Boolean hasNF2Schluessel(List<Table.Attribute> attributes, String tablename){

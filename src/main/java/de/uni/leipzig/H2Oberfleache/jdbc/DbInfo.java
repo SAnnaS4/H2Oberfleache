@@ -36,6 +36,17 @@ public class DbInfo {
         return result;
     }
 
+    public static List<String> getColumnList(Boolean autoCommit, String dBName, String tableName, String user, String password) throws SQLException, IllegalAccessException {
+        DatabaseMetaData meta = DBConnection.getInstance(autoCommit, dBName, user, password).getMeta();
+        List<String> result = new ArrayList<>();
+        ResultSet columns = meta.getColumns(null,null, tableName, null);
+        while(columns.next())
+        {
+            result.add(columns.getString("COLUMN_NAME"));
+        }
+        return result;
+    }
+
     private Map<Integer, String> getAllJdbcTypeNames() throws IllegalAccessException {
         Map<Integer, String> result = new HashMap<>();
         for (Field field : Types.class.getFields()) {

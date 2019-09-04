@@ -17,7 +17,7 @@ public class Update extends Update_Delete {
 
     public Update(String sql){
         this.sql = sql;
-        makeMap(sql);
+        makePosition_sql(sql);
     }
     public String nf2ToNf1() throws SQLException {
         sql = prepareSQL(sql);

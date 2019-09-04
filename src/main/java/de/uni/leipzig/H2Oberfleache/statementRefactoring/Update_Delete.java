@@ -51,7 +51,7 @@ public class Update_Delete extends Statement {
         }
         selectStmt.append(where);
         if(!tableAlias.equals("")){
-            makeMap(selectStmt.toString());
+            makePosition_sql(selectStmt.toString());
             Map<String, String> alias_tablename = new HashMap<>();
             alias_tablename.put(tableAlias, tablename);
             List<String> maintables = new ArrayList<>();
@@ -71,7 +71,7 @@ public class Update_Delete extends Statement {
         List<String> tables = new ArrayList<>();
         tables.add(tablename);
         tables.addAll(subtables);
-        makeMap(sql);
+        makePosition_sql(sql);
         int columnCount = rs.getMetaData().getColumnCount();
         while (rs.next()){
             if(!ids.contains(rs.getObject(1).toString())) ids.add(rs.getObject(1).toString());
