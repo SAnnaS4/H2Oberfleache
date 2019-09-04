@@ -101,7 +101,6 @@ public class Grouping extends Statement{
         }
     }
 
-
     private void changeSQL(Map<String, List<RuleContext>> select_or_values, String from, String where){
         List<RuleContext> fromCntx = select_or_values.get("table_or_subquery");
         RuleContext lastFrom = fromCntx.get(fromCntx.size()-1);

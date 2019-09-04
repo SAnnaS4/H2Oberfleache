@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Map;
 
 public class Select extends Statement{
+    private boolean order = false;
+    private List<String> orderAttributes = new ArrayList<>();
     private static Integer aliasCounter = 0;
     private Map<String, String> alias_tablename = new HashMap<>();
     private Map<String, List<String>> parentTabAlias_childTabAliases = new HashMap<>();
@@ -119,6 +121,26 @@ public class Select extends Statement{
             }
         }
         sql = updateWhereExpr(select_stmt, sql);
+        if(order){
+            sql = updateOrder(select_stmt, sql);
+        }
+        return sql;
+    }
+    private String updateOrder(RuleContext sql_stmt, String sql){
+        StringBuilder newOrderingTerms = new StringBuilder();
+        boolean komma = false;
+        for (String orderAttribute : orderAttributes) {
+            if(komma) newOrderingTerms.append(", ");
+            komma = true;
+            newOrderingTerms.append(orderAttribute);
+        }
+        List<RuleContext> orderingTerm = SQL_Parser.getChildMap(sql_stmt).getOrDefault("ordering_term", new ArrayList<>());
+        if(orderingTerm.isEmpty()){
+            sql += " ORDER BY " + newOrderingTerms.toString();
+        }else {
+            String newOrder = newOrderingTerms + ", " + orderingTerm.get(0).getText();
+            sql = replaceRuleContext(orderingTerm.get(0), newOrder);
+        }
         return sql;
     }
 
@@ -276,18 +298,30 @@ public class Select extends Statement{
     }
 
     private String setNestUnnestAttributes(RuleContext un_nest_stmt, Map<String, List<RuleContext>> children, String start){
-        String aliasStart = un_nest_stmt.getChild(0).getText().equals("NEST")? start + "n_" : start + "un_";
-        String tablename = children.get("table_name").get(0).getText();
-        if(!alias_tablename.containsKey(tablename)) {
+        String aliasStart;
+        if(un_nest_stmt.getChild(0).getText().equals("NEST")){
+            aliasStart = start + "n_";
+            order = true;
+        }else aliasStart = start + "un_";
+        String tablealias = children.get("table_name").get(0).getText();
+        String tablename = "";
+        if(!alias_tablename.containsKey(tablealias)) {
             for (Map.Entry<String, String> entry : alias_tablename.entrySet()) {
-                if (entry.getValue().equals(tablename)) tablename = entry.getKey();
+                if (entry.getValue().equals(tablealias)){
+                    tablealias = entry.getKey();
+                    tablename = entry.getValue();
+                }
             }
-        }
+        }else tablename = alias_tablename.get(tablealias);
+        String obertabSchluessel = tablealias + ". __" + tablename + "ID";
+        orderAttributes.add(obertabSchluessel);
         List<RuleContext> column_name = children.getOrDefault("column_name", new ArrayList<>());
         List<RuleContext> nests = children.getOrDefault("un_nest_stmt", new ArrayList<>());
         StringBuilder result = new StringBuilder();
         for (RuleContext ruleContext : column_name) {
-            result.append(tablename).append(".").append(ruleContext.getText()).append(" AS ").append(aliasStart).append(ruleContext.getText()).append(" , ");
+            String attribute = tablealias + "." + ruleContext.getText() + " AS " + aliasStart + ruleContext.getText();
+            result.append(attribute).append(" , ");
+            orderAttributes.add(attribute);
         }
         for (RuleContext ruleContext : nests) {
             result.append(setNestUnnestAttributes(ruleContext, SQL_Parser.getChildMap(ruleContext), aliasStart));
@@ -295,5 +329,4 @@ public class Select extends Statement{
         result = new StringBuilder(result.substring(0, result.length() - 2));
         return result.toString();
     }
-
 }
