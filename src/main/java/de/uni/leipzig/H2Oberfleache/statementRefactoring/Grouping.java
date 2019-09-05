@@ -1,11 +1,8 @@
 package de.uni.leipzig.H2Oberfleache.statementRefactoring;
 
-import de.uni.leipzig.H2Oberfleache.controller.BaseController;
 import de.uni.leipzig.H2Oberfleache.parser.SQL_Parser;
 import org.antlr.v4.runtime.RuleContext;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

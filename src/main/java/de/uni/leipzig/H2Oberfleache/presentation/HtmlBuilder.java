@@ -155,6 +155,13 @@ public class HtmlBuilder {
                 ids.add(attribute.getNumber());
             }
         }
+        Map<List<String>, Integer> highestTable_height = getHighestNesting(tabelname_Attribute, attributes);
+        Integer highest = 0;
+        for (Map.Entry<List<String>, Integer> entry : highestTable_height.entrySet()) {
+            highestTablenames.addAll(entry.getKey());
+            highest = entry.getValue();
+        }
+        Map<String, List<Table.Attribute>> oldtabelname_Attribute = new HashMap<>(tabelname_Attribute);
         for(Iterator<Map.Entry<String, List<Table.Attribute>>> it = tabelname_Attribute.entrySet().iterator(); it.hasNext(); ) {
             Map.Entry<String, List<Table.Attribute>> entry = it.next();
             boolean justIDs = true;
@@ -162,12 +169,6 @@ public class HtmlBuilder {
                 if(!ids.contains(attribute.getNumber()))justIDs = false;
             }
             if (justIDs)it.remove();
-        }
-        Map<List<String>, Integer> highestTable_height = getHighestNesting(tabelname_Attribute, attributes);
-        Integer highest = 0;
-        for (Map.Entry<List<String>, Integer> entry : highestTable_height.entrySet()) {
-            highestTablenames.addAll(entry.getKey());
-            highest = entry.getValue();
         }
         int attributCounter = 0;
         Integer hierarchy = 0;
@@ -178,7 +179,11 @@ public class HtmlBuilder {
             head.append("    <tr>\n");
             for (Table.Attribute attribute : attributes) {
                 if (tabelname_Attribute.containsKey(attribute.getTable())) {
-                    Integer depth = depth(tabelname_Attribute, highestTablenames.get(0), attribute.getTable());
+                    Integer depth = 100;
+                    for (String highestTablename : highestTablenames) {
+                        Integer depth1 = depth(oldtabelname_Attribute, highestTablename, attribute.getTable());
+                        if(depth1 < depth)depth = depth1;
+                    }
                     if (!ids.contains(attribute.getNumber())) {
                         if (Objects.equals(depth, height)) {
                             head.append("<th rowspan=\"").append(highest - height + 1).append("\">").append(attribute.getName()).append("</th>\n");

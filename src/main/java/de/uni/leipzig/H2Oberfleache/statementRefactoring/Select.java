@@ -232,22 +232,22 @@ public class Select extends Statement{
     }
 
     private String insertJoins(String tablename, RuleContext table, String alias){
-        String tablenameJoins = getTablenameJoins(tablename);
+        String tablenameJoins = getTablenameJoins(tablename, alias);
         if(!alias.equals(""))tablenameJoins += " " + alias;
         return replaceRuleContext(table, tablenameJoins);
     }
 
-    private String getTablenameJoins(String tablename){
+    private String getTablenameJoins(String tablename, String alias){
         List<String> subtables = getNF2TableNames(tablename);
         Map<String, String> name_newSubtables = new HashMap<>();
         for (String subtable : subtables) {
-            String newName = getTablenameJoins(subtable);
+            String newName = getTablenameJoins(subtable, alias);
             name_newSubtables.put(subtable, newName);
         }
-        return generateFullText(tablename, name_newSubtables);
+        return generateFullText(tablename, name_newSubtables, alias);
     }
 
-    private String generateFullText(String tablename, Map<String, String> name_contentSubtables){
+    private String generateFullText(String tablename, Map<String, String> name_contentSubtables, String oberAlias){
         if(name_contentSubtables.isEmpty())return tablename;
         String alias;
         alias = "_A_" + ++aliasCounter;
@@ -255,24 +255,34 @@ public class Select extends Statement{
         StringBuilder tablenameJoins = new StringBuilder("(" + tablename + " as " + alias);
         for (Map.Entry<String, String> subtable : name_contentSubtables.entrySet()) {
             String IDName = "__" + tablename + "ID";
-            tablenameJoins.append(generateJoins(subtable.getValue(), subtable.getKey(), alias, IDName));
+            tablenameJoins.append(generateJoins(subtable.getValue(), subtable.getKey(), alias, IDName, oberAlias));
         }
         return tablenameJoins + ")";
     }
 
-    private String generateJoins(String subtablecontent, String subtablename, String tablename_or_alias, String IDName){
+    private String generateJoins(String subtablecontent, String subtablename, String tablename_or_alias, String IDName, String oberAlias){
         String result = " LEFT JOIN ";
+        oberAlias = oberAlias.equals("")?tablename_or_alias:oberAlias;
         String[] helper = subtablename.split("_");
         String alias = subtablename;
         if(helper.length > 0)alias = helper[helper.length-1];
-        if(parentTabAlias_childTabAliases.containsKey(tablename_or_alias)){
-            List<String> childtabAlias = parentTabAlias_childTabAliases.get(tablename_or_alias);
+        if (alias_tablename.containsKey(alias)){
+            String nextAlias;
+            int i = 1;
+            do{
+                nextAlias = alias + i;
+                i++;
+            }while (alias_tablename.containsKey(nextAlias));
+            alias = nextAlias;
+        }
+        if(parentTabAlias_childTabAliases.containsKey(oberAlias)){
+            List<String> childtabAlias = parentTabAlias_childTabAliases.get(oberAlias);
             childtabAlias.add(alias);
-            parentTabAlias_childTabAliases.put(tablename_or_alias, childtabAlias);
+            parentTabAlias_childTabAliases.put(oberAlias, childtabAlias);
         }else {
             List<String> childtabAlias = new ArrayList<>();
             childtabAlias.add(alias);
-            parentTabAlias_childTabAliases.put(tablename_or_alias, childtabAlias);
+            parentTabAlias_childTabAliases.put(oberAlias, childtabAlias);
         }
         alias_tablename.put(alias, subtablename);
         return result + subtablecontent + " " + alias + " ON " + tablename_or_alias + "." + IDName + " = " + alias + "." + IDName;
@@ -310,7 +320,7 @@ public class Select extends Statement{
             List<RuleContext> ordering_terms = context.get("ordering_term");
             for (RuleContext ordering_term : ordering_terms) {
                 RuleContext expr = (RuleContext) ordering_term.getChild(0);
-                String newExp = Where.changeExpr(expr, alias_tablename, maintables, position_sql, sql);
+                String newExp = Where.changeExpr(expr, alias_tablename, maintables, position_sql, sql, parentTabAlias_childTabAliases);
                 sql = replaceRuleContext(expr, newExp);
             }
         }
@@ -346,7 +356,7 @@ public class Select extends Statement{
                         newExp = addAllSubtables(expr);
 
                     }else{
-                        newExp = Where.changeExpr(expr, alias_tablename, maintables, position_sql, sql);
+                        newExp = Where.changeExpr(expr, alias_tablename, maintables, position_sql, sql, parentTabAlias_childTabAliases);
                         if (notAdded && zurAusgabe) {
                             newExp += addIDSToQuery();
                             notAdded = false;
@@ -359,7 +369,7 @@ public class Select extends Statement{
         if(select_or_values.containsKey("where_expr")){
             List<RuleContext> where_exprs = select_or_values.get("where_expr");
             for (RuleContext where_expr : where_exprs) {
-                Where where = new Where(sql, where_expr.parent, alias_tablename, position_sql, maintables);
+                Where where = new Where(sql, where_expr.parent, alias_tablename, position_sql, maintables, parentTabAlias_childTabAliases);
                 sql = where.sql;
             }
         }

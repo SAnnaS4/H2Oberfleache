@@ -59,7 +59,7 @@ public class Update_Delete extends Statement {
             SQLiteLexer lexer = new SQLiteLexer(CharStreams.fromString(selectStmt.toString()));
             SQLiteParser parser = new SQLiteParser(new CommonTokenStream(lexer));
             RuleContext select_stmt = parser.select_or_values();
-            Where updateWhere = new Where(selectStmt.toString(),select_stmt, alias_tablename, position_sql, maintables);
+            Where updateWhere = new Where(selectStmt.toString(),select_stmt, alias_tablename, position_sql, maintables, new HashMap<>());
             selectStmt = new StringBuilder(updateWhere.sql);
         }
         position_sql = new HashMap<>();
