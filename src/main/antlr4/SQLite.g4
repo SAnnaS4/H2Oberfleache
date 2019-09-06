@@ -259,7 +259,7 @@ select_stmt
 
 select_or_values
  : K_SELECT ( K_DISTINCT | K_ALL )? (result_column) ( ',' result_column )*
-   ( K_FROM ( table_or_subquery ( ',' table_or_subquery )* | join_clause ) )?
+   ( K_FROM ( join_clause | table_or_subquery ( ',' table_or_subquery )* ) )?
    ( where_expr )?
    ( group_by )?
  | K_VALUES '(' expr ( ',' expr )* ')' ( ',' '(' expr ( ',' expr )* ')' )*

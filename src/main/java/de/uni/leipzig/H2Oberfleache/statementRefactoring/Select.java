@@ -118,26 +118,23 @@ public class Select extends Statement{
                         }
                         if(tables_or_subquery.getText().contains(".")) tablename = getTablename(tables_or_subquery, subtables, false);
                         String alias = "";
-                        if(children.containsKey("table_alias"))alias = children.get("table_alias").get(0).getText();
+                        if(children.containsKey("table_alias")){
+                            alias = children.get("table_alias").get(0).getText();
+                            if(Joins.operations.contains(alias)) alias = "";
+                        }
                         sql = updateFrom(tablename, tables_or_subquery, alias);
                     }
                 }
             }
         }
+        List<RuleContext> joinConstaints = SQL_Parser.getParsedMap(select_stmt).get("join_constraint");
+        Joins joins = new Joins();
+        sql = joins.JoinConstraint(sql, joinConstaints, alias_tablename, position_sql, maintables, parentTabAlias_childTabAliases);
         sql = updateWhereExpr(select_stmt, sql);
         if(nested){
             sql = updateOrder(sql);
         }
         return sql;
-    }
-
-    private List<String> getAllChildAlias(String alias){
-        List<String> allAlias = new ArrayList<>();
-        allAlias.add(alias);
-        for (String s : parentTabAlias_childTabAliases.getOrDefault(alias, new ArrayList<>())) {
-            allAlias.addAll(getAllChildAlias(s));
-        }
-        return allAlias;
     }
 
     private Map<String, List<String>> getAlias_Attributes(String alias){
@@ -148,11 +145,7 @@ public class Select extends Statement{
             e.printStackTrace();
         } catch (IllegalAccessException e) {
             System.out.println("Exception at Select getAlias_Attributes");
-            //e.printStackTrace();
         }
-//        for (String s : parentTabAlias_childTabAliases.getOrDefault(alias, new ArrayList<>())) {
-//            alias_Attributes.putAll(getAlias_Attributes(s));
-//        }
         return alias_Attributes;
     }
 
@@ -168,11 +161,11 @@ public class Select extends Statement{
             StringBuilder rank = new StringBuilder("RANK() OVER (ORDER BY ");
             boolean komma = false;
             String schluessel;
-            String newKey = "";
+            StringBuilder newKey = new StringBuilder();
             for (String nestedObertab : nestedObertabs) {
-                newKey += nestedObertab + "_";
+                newKey.append(nestedObertab).append("_");
             }
-            newKey = newKey.substring(0, newKey.length()-1);
+            newKey = new StringBuilder(newKey.substring(0, newKey.length() - 1));
             if(alias_tablename.containsKey(nestedTable.getValue())) {
                 schluessel = "_n___" + alias_tablename.get(nestedTable.getValue()) + "_" + newKey;
                 List<String> notNeeded = new ArrayList<>();
@@ -227,6 +220,7 @@ public class Select extends Statement{
         if(children.containsKey("select_or_values")){
             select_or_values = SQL_Parser.getChildMap(children.get("select_or_values").get(0));
             if(select_or_values.containsKey("table_or_subquery"))tables_or_subtables = select_or_values.get("table_or_subquery");
+            if(select_or_values.containsKey("join_clause"))tables_or_subtables = Joins.getTableOrSubQuerys(select_or_values.get("join_clause"));
         }
         return tables_or_subtables;
     }

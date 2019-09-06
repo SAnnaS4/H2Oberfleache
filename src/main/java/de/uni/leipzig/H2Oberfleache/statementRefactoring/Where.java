@@ -14,7 +14,7 @@ import java.util.Map;
 
 public class Where extends Statement{
     String sql;
-    private Map<String, String> alias_tablename;
+    protected Map<String, String> alias_tablename;
     public Where(String sql, RuleContext context, Map<String, String> alias_tablename, Map<Integer, String> position_sql,
                  List<String> haupttables, Map<String, List<String>> parentTabAlias_childTabAliases){
         this.sql = sql;
@@ -44,7 +44,10 @@ public class Where extends Statement{
         }
     }
 
-    private List<RuleContext> exploreExpr(RuleContext expr){
+    public Where() {
+    }
+
+    protected List<RuleContext> exploreExpr(RuleContext expr){
         List<RuleContext> exprs = new ArrayList<>();
         Map<String, List<RuleContext>> children = SQL_Parser.getChildMap(expr);
         if(children.containsKey("aggregate")){
@@ -92,7 +95,7 @@ public class Where extends Statement{
         return result;
     }
 
-    private static String getAlias(Map<String, String> alias_tablename, String column, List<String> maintables){
+    protected static String getAlias(Map<String, String> alias_tablename, String column, List<String> maintables){
         for (Map.Entry<String, String> entry : alias_tablename.entrySet()) {
             if(maintables.contains(entry.getValue())) {
                 List<String> attributes = getAllAttributes(entry.getValue());
