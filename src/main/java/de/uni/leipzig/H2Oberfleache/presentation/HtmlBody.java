@@ -17,6 +17,7 @@ public class HtmlBody {
     Map<Integer, List<HtmlBody>> attribut_td;
     static List<Integer> usedAttributes;
     List<Table.Attribute> attributes;
+    List<String> mainTables = new ArrayList<>();
 
     private HtmlBody(Integer rowspan, Table.Content value){
         this.rowspan = rowspan;
@@ -50,9 +51,11 @@ public class HtmlBody {
                             }
                             //myValues.add(contentList);
                             Integer rowspan = 1;
-                            if (!subtables.isEmpty() || StatementHandling.ober_untertabelle.containsKey(tablename)) {
+                            if (!subtables.isEmpty() || StatementHandling.ober_untertabelle.containsKey(tablename) || tablename.equals("main")) {
                                 List<Integer> usedAttributesAlt = usedAttributes;
-                                rowspan = makeChildList(mySchluesselValue, subtables, mySchluessel, tablename_inhalt, attributes);
+                                if(!subtables.isEmpty()) {
+                                    rowspan = makeChildList(mySchluesselValue, subtables, mySchluessel, tablename_inhalt, attributes);
+                                }
                                 if(StatementHandling.ober_untertabelle.containsKey(tablename)){
                                     List<String> subtable = new ArrayList<>();
                                     subtable.add(StatementHandling.ober_untertabelle.get(tablename));
@@ -62,7 +65,18 @@ public class HtmlBody {
                                         if(attribute.getAttribute().getName().equals(nestSchluessel))nestMySchluessel = attribute.getValue();
                                     }
                                     rowspan = makeChildList(nestMySchluessel, subtable, nestSchluessel, tablename_inhalt, attributes);
-                                    usedAttributes.addAll(usedAttributesAlt);
+                                }
+                                if(tablename.equals("main")){
+                                    for (String mainTable : mainTables) {
+                                        List<String> subtable = Statement.getNF2TableNames(mainTable);
+                                        String nestSchluessel = "__" + mainTable + "ID";
+                                        String nestMySchluessel = "";
+                                        for (Table.Content attribute : contentList) {
+                                            if(attribute.getAttribute().getName().equals(nestSchluessel))nestMySchluessel = attribute.getValue();
+                                        }
+                                        int newRowspan = makeChildList(nestMySchluessel, subtable, nestSchluessel, tablename_inhalt, attributes);
+                                        if(newRowspan>rowspan)rowspan = newRowspan;
+                                    }
                                 }
                                 usedAttributes.addAll(usedAttributesAlt);
                             }
@@ -132,6 +146,8 @@ public class HtmlBody {
     }
 
     public String makeHTML(List<String> tablenames, Map<String, List<List<Table.Content>>> tablename_inhalt, List<Table.Attribute> attributes){
+        this.mainTables = tablenames;
+        List<String> main = Arrays.asList("main");
         StringBuilder body = new StringBuilder("<tbody>\n");
         Map<Integer, Integer> attribut_position = new HashMap<>();
         Map<Integer, Integer> nochInRowspan = new HashMap<>();
@@ -139,13 +155,19 @@ public class HtmlBody {
             attribut_position.put(attribute.getNumber(), 0);
             nochInRowspan.put(attribute.getNumber(), 0);
         }
-        Integer laenge = makeChildList("", tablenames, "", tablename_inhalt, attributes);
+        Integer laenge = makeChildList("", main, "", tablename_inhalt, attributes);
         cleanMap();
         for(int i = 0; i<laenge; i++){
             body.append("<tr>\n");
             for (Map.Entry<Integer, List<HtmlBody>> entry : attribut_td.entrySet()) {
                 if(nochInRowspan.get(entry.getKey()) == 0){
-                    HtmlBody value = entry.getValue().get(attribut_position.get(entry.getKey()));
+                    HtmlBody value = null;
+                    try {
+                        value = entry.getValue().get(attribut_position.get(entry.getKey()));
+                    } catch (Exception e) {
+                        value = makeEmpty(1, entry.getKey());
+                        System.out.println("Fehler");
+                    }
                     body.append("<td rowspan=").append(value.rowspan).append(">").append(value.value.getValue()).append("</td>\n");
                     nochInRowspan.put(entry.getKey(), value.rowspan-1);
                     attribut_position.put(entry.getKey(), attribut_position.get(entry.getKey())+1);

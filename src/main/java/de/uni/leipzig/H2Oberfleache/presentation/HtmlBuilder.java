@@ -38,8 +38,10 @@ public class HtmlBuilder {
         html = makeFinalHtml(table.content, head, table.attributes, allTabelname_Attribute);
     }
 
-    private Map<String, List<List<Table.Content>>> getTablename_Content(List<List<Table.Content>> inhalt, Map<String, List<Table.Attribute>> tabelname_Attribute){
+    private Map<String, List<List<Table.Content>>> getTablename_Content(List<List<Table.Content>> inhalt,
+                                                                        Map<String, List<Table.Attribute>> tabelname_Attribute, List<String> mainTables){
         Map<String, List<List<Table.Content>>> tabelname_Inhalte = new HashMap<>();
+
         for (Map.Entry<String, List<Table.Attribute>> entry : tabelname_Attribute.entrySet()) {
             String tablename = entry.getKey();
             List<List<Table.Content>> tupelList = new ArrayList<>();
@@ -54,8 +56,7 @@ public class HtmlBuilder {
         }
         Map<String, List<List<Table.Content>>> newtabelname_content = new HashMap<>();
         for (Map.Entry<String, List<List<Table.Content>>> table : tabelname_Inhalte.entrySet()) {
-
-            if (!isNF2Table(table.getKey()) || !hasNF2Schluessel(tabelname_Attribute.get(table.getKey()), table.getKey())) {
+            if (!isNF2Table(table.getKey(), mainTables) || !hasNF2Schluessel(tabelname_Attribute.get(table.getKey()), table.getKey(), mainTables)) {
                 newtabelname_content.put(table.getKey(), table.getValue());
             } else {
                 List<List<Table.Content>> newContent = new ArrayList<>();
@@ -63,10 +64,17 @@ public class HtmlBuilder {
                 for (List<Table.Content> tuple : table.getValue()) {
                     List<String> values = new ArrayList<>();
                     for (Table.Content content1 : tuple) {
-                        if (content1.getAttribute().getName().equals("__" + table.getKey() + "ID"))
-                            values.add(content1.getValue());
-                        if(content1.getAttribute().getName().equals("__" + Statement.getObertabelle(table.getKey()) + "ID"))
-                            values.add(content1.getValue());
+                        if(table.getKey().equals("main")){
+                            for (String mainTable : mainTables) {
+                                if (content1.getAttribute().getName().equals("__" + mainTable + "ID"))
+                                    values.add(content1.getValue());
+                            }
+                        }else {
+                            if (content1.getAttribute().getName().equals("__" + table.getKey() + "ID"))
+                                values.add(content1.getValue());
+                            if (content1.getAttribute().getName().equals("__" + Statement.getObertabelle(table.getKey()) + "ID"))
+                                values.add(content1.getValue());
+                        }
                     }
                     if (!keyList.contains(values)) {
                         newContent.add(tuple);
@@ -134,7 +142,7 @@ public class HtmlBuilder {
         if(!subbtable.equals(""))subtables.add(subbtable);
         Integer highestSubtable = 0;
         boolean isNested = false;
-        if(!isNF2Table(tablename))return 0;
+        if(!isNF2Table(tablename, new ArrayList<>()))return 0;
         if(tablename.equals(targetTable))return 0;
         for (String subtable : subtables) {
             if(subtable.equals(targetTable))return 1;
@@ -214,10 +222,16 @@ public class HtmlBuilder {
     private String addBody(List<List<Table.Content>> inhalt, List<Table.Attribute> attributes, Map<String, List<Table.Attribute>> tabelname_Attribute){
         Map<List<String>, Integer> highestTable = getHighestNesting(tabelname_Attribute, attributes);
         List<String> tables = new ArrayList<>();
+        List<Table.Attribute> mainAttributes = new ArrayList<>();
         for (Map.Entry<List<String>, Integer> entry : highestTable.entrySet()) {
             tables.addAll(entry.getKey());
+            for (String mainTable : entry.getKey()) {
+                mainAttributes.addAll(tabelname_Attribute.get(mainTable));
+                tabelname_Attribute.remove(mainTable);
+            }
+            tabelname_Attribute.put("main", mainAttributes);
         }
-        Map<String, List<List<Table.Content>>> tablename_content = getTablename_Content(inhalt, tabelname_Attribute);
+        Map<String, List<List<Table.Content>>> tablename_content = getTablename_Content(inhalt, tabelname_Attribute, tables);
         HtmlBody htmlBody = new HtmlBody(attributes);
         return htmlBody.makeHTML(tables, tablename_content, attributes);
     }
@@ -239,7 +253,12 @@ public class HtmlBuilder {
                 "</table>";
     }
 
-    private Boolean isNF2Table(String tablename){
+    private Boolean isNF2Table(String tablename, List<String> maintabs){
+        if(tablename.equals("main")){
+            for (String maintab : maintabs) {
+                if(isNF2Table(maintab, new ArrayList<>())) return true;
+            }
+        }
         List<String> columns = new ArrayList<>();
         try {
             columns = DbInfo.getColumnList(false,BaseController.dbName,tablename, BaseController.user, BaseController.password);
@@ -249,7 +268,12 @@ public class HtmlBuilder {
         return columns.contains("__" + tablename + "ID");
     }
 
-    private Boolean hasNF2Schluessel(List<Table.Attribute> attributes, String tablename){
+    private Boolean hasNF2Schluessel(List<Table.Attribute> attributes, String tablename, List<String> mainTabs){
+        if(tablename.equals("main")){
+            for (String mainTab : mainTabs) {
+                if(hasNF2Schluessel(attributes, mainTab, new ArrayList<>())) return true;
+            }
+        }
         String schluessel = "__" + tablename + "ID";
         boolean hasSchluessel = false;
         for (Table.Attribute attribute : attributes) {

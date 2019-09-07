@@ -449,7 +449,7 @@ table_or_subquery
  ;
 
 join_clause
- : table_or_subquery ( join_operator table_or_subquery join_constraint )*
+ : table_or_subquery ( join_operator table_or_subquery (join_constraint)? )*
  ;
 
 join_operator
@@ -458,8 +458,8 @@ join_operator
  ;
 
 join_constraint
- : ( K_ON expr
-   | K_USING '(' (nf2_point_Notation|column_name) ( ',' column_name )* (',' nf2_point_Notation)* ')' )?
+ :  K_ON expr
+   | K_USING '(' (nf2_point_Notation|column_name) ( ',' column_name )* (',' nf2_point_Notation)* ')'
  ;
 
 group_by

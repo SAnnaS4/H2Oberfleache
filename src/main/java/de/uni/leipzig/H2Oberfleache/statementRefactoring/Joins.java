@@ -32,10 +32,15 @@ public class Joins extends Where {
         this.position_sql = position_sql;
         for (RuleContext ruleContext : constrainList) {
             List<RuleContext> exprs = exploreExpr((RuleContext) ruleContext.getChild(1));
+            usedExpr = new ArrayList<>();
             for (RuleContext expr : exprs) {
-                String newExpr = changeExpr(expr, alias_tablename, haupttables, position_sql, sql, parentTabAlias_childTabAliases);
-                if (!newExpr.equals(expr.getText())) {
-                    this.sql = replaceRuleContext(expr, newExpr);
+                if(!usedExpr.contains(expr)) {
+                    String newExpr = changeExpr(expr, alias_tablename, haupttables, position_sql, sql, parentTabAlias_childTabAliases);
+                    if (!newExpr.equals(expr.getText())) {
+                        if(newExpr.contains("NOT EXISTS (") && newExpr.contains("AND NOT EXISTS (") && newExpr.contains(" EXCEPT")){
+                            this.sql = replaceRuleContext(expr.parent, newExpr);
+                        }else this.sql = replaceRuleContext(expr, newExpr);
+                    }
                 }
             }
         }

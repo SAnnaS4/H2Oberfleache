@@ -25,7 +25,6 @@ public class Select extends Statement{
     private Map<String, List<String>> parentTabAlias_childTabAliases = new HashMap<>();
     private List<String> maintables = new ArrayList<>();
     String sql;
-    private List<String> schluessel = new ArrayList<>();
     private Boolean zurAusgabe;
     private Map<String, List<RuleContext>> select_or_values = new HashMap<>();
 
@@ -75,7 +74,6 @@ public class Select extends Statement{
         StringBuilder idsToQuery = new StringBuilder();
         for (Map.Entry<String, List<String>> entry : parentTabAlias_childTabAliases.entrySet()) {
             String id = "__" + alias_tablename.get(entry.getKey()) + "ID";
-            schluessel.add(id);
             if(maintables.contains(alias_tablename.get(entry.getKey()))) {
                 idsToQuery.append(", ").append(entry.getKey()).append(".").append(id);
             }else {
@@ -87,7 +85,6 @@ public class Select extends Statement{
                 idsToQuery.append(", ").append(childtabAlias).append(".").append(id);
                 if(!parentTabAlias_childTabAliases.containsKey(childtabAlias)){
                     String subid = "__" + alias_tablename.get(childtabAlias) + "ID";
-                    schluessel.add(subid);
                     idsToQuery.append(", ").append(childtabAlias).append(".").append(subid);
                 }
             }
@@ -121,15 +118,17 @@ public class Select extends Statement{
                         if(children.containsKey("table_alias")){
                             alias = children.get("table_alias").get(0).getText();
                             if(Joins.operations.contains(alias)) alias = "";
-                        }
+                        }if(alias.equals(""))alias = tablename;
                         sql = updateFrom(tablename, tables_or_subquery, alias);
                     }
                 }
             }
         }
-        List<RuleContext> joinConstaints = SQL_Parser.getParsedMap(select_stmt).get("join_constraint");
-        Joins joins = new Joins();
-        sql = joins.JoinConstraint(sql, joinConstaints, alias_tablename, position_sql, maintables, parentTabAlias_childTabAliases);
+        List<RuleContext> joinConstaints = SQL_Parser.getParsedMap(select_stmt).getOrDefault("join_constraint", new ArrayList<>());
+        if(!joinConstaints.isEmpty()) {
+            Joins joins = new Joins();
+            sql = joins.JoinConstraint(sql, joinConstaints, alias_tablename, position_sql, maintables, parentTabAlias_childTabAliases);
+        }
         sql = updateWhereExpr(select_stmt, sql);
         if(nested){
             sql = updateOrder(sql);
@@ -205,11 +204,11 @@ public class Select extends Statement{
 
     private String updateFrom(String tablename, RuleContext table, String alias){
         maintables.add(tablename);
-        sql = insertJoins(tablename, table, alias);
         if(!alias.equals("")){
             alias_tablename.entrySet().removeIf(entry -> entry.getKey().equals(tablename));
-            alias_tablename.put(alias, tablename);
+            if(!alias_tablename.containsValue(tablename)) alias_tablename.put(alias, tablename);
         }
+        sql = insertJoins(tablename, table, alias);
         return sql;
     }
 
@@ -245,7 +244,7 @@ public class Select extends Statement{
         if(name_contentSubtables.isEmpty())return tablename;
         String alias;
         alias = "_A_" + ++aliasCounter;
-        alias_tablename.put(alias, tablename);
+        if(!alias_tablename.containsValue(tablename)) alias_tablename.put(alias, tablename);
         StringBuilder tablenameJoins = new StringBuilder("(" + tablename + " as " + alias);
         for (Map.Entry<String, String> subtable : name_contentSubtables.entrySet()) {
             String IDName = "__" + tablename + "ID";
@@ -278,7 +277,7 @@ public class Select extends Statement{
             childtabAlias.add(alias);
             parentTabAlias_childTabAliases.put(oberAlias, childtabAlias);
         }
-        alias_tablename.put(alias, subtablename);
+        if(!alias_tablename.containsValue(subtablename)) alias_tablename.put(alias, subtablename);
         return result + subtablecontent + " " + alias + " ON " + tablename_or_alias + "." + IDName + " = " + alias + "." + IDName;
     }
 
