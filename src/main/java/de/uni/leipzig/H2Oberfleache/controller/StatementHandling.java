@@ -20,7 +20,6 @@ import java.util.*;
 @Getter
 @Setter
 @Component
-//@SessionScoped
 public class StatementHandling extends BaseController implements Serializable {
     String sql;
     int update;
@@ -40,7 +39,6 @@ public class StatementHandling extends BaseController implements Serializable {
             eS = new ExecuteStatement(dbName, changeSQLAutoCommitFalse(sql), false, user, password);
             eS.getDBcon().Commit();
         }
-      //  try {
             if(isUpdate())update = eS.execUpdate();
             else {
                 rs = eS.execQuery();
@@ -48,8 +46,6 @@ public class StatementHandling extends BaseController implements Serializable {
                 HtmlBuilder htmlBuilder = new HtmlBuilder(table);
                 this.html = htmlBuilder.getHtml();
             }
-      //  } catch (NullPointerException e) {
-      //  }
         PrimeFaces.current().ajax().update("mainForm");
     }
     
@@ -86,13 +82,6 @@ public class StatementHandling extends BaseController implements Serializable {
     public static Map<String, String> ober_untertabelle = new HashMap<>();
     private Map<String, List<Integer>> tablename_schluesselPosition = new HashMap<>();
     public Map<Integer, Integer> position_gleicheBelegung = new HashMap<>();
-
-    public static String getObertab(String tab){
-        for (Map.Entry<String, String> entry : ober_untertabelle.entrySet()) {
-            if(entry.getValue().equals(tab))return entry.getKey();
-        }
-        return "";
-    }
 
     private Table readResultSet(ResultSet rs) throws SQLException {
         Map<Integer, String> position_tablename = new HashMap<>();
@@ -190,7 +179,6 @@ public class StatementHandling extends BaseController implements Serializable {
                                 if(!parts[z].equals(""))
                                 obertable = (obertable.equals("")?"":"__" + obertable + "_") + parts[z];
                             }
-                           // obertable = obertable.substring(2);
                         }else obertable = "main";
                         ober_untertabelle.put(obertable, tablename);
                         Map<String, String> entry = new HashMap<>();

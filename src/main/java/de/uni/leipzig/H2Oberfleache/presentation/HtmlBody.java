@@ -40,7 +40,6 @@ public class HtmlBody {
                 String mySchluessel = "__" + tablename + "ID";
                 for (List<Table.Content> contentList : tablename_inhalt.get(tablename)) {
                     String mySchluesselValue = "";
-                    // List<List<Table.Content>> myValues = new ArrayList<>();
                     for (Table.Content content : contentList) {
                         if ((content.getAttribute().getName().equals(OTSchluessel) && content.getValue().equals(OTschluesselValue)) || OTSchluessel.equals("")) {
                             for (Table.Content content1 : contentList) {
@@ -49,7 +48,6 @@ public class HtmlBody {
                                 if (content1.getAttribute().getName().equals(mySchluessel))
                                     mySchluesselValue = content1.getValue();
                             }
-                            //myValues.add(contentList);
                             Integer rowspan = 1;
                             if (!subtables.isEmpty() || StatementHandling.ober_untertabelle.containsKey(tablename) || tablename.equals("main")) {
                                 List<Integer> usedAttributesAlt = usedAttributes;
@@ -147,12 +145,12 @@ public class HtmlBody {
 
     public String makeHTML(List<String> tablenames, Map<String, List<List<Table.Content>>> tablename_inhalt, List<Table.Attribute> attributes){
         this.mainTables = tablenames;
-        List<String> main = Arrays.asList("main");
+        List<String> main = Collections.singletonList("main");
         StringBuilder body = new StringBuilder("<tbody>\n");
-        Map<Integer, Integer> attribut_position = new HashMap<>();
+        Map<Integer, Integer> attribute_position = new HashMap<>();
         Map<Integer, Integer> nochInRowspan = new HashMap<>();
         for (Table.Attribute attribute : attributes) {
-            attribut_position.put(attribute.getNumber(), 0);
+            attribute_position.put(attribute.getNumber(), 0);
             nochInRowspan.put(attribute.getNumber(), 0);
         }
         Integer laenge = makeChildList("", main, "", tablename_inhalt, attributes);
@@ -161,16 +159,15 @@ public class HtmlBody {
             body.append("<tr>\n");
             for (Map.Entry<Integer, List<HtmlBody>> entry : attribut_td.entrySet()) {
                 if(nochInRowspan.get(entry.getKey()) == 0){
-                    HtmlBody value = null;
+                    HtmlBody value;
                     try {
-                        value = entry.getValue().get(attribut_position.get(entry.getKey()));
+                        value = entry.getValue().get(attribute_position.get(entry.getKey()));
                     } catch (Exception e) {
                         value = makeEmpty(1, entry.getKey());
-                        System.out.println("Fehler");
                     }
                     body.append("<td rowspan=").append(value.rowspan).append(">").append(value.value.getValue()).append("</td>\n");
                     nochInRowspan.put(entry.getKey(), value.rowspan-1);
-                    attribut_position.put(entry.getKey(), attribut_position.get(entry.getKey())+1);
+                    attribute_position.put(entry.getKey(), attribute_position.get(entry.getKey())+1);
                 }else nochInRowspan.put(entry.getKey(), nochInRowspan.get(entry.getKey())-1);
             }
             body.append("</tr>\n");
@@ -179,17 +176,3 @@ public class HtmlBody {
         return body.toString();
     }
 }
-
-//    private List<String> concernedTables(List<String> tables, Map<String, List<List<Table.Content>>> tablename_content){
-//        List<String> tablenames = new ArrayList<>();
-//        for (String table : tables) {
-//            if(tablename_content.containsKey(table))tablenames.add(table);
-//        }
-//        if(tablenames.isEmpty()){
-//            for (String table : tables) {
-//                tablenames.addAll(Statement.getNF2TableNames(table));
-//            }
-//            tablenames = concernedTables(tablenames, tablename_content);
-//        }
-//        return tablenames;
-//    }

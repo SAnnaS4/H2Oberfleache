@@ -259,7 +259,7 @@ select_stmt
 
 select_or_values
  : K_SELECT ( K_DISTINCT | K_ALL )? (result_column) ( ',' result_column )*
-   ( K_FROM ( join_clause | table_or_subquery ( ',' table_or_subquery )* ) )?
+   ( K_FROM (table_or_subquery|join_clause ( ',' table_or_subquery|join_clause )* ) )?
    ( where_expr )?
    ( group_by )?
  | K_VALUES '(' expr ( ',' expr )* ')' ( ',' '(' expr ( ',' expr )* ')' )*
@@ -683,6 +683,7 @@ aggregate
   | K_MEDIAN
   | K_MODE
   | K_ENVELOPE
+  | K_CARDINALITY
   ;
 
 database_name
@@ -922,6 +923,7 @@ K_RANK : R A N K;
 K_MEDIAN : M E D I A N;
 K_MODE : M O D E;
 K_ENVELOPE : E N V E L O P E;
+K_CARDINALITY: C A R D I N A L I T Y;
 
 
 IDENTIFIER

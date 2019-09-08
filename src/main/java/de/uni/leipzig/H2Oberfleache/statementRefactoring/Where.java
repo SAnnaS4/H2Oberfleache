@@ -92,7 +92,8 @@ public class Where extends Statement{
             RuleContext parent = expr.parent;
             return makeJoinConstraint(parent, alias_tablename, parentTabAlias_childTabAliases);
         }
-        if(alias_tablename.containsKey(column.get(column.size()-1).getText()))return getSubtableASQuery(expr, alias_tablename, parentTabAlias_childTabAliases);
+        if(alias_tablename.containsKey(column.get(column.size()-1).getText()))
+            return getSubtableASQuery(expr, alias_tablename, parentTabAlias_childTabAliases);
         if(children.containsKey("function_name")){
             Map<String, List<RuleContext>> child = SQL_Parser.getChildMap(children.get("function_name").get(0));
             if(child.containsKey("expr")){
