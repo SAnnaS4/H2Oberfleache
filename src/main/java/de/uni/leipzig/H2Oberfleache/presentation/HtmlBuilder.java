@@ -7,7 +7,6 @@ import de.uni.leipzig.H2Oberfleache.statementRefactoring.Statement;
 import de.uni.leipzig.H2Oberfleache.tables.Table;
 import lombok.Getter;
 import lombok.Setter;
-import org.antlr.v4.runtime.RuleContext;
 
 import java.sql.SQLException;
 import java.util.*;
@@ -38,24 +37,22 @@ public class HtmlBuilder {
         html = makeFinalHtml(table.content, head, table.attributes, allTabelname_Attribute);
     }
 
-    private Map<String, List<List<Table.Content>>> getTablename_Content(List<List<Table.Content>> inhalt,
-                                                                        Map<String, List<Table.Attribute>> tabelname_Attribute, List<String> mainTables){
-        Map<String, List<List<Table.Content>>> tabelname_Inhalte = new HashMap<>();
-
+    private Map<String, List<List<Table.Content>>> getTablename_Content(List<List<Table.Content>> inhalt, Map<String, List<Table.Attribute>> tabelname_Attribute, List<String> mainTables){
+        Map<String, List<List<Table.Content>>> tabelname_Content = new HashMap<>();
         for (Map.Entry<String, List<Table.Attribute>> entry : tabelname_Attribute.entrySet()) {
-            String tablename = entry.getKey();
-            List<List<Table.Content>> tupelList = new ArrayList<>();
+            String tabelname = entry.getKey();
+            List<List<Table.Content>> tupleList = new ArrayList<>();
             for (List<Table.Content> list : inhalt) {
-                List<Table.Content> tupel = new ArrayList<>();
+                List<Table.Content> tuple = new ArrayList<>();
                 for (Table.Attribute attribute : entry.getValue()) {
-                    tupel.add(list.get(attribute.getNumber()));
+                    tuple.add(list.get(attribute.getNumber()));
                 }
-                tupelList.add(tupel);
+                tupleList.add(tuple);
             }
-            tabelname_Inhalte.put(tablename, tupelList);
+            tabelname_Content.put(tabelname, tupleList);
         }
         Map<String, List<List<Table.Content>>> newtabelname_content = new HashMap<>();
-        for (Map.Entry<String, List<List<Table.Content>>> table : tabelname_Inhalte.entrySet()) {
+        for (Map.Entry<String, List<List<Table.Content>>> table : tabelname_Content.entrySet()) {
             if (!isNF2Table(table.getKey(), mainTables) || !hasNF2Schluessel(tabelname_Attribute.get(table.getKey()), table.getKey(), mainTables)) {
                 newtabelname_content.put(table.getKey(), table.getValue());
             } else {
@@ -87,17 +84,6 @@ public class HtmlBuilder {
         return newtabelname_content;
     }
 
-    private List<String> getObertables(String tablename){
-        List<String> tablenames = new ArrayList<>();
-        String obertab = Statement.getObertabelle(tablename);
-        if(obertab.equals(""))obertab = StatementHandling.getObertab(tablename);
-        if(!obertab.equals("")){
-            tablenames.add(obertab);
-            tablenames.addAll(getObertables(obertab));
-        }
-        return tablenames;
-    }
-
     private Map<List<String>, Integer> getHighestNesting(Map<String, List<Table.Attribute>> tabelname_Attribute, List<Table.Attribute> attribute){
         List<String> tables = new ArrayList<>();
         Integer depth = 0;
@@ -105,7 +91,7 @@ public class HtmlBuilder {
         for (Table.Attribute attribut : attribute) {
             if(!tables.contains(attribut.getTable())) {
                 Integer next = depth(tabelname_Attribute, attribut.getTable(), "");
-                if (next==depth){if(!highestTable.contains(attribut.getTable()))highestTable.add(attribut.getTable());}
+                if (next.equals(depth)){if(!highestTable.contains(attribut.getTable()))highestTable.add(attribut.getTable());}
                 if(next > depth){
                     highestTable = new ArrayList<>();
                     highestTable.add(attribut.getTable());
