@@ -29,6 +29,7 @@ public class TreeMaker extends BaseController {
 
     public TreeNode getTree() throws SQLException, IllegalAccessException {
         List<String> allTables = dbInfo.getTables(autoCommit, dbName, user, password);
+        allTables.remove("NF2_UNTERTABELLEN");
         List<String> tables = new ArrayList<>();
         List<String> subtables = new ArrayList<>();
         TreeNode root = new DefaultTreeNode("ROOT", null);

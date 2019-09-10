@@ -92,6 +92,13 @@ public class Select extends Statement{
         return idsToQuery.toString();
     }
 
+    public String getSubQuery(RuleContext context, String aliasMainSelect, String obertab){
+        String obertabkey = "__" + obertab + "ID";
+        String[] parts = cutFromSQL(context, sql).split(" ")[0].split("\\.");
+        String tablename = Where.getLastAlias(parts, alias_tablename, parentTabAlias_childTabAliases);
+        return "(SELECT _UT.* FROM " + alias_tablename.get(tablename) + " _UT WHERE " + aliasMainSelect + "." + obertabkey + " = _UT." + obertabkey + ")";
+    }
+
     private String changeSQL(RuleContext select_stmt){
         List<RuleContext> tables_or_subqueries = getTables_orSubquerys(select_stmt);
         for (RuleContext tables_or_subquery : tables_or_subqueries) {
@@ -108,12 +115,7 @@ public class Select extends Statement{
                     if(!subtables.isEmpty()) {
                         String tablename = children.get("table_name").get(0).getText();
                         if(alias_tablename.containsKey(tablename)){
-                            String[] names = cutFromSQL(tables_or_subquery, sql).split("\\.");
-                            StringBuilder neu = new StringBuilder(names[1]);
-                            for (int i = 2; i<names.length; i++) {
-                                neu.append(".").append(names[i]);
-                            }
-                            sql = replaceRuleContext(tables_or_subquery, neu.toString());
+                            sql = replaceRuleContext(tables_or_subquery, getSubQuery(tables_or_subquery, tablename, alias_tablename.get(tablename)));
                             continue;
                         }
                         if(tables_or_subquery.getText().contains(".")) tablename = getTablename(tables_or_subquery, subtables, false);
