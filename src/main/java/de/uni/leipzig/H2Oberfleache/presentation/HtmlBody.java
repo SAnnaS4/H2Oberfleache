@@ -1,6 +1,5 @@
 package de.uni.leipzig.H2Oberfleache.presentation;
 
-import de.uni.leipzig.H2Oberfleache.controller.StatementHandling;
 import de.uni.leipzig.H2Oberfleache.statementRefactoring.Statement;
 import de.uni.leipzig.H2Oberfleache.tables.Table;
 import lombok.Getter;
@@ -17,6 +16,7 @@ public class HtmlBody {
     Map<Integer, List<HtmlBody>> attribut_td;
     static List<Integer> usedAttributes;
     List<Table.Attribute> attributes;
+    Map<String, List<Table.Attribute>> tablename_attribute;
     List<String> mainTables = new ArrayList<>();
 
     private HtmlBody(Integer rowspan, Table.Content value){
@@ -24,9 +24,11 @@ public class HtmlBody {
         this.value = value;
     }
 
-    public HtmlBody(List<Table.Attribute> attributes){
+    public HtmlBody(List<Table.Attribute> attributes, Map<String, List<Table.Attribute>> tablename_attribute){
         this.attributes = attributes;
+        this.tablename_attribute=tablename_attribute;
         attribut_td = fillMap(attributes);
+        usedAttributes = new ArrayList<>();
     }
 
     private Integer makeChildList(String OTschluesselValue, List<String> tablenames, String OTSchluessel,
@@ -49,41 +51,49 @@ public class HtmlBody {
                                     mySchluesselValue = content1.getValue();
                             }
                             Integer rowspan = 1;
-                            if (!subtables.isEmpty() || StatementHandling.ober_untertabelle.containsKey(tablename) || tablename.equals("main")) {
+                            if(!tableIsConcerned(tablename))rowspan=0;
+                            if (!subtables.isEmpty() || ReadResultSet.ober_untertabelle.containsKey(tablename) || tablename.equals("main")) {
                                 List<Integer> usedAttributesAlt = usedAttributes;
-                                if(!subtables.isEmpty()) {
-                                    rowspan = makeChildList(mySchluesselValue, subtables, mySchluessel, tablename_inhalt, attributes);
+                                if (!subtables.isEmpty()) {
+                                    int newRowspan = makeChildList(mySchluesselValue, subtables, mySchluessel, tablename_inhalt, attributes);
+                                    if (newRowspan > rowspan) rowspan = newRowspan;
                                 }
-                                if(StatementHandling.ober_untertabelle.containsKey(tablename)){
+                                if (ReadResultSet.ober_untertabelle.containsKey(tablename)) {
                                     List<String> subtable = new ArrayList<>();
-                                    subtable.add(StatementHandling.ober_untertabelle.get(tablename));
+                                    subtable.add(ReadResultSet.ober_untertabelle.get(tablename));
                                     String nestSchluessel = "__" + subtable.get(0) + "ID";
                                     String nestMySchluessel = "";
                                     for (Table.Content attribute : contentList) {
-                                        if(attribute.getAttribute().getName().equals(nestSchluessel))nestMySchluessel = attribute.getValue();
+                                        if (attribute.getAttribute().getName().equals(nestSchluessel))
+                                            nestMySchluessel = attribute.getValue();
                                     }
-                                    rowspan = makeChildList(nestMySchluessel, subtable, nestSchluessel, tablename_inhalt, attributes);
+                                    int newRowspan = makeChildList(nestMySchluessel, subtable, nestSchluessel, tablename_inhalt, attributes);
+                                    if (newRowspan > rowspan) rowspan = newRowspan;
                                 }
-                                if(tablename.equals("main")){
+                                if (tablename.equals("main")) {
                                     for (String mainTable : mainTables) {
                                         List<String> subtable = Statement.getNF2TableNames(mainTable);
                                         String nestSchluessel = "__" + mainTable + "ID";
                                         String nestMySchluessel = "";
                                         for (Table.Content attribute : contentList) {
-                                            if(attribute.getAttribute().getName().equals(nestSchluessel))nestMySchluessel = attribute.getValue();
+                                            if (attribute.getAttribute().getName().equals(nestSchluessel))
+                                                nestMySchluessel = attribute.getValue();
+                                        }
+                                        if (nestMySchluessel.contains("2")) {
+                                            System.out.println();
                                         }
                                         int newRowspan = makeChildList(nestMySchluessel, subtable, nestSchluessel, tablename_inhalt, attributes);
-                                        if(newRowspan>rowspan)rowspan = newRowspan;
+                                        if (newRowspan > rowspan) rowspan = newRowspan;
                                     }
                                 }
                                 usedAttributes.addAll(usedAttributesAlt);
                             }
-                            for (Table.Content content1 : contentList) {
-                                HtmlBody html_td = new HtmlBody(rowspan, content1);
-                                attribut_td.get(content1.getAttribute().getNumber()).add(html_td);
-                            }
-                            table_rowspan.get(tablename).add(rowspan);
-                            break;
+                                for (Table.Content content1 : contentList) {
+                                    HtmlBody html_td = new HtmlBody(rowspan, content1);
+                                    attribut_td.getOrDefault(content1.getAttribute().getNumber(), new ArrayList<>()).add(html_td);
+                                }
+                                table_rowspan.get(tablename).add(rowspan);
+                                break;
                         }
                     }
                 }
@@ -106,18 +116,19 @@ public class HtmlBody {
             }
             attribute_rowspan.put(entry.getKey(), span);
             if(span>maxRowspan)maxRowspan=span;
+
         }
         for (Map.Entry<Integer, Integer> entry : attribute_rowspan.entrySet()) {
             if(entry.getValue()< maxRowspan && usedAttributes.contains(entry.getKey())){
                 Integer difference = maxRowspan-entry.getValue();
-                attribut_td.get(entry.getKey()).add(makeEmpty(difference, entry.getKey()));
+                attribut_td.getOrDefault(entry.getKey(), new ArrayList<>()).add(makeEmpty(difference, entry.getKey()));
             }
         }
         for (String tablename : tablenames) {
-            if(table_rowspan.getOrDefault(tablename, new ArrayList<>()).isEmpty()){
+            if(!table_rowspan.containsKey(tablename) && tableIsConcerned(tablename)){
                 for (Table.Attribute attribute : attributes) {
                     if(attribute.getTable().equals(tablename)){
-                        attribut_td.get(attribute.getNumber()).add(makeEmpty(1, attribute.getNumber()));
+                        attribut_td.getOrDefault(attribute.getNumber(), new ArrayList<>()).add(makeEmpty(1, attribute.getNumber()));
                     }
                 }
             }
@@ -141,6 +152,15 @@ public class HtmlBody {
     private void cleanMap(){
         attribut_td.entrySet().removeIf(entry -> attributes.get(entry.getKey()).getName().startsWith("__")
                 && attributes.get(entry.getKey()).getName().endsWith("ID"));
+    }
+
+    private boolean tableIsConcerned(String tablename){
+        if(mainTables.contains(tablename))return true;
+        if (tablename.equals("main"))return true;
+        for (Table.Attribute attribute : tablename_attribute.get(tablename)) {
+            if(!(attribute.getName().startsWith("__") && attribute.getName().endsWith("ID")))return true;
+        }
+        return false;
     }
 
     public String makeHTML(List<String> tablenames, Map<String, List<List<Table.Content>>> tablename_inhalt, List<Table.Attribute> attributes){

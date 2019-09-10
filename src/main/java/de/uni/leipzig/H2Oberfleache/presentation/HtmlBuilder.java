@@ -111,7 +111,7 @@ public class HtmlBuilder {
             if(!ids.contains(attribute.getNumber()))++colspan;
         }
         List<String> subtables = Statement.getNF2TableNamesRec(tablename);
-        if(StatementHandling.ober_untertabelle.containsKey(tablename))subtables.add(StatementHandling.ober_untertabelle.get(tablename));
+        if(ReadResultSet.ober_untertabelle.containsKey(tablename))subtables.add(ReadResultSet.ober_untertabelle.get(tablename));
         for (String subtable : subtables) {
             if(tabelname_Attribute.containsKey(subtable)){
                 for (Table.Attribute attribute : tabelname_Attribute.get(subtable)) {
@@ -124,7 +124,7 @@ public class HtmlBuilder {
 
     private Integer depth(Map<String, List<Table.Attribute>> tabelname_Attribute, String tablename, String targetTable){
         List<String> subtables = Statement.getNF2TableNames(tablename);
-        String subbtable = StatementHandling.ober_untertabelle.getOrDefault(tablename, "");
+        String subbtable = ReadResultSet.ober_untertabelle.getOrDefault(tablename, "");
         if(!subbtable.equals(""))subtables.add(subbtable);
         Integer highestSubtable = 0;
         boolean isNested = false;
@@ -218,7 +218,7 @@ public class HtmlBuilder {
             tabelname_Attribute.put("main", mainAttributes);
         }
         Map<String, List<List<Table.Content>>> tablename_content = getTablename_Content(inhalt, tabelname_Attribute, tables);
-        HtmlBody htmlBody = new HtmlBody(attributes);
+        HtmlBody htmlBody = new HtmlBody(attributes, tabelname_Attribute);
         return htmlBody.makeHTML(tables, tablename_content, attributes);
     }
 

@@ -101,16 +101,19 @@ public class Select extends Statement{
                 replaceRuleContext(tables_or_subquery, "(" + select.nf2ToNf1(alias_tablename) + ")");
             }else {
                 if(children.containsKey("table_name")){
-                    List<String> subtables = getNF2TableNamesRec(children.get("table_name").get(0).getText());
+                    List<String> subtables;
+                    if(alias_tablename.containsKey(children.get("table_name").get(0).getText())){
+                        subtables = getNF2TableNamesRec(alias_tablename.get(children.get("table_name").get(0).getText()));
+                    }else subtables = getNF2TableNamesRec(children.get("table_name").get(0).getText());
                     if(!subtables.isEmpty()) {
                         String tablename = children.get("table_name").get(0).getText();
                         if(alias_tablename.containsKey(tablename)){
-                            String[] names = cutFromSQL(tables_or_subquery, sql).split(".");
+                            String[] names = cutFromSQL(tables_or_subquery, sql).split("\\.");
                             StringBuilder neu = new StringBuilder(names[1]);
                             for (int i = 2; i<names.length; i++) {
                                 neu.append(".").append(names[i]);
                             }
-                            replaceRuleContext(tables_or_subquery, neu.toString());
+                            sql = replaceRuleContext(tables_or_subquery, neu.toString());
                             continue;
                         }
                         if(tables_or_subquery.getText().contains(".")) tablename = getTablename(tables_or_subquery, subtables, false);
@@ -234,7 +237,8 @@ public class Select extends Statement{
         List<String> subtables = getNF2TableNames(tablename);
         Map<String, String> name_newSubtables = new HashMap<>();
         for (String subtable : subtables) {
-            String newName = getTablenameJoins(subtable, alias);
+            String[] parts = subtable.split("_");
+            String newName = getTablenameJoins(subtable, parts[parts.length-1]);
             name_newSubtables.put(subtable, newName);
         }
         return generateFullText(tablename, name_newSubtables, alias);
@@ -244,7 +248,6 @@ public class Select extends Statement{
         if(name_contentSubtables.isEmpty())return tablename;
         String alias;
         alias = "_A_" + ++aliasCounter;
-        if(!alias_tablename.containsValue(tablename)) alias_tablename.put(alias, tablename);
         StringBuilder tablenameJoins = new StringBuilder("(" + tablename + " as " + alias);
         for (Map.Entry<String, String> subtable : name_contentSubtables.entrySet()) {
             String IDName = "__" + tablename + "ID";
@@ -341,6 +344,8 @@ public class Select extends Statement{
                         sql = replaceRuleContext(result_column, newExp);
                         updated = true;
                     }else if(childs.containsKey("aggregate")){
+
+                       // dontAddID = true;
                         Grouping grouping = new Grouping(position_sql, alias_tablename, maintables, sql);
                         grouping.aggregateInSelect(expr, select_or_values);
                         sql = grouping.sql;
@@ -402,8 +407,37 @@ public class Select extends Statement{
         }
         StringBuilder result = new StringBuilder();
         for (RuleContext ruleContext : column_name) {
-            String attribute = tablealias + "." + ruleContext.getText() + " AS " + aliasStart + ruleContext.getText();
-            result.append(attribute).append(" , ");
+            String attribute;
+            String text = ruleContext.getText();
+            if(!text.contains(".")){
+                attribute = tablealias + "." + ruleContext.getText() + " AS " + aliasStart + ruleContext.getText();
+                result.append(attribute).append(" , ");
+            }else{
+                if(!text.contains("*")){
+                    List<String> maintab = new ArrayList<>();
+                    maintab.add(alias_tablename.get(tablealias));
+                    String attr = Where.changeExpr(ruleContext, alias_tablename, maintab, position_sql, sql, parentTabAlias_childTabAliases);
+                    attribute = attr + " AS " + aliasStart + attr.split("\\.")[attr.split("\\.").length-1];
+                    result.append(attribute).append(" , ");
+                }else {
+                    String[] parts = text.split("\\.");
+                    String[] part1 = new String[parts.length-1];
+                    System.arraycopy(parts, 0, part1, 0, parts.length - 1);
+                    String alias = Where.getLastAlias(part1, alias_tablename, parentTabAlias_childTabAliases);
+                    String tablename = alias_tablename.get(alias);
+                    List<String> attributes = new ArrayList<>();
+                    try {
+                        attributes = DbInfo.getColumnList(false,BaseController.dbName,tablename, BaseController.user, BaseController.password);
+                    } catch (SQLException | IllegalAccessException e) {
+                        e.printStackTrace();
+                    }
+                    for (String attribut : attributes) {
+                        String nextAttribute = alias + "." + attribut + " AS " + aliasStart + attribut;
+                        result.append(nextAttribute).append(" , ");
+                    }
+                }
+            }
+
         }
         for (RuleContext ruleContext : nests) {
             result.append(setNestUnnestAttributes(ruleContext.parent, ruleContext, SQL_Parser.getChildMap(ruleContext), aliasStart));

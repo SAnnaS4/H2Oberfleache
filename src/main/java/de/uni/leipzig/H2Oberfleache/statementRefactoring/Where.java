@@ -84,24 +84,29 @@ public class Where extends Statement{
         Map<String, List<RuleContext>> children = SQL_Parser.getChildMap(expr);
         if(children.containsKey("aggregate")){
             Grouping grouping = new Grouping(position_sql, alias_tablename, maintables, sql);
+            String r = grouping.aggragateInWhere(expr);
+            if(!r.equals(""))return r;
             return grouping.aggragateInWhere(expr);
         }
-        List<RuleContext> column = children.get("column_name");
-        if(alias_tablename.containsKey(column.get(column.size()-1).getText()) && expr.parent.getText().contains("=")){
-            usedExpr.add(expr);
-            RuleContext parent = expr.parent;
-            return makeJoinConstraint(parent, alias_tablename, parentTabAlias_childTabAliases);
-        }
-        if(alias_tablename.containsKey(column.get(column.size()-1).getText()))
-            return getSubtableASQuery(expr, alias_tablename, parentTabAlias_childTabAliases);
-        if(children.containsKey("function_name")){
-            Map<String, List<RuleContext>> child = SQL_Parser.getChildMap(children.get("function_name").get(0));
-            if(child.containsKey("expr")){
-                return changeExpr(child.get("expr").get(0), alias_tablename, maintables, position_sql, sql, parentTabAlias_childTabAliases);
+        List<RuleContext> column = children.getOrDefault("column_name", new ArrayList<>());
+        if(!column.isEmpty()) {
+            if (alias_tablename.containsKey(column.get(column.size() - 1).getText()) && expr.parent.getText().contains("=")) {
+                usedExpr.add(expr);
+                RuleContext parent = expr.parent;
+                return makeJoinConstraint(parent, alias_tablename, parentTabAlias_childTabAliases);
+            }
+            if (alias_tablename.containsKey(column.get(column.size() - 1).getText()))
+                return getSubtableASQuery(expr, alias_tablename, parentTabAlias_childTabAliases);
+            if (children.containsKey("function_name")) {
+                Map<String, List<RuleContext>> child = SQL_Parser.getChildMap(children.get("function_name").get(0));
+                if (child.containsKey("expr")) {
+                    return changeExpr(child.get("expr").get(0), alias_tablename, maintables, position_sql, sql, parentTabAlias_childTabAliases);
+                }
             }
         }
         if(!children.containsKey("table_name") && !children.containsKey("function_name") && !alias_tablename.containsKey(expr.getText())){
-            return getAlias(alias_tablename, expr.getText(), maintables) + "." + expr.getText();
+            String alias = getAlias(alias_tablename, expr.getText(), maintables);
+            return alias.isEmpty()?expr.getText(): alias + "." + expr.getText();
         }
         String[] tables = expr.getText().split("\\.");
         String result = expr.getText();
@@ -164,13 +169,9 @@ public class Where extends Statement{
     }
 
     public static List<String> getAllAttributes(String tablename){
-        DbInfo dbInfo = new DbInfo();
         List<String> attributes = new ArrayList<>();
         try {
-            Map<String, String> columns = dbInfo.getColums(false,BaseController.dbName,tablename, BaseController.user, BaseController.password);
-            for (Map.Entry<String, String> entry : columns.entrySet()) {
-                attributes.add(entry.getKey());
-            }
+            attributes = DbInfo.getColumnList(false,BaseController.dbName,tablename, BaseController.user, BaseController.password);
         } catch (SQLException | IllegalAccessException e) {
             e.printStackTrace();
         }
@@ -185,7 +186,7 @@ public class Where extends Statement{
         return getLastAlias(part1, alias_tablename, parentTabAlias_childTabAliases) + "." + parts[parts.length-1];
     }
 
-    private static String getLastAlias(String[] parts, Map<String, String> alias_tablename, Map<String, List<String>> parentTabAlias_childTabAliases){
+    public static String getLastAlias(String[] parts, Map<String, String> alias_tablename, Map<String, List<String>> parentTabAlias_childTabAliases){
         if(!parentTabAlias_childTabAliases.isEmpty()) {
             for (int i = 0; i < parts.length-1; i++) {
                 if (alias_tablename.containsKey(parts[i]) || alias_tablename.containsValue(parts[i])) {
@@ -197,6 +198,7 @@ public class Where extends Statement{
                         do {
                             nextAlias = alias + j;
                             j++;
+                            if(j > 100)return parts[i];
                         } while (!childs.contains(nextAlias));
                         parts[i + 1] = nextAlias;
                     }

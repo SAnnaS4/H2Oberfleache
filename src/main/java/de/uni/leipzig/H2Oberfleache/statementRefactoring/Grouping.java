@@ -12,6 +12,7 @@ public class Grouping extends Statement{
     public static Map<String, List<String>> columnname_tables = new HashMap<>();
     private Map<String, String> alias_tablename;
     private List<String> maintables;
+    public List<RuleContext> grouping = new ArrayList<>();
     String sql;
     public Grouping(Map<Integer, String> position_sql, Map<String, String> alias_tablename, List<String> maintables, String sql){
         this.position_sql = position_sql;
@@ -20,17 +21,12 @@ public class Grouping extends Statement{
         this.sql = sql;
     }
     static private Integer i = 0;
-    /*
-    AVG(Mitarbeiter.Projekt.Projnr) -->
-    (SELECT AVG( _UT.PROJNR) AS AVG FROM ____ABTEILUNG_MITARBEITER_PROJEKT _UT
-    WHERE Mitarbeiter.____ABTEILUNG_MITARBEITERID = _UT.____ABTEILUNG_MITARBEITERID)
-     */
     private String distinct;
     private String column;
     private String tablename;
     private String obertabkey;
     private String aliasMainSelect;
-    private String obertab;
+    private String obertab = "";
 
     public String aggragateInWhere(RuleContext expr){
         Map<String, List<RuleContext>> map = SQL_Parser.getChildMap(expr);
@@ -38,9 +34,12 @@ public class Grouping extends Statement{
         if(functionName.equals("CARDINALITY"))functionName = "COUNT";
         String from = "(SELECT ";
         getTableNamesAndColumn(map, expr);
-        from += functionName + "(" + distinct + "_UT." + column + ") FROM " +
-                tablename + " _UT WHERE "+ aliasMainSelect +"." + obertabkey + " = _UT." + obertabkey;
-        return from + ")";
+        if(!obertab.isEmpty()) {
+            from += functionName + "(" + distinct + "_UT." + column + ") FROM " +
+                    tablename + " _UT WHERE " + aliasMainSelect + "." + obertabkey + " = _UT." + obertabkey;
+            return from + ")";
+        }
+        return "";
     }
 
     private void getTableNamesAndColumn(Map<String, List<RuleContext>> map, RuleContext expr){
@@ -55,7 +54,7 @@ public class Grouping extends Statement{
                 if(maintables.contains(entry.getValue())) {
                     List<String> attributes = Where.getAllAttributes(entry.getValue());
                     for (String attribute : attributes) {
-                        if (attribute.equals(expr.getText())) {
+                        if (attribute.equals(expr1.getText())) {
                             tablename = entry.getValue();
                         }
                     }
@@ -88,13 +87,28 @@ public class Grouping extends Statement{
         if(map.containsKey("alias"))select += " as " + map.get("alias");
         String from = "(SELECT ";
         getTableNamesAndColumn(map, expr);
-        from += "_OT." + obertabkey + " AS ID, " + functionName + "(" + distinct + "_UT." + column + ") AS " + functionName + " FROM " +
-                obertab + " _OT, " + tablename + " _UT WHERE _OT." + obertabkey + " = _UT." + obertabkey +
-                " GROUP BY _OT." + obertabkey + ") AS " + newAlias;
-        String where = newAlias + ".ID = " + aliasMainSelect + "." + obertabkey;
+        String where = "";
+        if(!obertab.isEmpty()&& !obertab.equals("null")) {
+            from += "_OT." + obertabkey + " AS ID, " + functionName + "(" + distinct + "_UT." + column + ") AS " + functionName + " FROM " +
+                    obertab + " _OT, " + tablename + " _UT WHERE _OT." + obertabkey + " = _UT." + obertabkey +
+                    " GROUP BY _OT." + obertabkey + ") AS " + newAlias;
+             where = newAlias + ".ID = " + aliasMainSelect + "." + obertabkey;
+        }else {
+            obertab = tablename;
+            RuleContext grouping = select_or_values.get("group_by").get(0);
+            List<String> attributes = new ArrayList<>();
+            for(int i = 2; i< grouping.getChildCount(); i++){
+                if(grouping.getChild(i).getText().equals("having"))break;
+                if(!grouping.getChild(i).getText().equals(","))attributes.add(grouping.getChild(i).getText());
+            }
+            from += attributes.get(attributes.size()-1) + " AS ID, " + functionName + "(" + distinct + "_UT." + column + ") AS " + functionName + " FROM " +
+                    tablename + " _UT " + cutFromSQL(grouping, this.sql)+ ") AS " + newAlias;
+            where = newAlias + ".ID = " + attributes.get(attributes.size()-1);
+            this.sql = replaceRuleContext(grouping, "");
+        }
         this.sql = replaceRuleContext(expr, select);
         changeSQL(select_or_values, from, where);
-        if(columnname_tables.containsKey(functionName))columnname_tables.get(functionName).add(obertab);
+        if (columnname_tables.containsKey(functionName)) columnname_tables.get(functionName).add(obertab);
         else {
             List<String> newList = new ArrayList<>();
             newList.add(obertab);
