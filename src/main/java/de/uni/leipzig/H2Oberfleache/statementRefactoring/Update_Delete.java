@@ -20,6 +20,7 @@ import java.util.Map;
 public class Update_Delete extends Statement {
     String whichStmt = "";
     Map<String, List<String>> tablename_ID = new HashMap<>();
+
     private List<String> getIDs(String tablename, RuleContext stmt, String sql) throws SQLException {
         String id = "__" + tablename + "ID";
         String tableAlias = "";

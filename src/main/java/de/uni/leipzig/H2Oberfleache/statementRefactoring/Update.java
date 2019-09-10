@@ -154,7 +154,6 @@ public class Update extends Update_Delete {
 
     private List<String> getNewInsert(String oberTabName, String tablename, RuleContext value, String where) throws SQLException {
         RuleContext set = table_tableInsert.get(tablename);
-        //List<RuleContext> valueList = new ArrayList<>(SQL_Parser.getChildMap(name).get("value_insert"));
         List<String> inserts = new ArrayList<>();
         String[] names = tablename.split("_");
         StringBuilder pointTable = new StringBuilder();

@@ -12,7 +12,6 @@ public class Grouping extends Statement{
     public static Map<String, List<String>> columnname_tables = new HashMap<>();
     private Map<String, String> alias_tablename;
     private List<String> maintables;
-    public List<RuleContext> grouping = new ArrayList<>();
     String sql;
     public Grouping(Map<Integer, String> position_sql, Map<String, String> alias_tablename, List<String> maintables, String sql){
         this.position_sql = position_sql;
@@ -20,7 +19,7 @@ public class Grouping extends Statement{
         this.maintables = maintables;
         this.sql = sql;
     }
-    static private Integer i = 0;
+    static private Integer nameNumber = 0;
     private String distinct;
     private String column;
     private String tablename;
@@ -81,9 +80,9 @@ public class Grouping extends Statement{
         Map<String, List<RuleContext>> map = SQL_Parser.getChildMap(expr);
         String functionName = map.get("aggregate").get(0).getText();
         if(functionName.equals("CARDINALITY"))functionName = "COUNT";
-        String newAlias = "_" + functionName + "_" + i;
+        String newAlias = "_" + functionName + "_" + nameNumber;
         String select = newAlias + "." + functionName;
-        i++;
+        nameNumber++;
         if(map.containsKey("alias"))select += " as " + map.get("alias");
         String from = "(SELECT ";
         getTableNamesAndColumn(map, expr);

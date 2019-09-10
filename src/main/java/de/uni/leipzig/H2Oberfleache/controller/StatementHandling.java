@@ -5,7 +5,7 @@ import de.uni.leipzig.H2Oberfleache.jdbc.ExecuteStatement;
 import de.uni.leipzig.H2Oberfleache.presentation.HtmlBuilder;
 import de.uni.leipzig.H2Oberfleache.presentation.ReadResultSet;
 import de.uni.leipzig.H2Oberfleache.statementRefactoring.Statement;
-import de.uni.leipzig.H2Oberfleache.tables.Table;
+import de.uni.leipzig.H2Oberfleache.presentation.Table;
 import lombok.Getter;
 import lombok.Setter;
 import org.primefaces.PrimeFaces;
@@ -15,7 +15,6 @@ import java.io.Serializable;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 @Getter

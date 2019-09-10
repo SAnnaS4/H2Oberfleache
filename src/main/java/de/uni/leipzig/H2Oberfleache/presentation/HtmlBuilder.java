@@ -1,10 +1,8 @@
 package de.uni.leipzig.H2Oberfleache.presentation;
 
 import de.uni.leipzig.H2Oberfleache.controller.BaseController;
-import de.uni.leipzig.H2Oberfleache.controller.StatementHandling;
 import de.uni.leipzig.H2Oberfleache.jdbc.DbInfo;
 import de.uni.leipzig.H2Oberfleache.statementRefactoring.Statement;
-import de.uni.leipzig.H2Oberfleache.tables.Table;
 import lombok.Getter;
 import lombok.Setter;
 

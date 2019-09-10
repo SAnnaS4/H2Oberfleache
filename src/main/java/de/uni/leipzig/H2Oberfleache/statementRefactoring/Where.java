@@ -16,6 +16,7 @@ import java.util.Map;
 public class Where extends Statement{
     String sql;
     Map<String, String> alias_tablename;
+
     public Where(String sql, RuleContext context, Map<String, String> alias_tablename, Map<Integer, String> position_sql,
                  List<String> haupttables, Map<String, List<String>> parentTabAlias_childTabAliases) {
         this.sql = sql;
@@ -60,7 +61,6 @@ public class Where extends Statement{
             exprs.add(expr);
             return exprs;
         }
-        //else if(children.containsKey("expr"))
         for (RuleContext context : SQL_Parser.getChildList(expr)) {
             if(SQLiteParser.ruleNames[context.getRuleIndex()].equals("expr")){
                 exprs.addAll(exploreExpr(context));
@@ -182,7 +182,6 @@ public class Where extends Statement{
         String[] parts = column.split("\\.");
         String[] part1 = new String[parts.length-1];
         System.arraycopy(parts, 0, part1, 0, parts.length - 1);
-        //Map<String, List<String>> newParentTabAlias_childTabAliases = updateParent_child(alias_tablename, parentTabAlias_childTabAliases);
         return getLastAlias(part1, alias_tablename, parentTabAlias_childTabAliases) + "." + parts[parts.length-1];
     }
 
@@ -206,14 +205,5 @@ public class Where extends Statement{
             }
         }
         return parts[parts.length-1];
-    }
-
-    private static Map<String, List<String>>  updateParent_child(Map<String, String> alias_tablename, Map<String, List<String>> parentTabAlias_childTabAliases){
-        Map<String, List<String>> newParentTabAlias_childTabAliases = new HashMap<>();
-        for (Map.Entry<String, List<String>> entry : parentTabAlias_childTabAliases.entrySet()) {
-            newParentTabAlias_childTabAliases.put(alias_tablename.get(entry.getKey()), entry.getValue());
-        }
-        newParentTabAlias_childTabAliases.putAll(parentTabAlias_childTabAliases);
-        return newParentTabAlias_childTabAliases;
     }
 }

@@ -21,7 +21,6 @@ public class UnNest extends Statement{
     private Map<String, List<String>> nestedTable_oberNestedTab = new HashMap<>();
     private Map<String, String> alias_tablename = new HashMap<>();
     private Map<String, List<String>> parentTabAlias_childTabAliases = new HashMap<>();
-    private List<String> maintables = new ArrayList<>();
     String sql;
     Boolean nested;
 

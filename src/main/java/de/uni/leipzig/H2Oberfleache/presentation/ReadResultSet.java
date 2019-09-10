@@ -4,7 +4,6 @@ import de.uni.leipzig.H2Oberfleache.controller.BaseController;
 import de.uni.leipzig.H2Oberfleache.jdbc.DbInfo;
 import de.uni.leipzig.H2Oberfleache.statementRefactoring.Grouping;
 import de.uni.leipzig.H2Oberfleache.statementRefactoring.Statement;
-import de.uni.leipzig.H2Oberfleache.tables.Table;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;

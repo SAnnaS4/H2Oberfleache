@@ -16,7 +16,6 @@ import java.util.Map;
 public class H2OberfleacheApplication {
 
 	public static void main(String[] args) {
-		SQL_Parser.test();
 		SpringApplication.run(H2OberfleacheApplication.class, args);
 	}
 

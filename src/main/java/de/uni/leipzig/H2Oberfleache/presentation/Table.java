@@ -1,4 +1,4 @@
-package de.uni.leipzig.H2Oberfleache.tables;
+package de.uni.leipzig.H2Oberfleache.presentation;
 
 import lombok.Getter;
 import lombok.Setter;
