@@ -82,24 +82,3 @@ public class TreeMaker extends BaseController {
         }
     }
 }
-//    public static Map<String, List<String>> getTable_Subtable() throws SQLException {
-//        DbInfo dbInfo = new DbInfo();
-//        List<String> allTables = dbInfo.getTables(autoCommit, dbName, user, password);
-//        List<String> subtables = new ArrayList<>();
-//        for (String table : allTables) {
-//            if (table.startsWith("__")) {
-//                subtables.add(table);
-//            }
-//        }
-//        Map<String, List<String>> table_subtables = new HashMap<>();
-//        for (String table : allTables) {
-//            List<String> mySubtables = new ArrayList<>();
-//            for (String subtable : subtables) {
-//                if(subtable.startsWith("__" + table))mySubtables.add(subtable);
-//            }
-//            if(!subtables.isEmpty()) {
-//                table_subtables.put(table, mySubtables);
-//            }
-//        }
-//        return table_subtables;
-//    }
