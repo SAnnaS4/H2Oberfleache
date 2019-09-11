@@ -4,12 +4,10 @@ import de.uni.leipzig.H2Oberfleache.controller.BaseController;
 import de.uni.leipzig.H2Oberfleache.jdbc.DbInfo;
 import de.uni.leipzig.H2Oberfleache.parser.SQL_Parser;
 import de.uni.leipzig.H2Oberfleache.parser.SQLiteParser;
-import de.uni.leipzig.H2Oberfleache.presentation.TreeMaker;
 import org.antlr.v4.runtime.RuleContext;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -70,7 +68,7 @@ public class Where extends Statement{
             }
             if(SQLiteParser.ruleNames[context.getRuleIndex()].equals("select_stmt")){
                 Select select = new Select(position_sql, this.sql, false);
-                this.sql = select.nf2ToNf1(context, alias_tablename);
+                this.sql = select.nf2To1Nf(context, alias_tablename);
             }
         }
         return exprs;
@@ -83,10 +81,10 @@ public class Where extends Statement{
                                     Map<String, List<String>> parentTabAlias_childTabAliases) {
         Map<String, List<RuleContext>> children = SQL_Parser.getChildMap(expr);
         if(children.containsKey("aggregate")){
-            Grouping grouping = new Grouping(position_sql, alias_tablename, maintables, sql);
-            String r = grouping.aggragateInWhere(expr);
+            Aggregate aggregate = new Aggregate(position_sql, alias_tablename, maintables, sql);
+            String r = aggregate.aggragateInWhere(expr);
             if(!r.equals(""))return r;
-            return grouping.aggragateInWhere(expr);
+            return aggregate.aggragateInWhere(expr);
         }
         List<RuleContext> column = children.getOrDefault("column_name", new ArrayList<>());
         if(!column.isEmpty()) {

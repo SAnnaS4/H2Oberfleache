@@ -19,7 +19,7 @@ public class Update extends Update_Delete {
         this.sql = sql;
         makePosition_sql(sql);
     }
-    public String nf2ToNf1() throws SQLException {
+    public String nf2To1Nf() throws SQLException {
         sql = prepareSQL(sql);
         whichStmt = "update_stmt";
         Map<String, List<RuleContext>> map = SQL_Parser.getParsedMap(sql);
@@ -167,7 +167,7 @@ public class Update extends Update_Delete {
         }
         String delete_stmt = "DELETE FROM " + pointTable + " " + where + "; ";
         Delete delete = new Delete(delete_stmt);
-        delete_stmt = delete.nf2ToNf1();
+        delete_stmt = delete.nf2To1Nf();
         inserts.add(delete_stmt);
         List<String> otIds = tablename_ID.get(oberTabName);
         Insert insert1 = new Insert();

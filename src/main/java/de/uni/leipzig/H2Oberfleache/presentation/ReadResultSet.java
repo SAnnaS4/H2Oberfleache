@@ -2,7 +2,7 @@ package de.uni.leipzig.H2Oberfleache.presentation;
 
 import de.uni.leipzig.H2Oberfleache.controller.BaseController;
 import de.uni.leipzig.H2Oberfleache.jdbc.DbInfo;
-import de.uni.leipzig.H2Oberfleache.statementRefactoring.Grouping;
+import de.uni.leipzig.H2Oberfleache.statementRefactoring.Aggregate;
 import de.uni.leipzig.H2Oberfleache.statementRefactoring.Statement;
 
 import java.sql.ResultSet;
@@ -98,10 +98,10 @@ public class ReadResultSet {
             if(tablename.equals("") && label.startsWith("__") && label.endsWith("ID"))
                 tablename = label.substring(2, label.length()-2);
             if(!tables.contains(tablename)){
-                if(Grouping.columnname_tables.containsKey(label)) {
-                    tablename = Grouping.columnname_tables.get(label).get(0);
-                    Grouping.columnname_tables.get(label).remove(0);
-                    if (Grouping.columnname_tables.get(label).size() == 1) Grouping.columnname_tables.remove(label);
+                if(Aggregate.columnname_tables.containsKey(label)) {
+                    tablename = Aggregate.columnname_tables.get(label).get(0);
+                    Aggregate.columnname_tables.get(label).remove(0);
+                    if (Aggregate.columnname_tables.get(label).size() == 1) Aggregate.columnname_tables.remove(label);
                 }else if(label.startsWith("_N_")){
                     boolean schluessel = false;
                     for (String s : tables) {

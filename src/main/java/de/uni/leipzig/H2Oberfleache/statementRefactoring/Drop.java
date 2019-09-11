@@ -13,11 +13,11 @@ public class Drop extends Statement{
         this.sql = sql;
     }
 
-    public String nf2ToNf1() throws SQLException {
+    public String nf2To1Nf() throws SQLException {
         sql = prepareSQL(sql);
         List<String> tablenames = getDropedTabelnames();
         List<String> queries = new ArrayList<>();
-        if(!sql.endsWith(";")){sql += ";"; }
+        if(!sql.endsWith(";"))sql += ";";
         for (String tablename : tablenames) {
             queries.addAll(createQueries(getNF2TableNamesRec(tablename)));
             String delete = "DELETE FROM " + nf2TabName + " WHERE NAME = '" + tablename + "'";

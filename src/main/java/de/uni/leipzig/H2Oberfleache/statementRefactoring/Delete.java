@@ -15,7 +15,7 @@ public class Delete extends Update_Delete{
         this.sql = sql;
         makePosition_sql(sql);
     }
-    public String nf2ToNf1() throws SQLException {
+    public String nf2To1Nf() throws SQLException {
         sql = prepareSQL(sql);
         whichStmt = "delete_stmt";
         Map<String, List<RuleContext>> map = SQL_Parser.getParsedMap(sql);

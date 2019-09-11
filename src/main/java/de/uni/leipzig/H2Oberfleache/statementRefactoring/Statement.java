@@ -167,28 +167,28 @@ public class Statement {
         switch (SQL_Parser.getQueryType(sql)) {
             case "CREATE":
                 Create create = new Create(sql);
-                newSQL = create.nf2ToNf1();
+                newSQL = create.nf2To1Nf();
                 break;
             case "DROP":
                 Drop drop = new Drop(sql);
-                newSQL = drop.nf2ToNf1();
+                newSQL = drop.nf2To1Nf();
                 break;
             case "INSERT":
                 Insert insert = new Insert();
-                newSQL = insert.nf2ToNf1(newSQL);
+                newSQL = insert.nf2To1Nf(newSQL);
                 break;
             case "SELECT":
                 Select select = new Select(sql, true);
-                newSQL = select.nf2ToNf1();
+                newSQL = select.nf2To1Nf();
                 break;
             case "UPDATE":
                 Update.hauptSQL = sql;
                 Update update = new Update(sql);
-                newSQL = update.nf2ToNf1();
+                newSQL = update.nf2To1Nf();
                 break;
             case "DELETE":
                 Delete delete = new Delete(sql);
-                newSQL = delete.nf2ToNf1();
+                newSQL = delete.nf2To1Nf();
                 break;
         }
         return newSQL;

@@ -15,7 +15,7 @@ import java.util.Map;
 public class Insert extends Statement {
     private Map<String, Integer> tablename_nextID = new HashMap<>();
 
-    public String nf2ToNf1(String sql){
+    public String nf2To1Nf(String sql){
         sql = prepareSQL(sql);
         StringBuilder result = new StringBuilder(sql);
         SQLiteLexer lexer = new SQLiteLexer(CharStreams.fromString(sql));

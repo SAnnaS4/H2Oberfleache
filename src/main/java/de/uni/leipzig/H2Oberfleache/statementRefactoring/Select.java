@@ -1,7 +1,5 @@
 package de.uni.leipzig.H2Oberfleache.statementRefactoring;
 
-import de.uni.leipzig.H2Oberfleache.controller.BaseController;
-import de.uni.leipzig.H2Oberfleache.jdbc.DbInfo;
 import de.uni.leipzig.H2Oberfleache.parser.SQL_Parser;
 import de.uni.leipzig.H2Oberfleache.parser.SQLiteLexer;
 import de.uni.leipzig.H2Oberfleache.parser.SQLiteParser;
@@ -10,7 +8,6 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -38,7 +35,7 @@ public class Select extends Statement{
         this.position_sql = position_sql;
     }
 
-    public String nf2ToNf1(Map<String, String> alias_tablename) {
+    public String nf2To1Nf(Map<String, String> alias_tablename) {
         this.sql = prepareSQL(sql);
         this.alias_tablename = alias_tablename;
         SQLiteLexer lexer = new SQLiteLexer(CharStreams.fromString(sql));
@@ -49,12 +46,12 @@ public class Select extends Statement{
         return sql;
     }
 
-    public String nf2ToNf1(RuleContext context, Map<String, String> alias_tablename){
+    public String nf2To1Nf(RuleContext context, Map<String, String> alias_tablename){
         this.alias_tablename = alias_tablename;
         return changeSQL(context);
     }
 
-    public String nf2ToNf1() {
+    public String nf2To1Nf() {
         sql = prepareSQL(sql);
         SQLiteLexer lexer = new SQLiteLexer(CharStreams.fromString(sql));
         SQLiteParser parser = new SQLiteParser(new CommonTokenStream(lexer));
@@ -99,7 +96,7 @@ public class Select extends Statement{
             Map<String, List<RuleContext>> children = SQL_Parser.getChildMap(tables_or_subquery);
             if(children.containsKey("select_stmt")){
                 Select select = new Select(cutFromSQL(tables_or_subquery, sql), zurAusgabe);
-                replaceRuleContext(tables_or_subquery, "(" + select.nf2ToNf1(alias_tablename) + ")");
+                replaceRuleContext(tables_or_subquery, "(" + select.nf2To1Nf(alias_tablename) + ")");
             }else {
                 if(children.containsKey("table_name")){
                     List<String> subtables;
@@ -274,9 +271,9 @@ public class Select extends Statement{
                         sql = replaceRuleContext(result_column, newExp);
                         updated = true;
                     }else if(childs.containsKey("aggregate")){
-                        Grouping grouping = new Grouping(position_sql, alias_tablename, maintables, sql);
-                        grouping.aggregateInSelect(expr, select_or_values);
-                        sql = grouping.sql;
+                        Aggregate aggregate = new Aggregate(position_sql, alias_tablename, maintables, sql);
+                        aggregate.aggregateInSelect(expr, select_or_values);
+                        sql = aggregate.sql;
                         updated = true;
                     }else if (result_column.getText().contains("*")) {
                         newExp = addAllSubtables(expr);

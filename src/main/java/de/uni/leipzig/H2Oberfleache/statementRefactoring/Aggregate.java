@@ -8,12 +8,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class Grouping extends Statement{
+public class Aggregate extends Statement{
     public static Map<String, List<String>> columnname_tables = new HashMap<>();
     private Map<String, String> alias_tablename;
     private List<String> maintables;
     String sql;
-    public Grouping(Map<Integer, String> position_sql, Map<String, String> alias_tablename, List<String> maintables, String sql){
+    public Aggregate(Map<Integer, String> position_sql, Map<String, String> alias_tablename, List<String> maintables, String sql){
         this.position_sql = position_sql;
         this.alias_tablename = alias_tablename;
         this.maintables = maintables;

@@ -19,7 +19,7 @@ public class Create extends Statement {
         this.sql = sql;
     }
 
-    public String nf2ToNf1() {
+    public String nf2To1Nf() {
         sql = prepareSQL(sql);
         SQLiteLexer lexer = new SQLiteLexer(CharStreams.fromString(sql));
         SQLiteParser parser = new SQLiteParser(new CommonTokenStream(lexer));

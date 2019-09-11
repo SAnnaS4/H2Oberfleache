@@ -65,7 +65,7 @@ public class Update_Delete extends Statement {
         }
         position_sql = new HashMap<>();
         Select select = new Select(selectStmt.toString(), false);
-        selectStmt = new StringBuilder(select.nf2ToNf1());
+        selectStmt = new StringBuilder(select.nf2To1Nf());
         List<String> ids = new ArrayList<>();
         ExecuteStatement eS = new ExecuteStatement(BaseController.dbName, selectStmt.toString(), true, BaseController.user, BaseController.password);
         ResultSet rs = eS.execQuery();
