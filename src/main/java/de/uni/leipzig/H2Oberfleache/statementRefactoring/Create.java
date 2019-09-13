@@ -22,7 +22,6 @@ public class Create extends Statement {
     }
 
     public String nf2To1Nf() {
-        sql = prepareSQL(sql);
         SQLiteLexer lexer = new SQLiteLexer(CharStreams.fromString(sql));
         SQLiteParser parser = new SQLiteParser(new CommonTokenStream(lexer));
         RuleContext stmt = parser.create_table_stmt();

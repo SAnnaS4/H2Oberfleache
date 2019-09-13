@@ -21,7 +21,6 @@ public class Insert extends Statement {
     }
 
     public String nf2To1Nf(String sql){
-        sql = prepareSQL(sql);
         StringBuilder result = new StringBuilder(sql);
         SQLiteLexer lexer = new SQLiteLexer(CharStreams.fromString(sql));
         SQLiteParser parser = new SQLiteParser(new CommonTokenStream(lexer));
@@ -36,6 +35,7 @@ public class Insert extends Statement {
                 result.append(query);
             }
         }
+        System.out.println(result.toString());
         return result.toString();
     }
 

@@ -39,7 +39,6 @@ public class Select extends Statement{
     }
 
     public String nf2To1Nf(Map<String, String> alias_tablename) {
-        this.sql = prepareSQL(sql);
         this.alias_tablename = alias_tablename;
         SQLiteLexer lexer = new SQLiteLexer(CharStreams.fromString(sql));
         SQLiteParser parser = new SQLiteParser(new CommonTokenStream(lexer));
@@ -55,7 +54,6 @@ public class Select extends Statement{
     }
 
     public String nf2To1Nf() {
-        sql = prepareSQL(sql);
         SQLiteLexer lexer = new SQLiteLexer(CharStreams.fromString(sql));
         SQLiteParser parser = new SQLiteParser(new CommonTokenStream(lexer));
         RuleContext select_stmt = parser.select_stmt();

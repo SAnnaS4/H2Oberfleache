@@ -22,7 +22,6 @@ public class Update extends Update_Delete {
         makePosition_sql(sql);
     }
     public String nf2To1Nf() throws SQLException {
-        sql = prepareSQL(sql);
         whichStmt = "update_stmt";
         Map<String, List<RuleContext>> map = SQL_Parser.getParsedMap(sql);
         String tablename = getTablename(map.get("qualified_table_name").get(0), false);

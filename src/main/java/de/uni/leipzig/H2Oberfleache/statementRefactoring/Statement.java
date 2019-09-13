@@ -1,6 +1,5 @@
 package de.uni.leipzig.H2Oberfleache.statementRefactoring;
 
-import de.uni.leipzig.H2Oberfleache.controller.BaseController;
 import de.uni.leipzig.H2Oberfleache.parser.SQL_Parser;
 import de.uni.leipzig.H2Oberfleache.presentation.UserDetails;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -169,6 +168,7 @@ public class Statement {
     }
 
     public String changeToNF1(String sql) throws SQLException {
+        sql = prepareSQL(sql);
         String newSQL = sql;
         switch (SQL_Parser.getQueryType(sql)) {
             case "CREATE":

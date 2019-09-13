@@ -16,7 +16,6 @@ public class Drop extends Statement{
     }
 
     public String nf2To1Nf() throws SQLException {
-        sql = prepareSQL(sql);
         List<String> tablenames = getDropedTabelnames();
         List<String> queries = new ArrayList<>();
         if(!sql.endsWith(";"))sql += ";";

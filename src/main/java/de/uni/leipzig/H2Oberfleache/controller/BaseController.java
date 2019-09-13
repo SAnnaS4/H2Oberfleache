@@ -38,20 +38,33 @@ public class BaseController{
         if(autoCommit){
             for (String neu : changeSQLAutoCommitTrue(sql)) {
                 eS = new ExecuteStatement(neu, false, userDetails);
-                eS.getDBcon().Commit();
+                if(isUpdate()){
+                    update = eS.execUpdate();
+                    eS.getDBcon().Commit();
+                }
+                else {
+                    rs = eS.execQuery();
+                    ReadResultSet readResultSet = new ReadResultSet(rs, userDetails);
+                    this.table = readResultSet.readResultSet(rs);
+                    HtmlBuilder htmlBuilder = new HtmlBuilder(table, userDetails);
+                    this.html = htmlBuilder.getHtml();
+                }
             }
         }else {
             eS = new ExecuteStatement(changeSQLAutoCommitFalse(sql), false, userDetails);
-            eS.getDBcon().Commit();
+            if(isUpdate()){
+                update = eS.execUpdate();
+                eS.getDBcon().Commit();
+            }
+            else {
+                rs = eS.execQuery();
+                ReadResultSet readResultSet = new ReadResultSet(rs, userDetails);
+                this.table = readResultSet.readResultSet(rs);
+                HtmlBuilder htmlBuilder = new HtmlBuilder(table, userDetails);
+                this.html = htmlBuilder.getHtml();
+            }
         }
-        if(isUpdate())update = eS.execUpdate();
-        else {
-            rs = eS.execQuery();
-            ReadResultSet readResultSet = new ReadResultSet(rs, userDetails);
-            this.table = readResultSet.readResultSet(rs);
-            HtmlBuilder htmlBuilder = new HtmlBuilder(table, userDetails);
-            this.html = htmlBuilder.getHtml();
-        }
+
         PrimeFaces.current().ajax().update("mainForm");
     }
 
