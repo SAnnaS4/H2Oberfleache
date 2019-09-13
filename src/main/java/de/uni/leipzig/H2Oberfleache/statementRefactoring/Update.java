@@ -2,6 +2,7 @@ package de.uni.leipzig.H2Oberfleache.statementRefactoring;
 
 import de.uni.leipzig.H2Oberfleache.parser.SQL_Parser;
 import de.uni.leipzig.H2Oberfleache.parser.SQLiteParser;
+import de.uni.leipzig.H2Oberfleache.presentation.UserDetails;
 import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 
@@ -15,7 +16,8 @@ public class Update extends Update_Delete {
     private Map<String, List<Map<String, RuleContext>>> table_set_value = new HashMap<>();
     private Map<String, RuleContext> table_tableInsert = new HashMap<>();
 
-    public Update(String sql){
+    public Update(String sql, UserDetails userDetails){
+        super(userDetails);
         this.sql = sql;
         makePosition_sql(sql);
     }
@@ -24,7 +26,7 @@ public class Update extends Update_Delete {
         whichStmt = "update_stmt";
         Map<String, List<RuleContext>> map = SQL_Parser.getParsedMap(sql);
         String tablename = getTablename(map.get("qualified_table_name").get(0), false);
-        List<String> subtables = getNF2TableNamesRec(tablename);
+        List<String> subtables = getNF2TableNamesRec(tablename, userDetails);
         List<String> table = new ArrayList<>();
         table.add(tablename);
         getTable_set_value(tablename, map.get("set_stmt"), subtables);
@@ -111,7 +113,7 @@ public class Update extends Update_Delete {
                 String newQuery = "UPDATE " + tablename + " SET " + gernerateQuery(true, tablename, where).get(0);
                 List<String> set = gernerateQuery(false, tablename, where);
                 newQuery += " " + where + "; ";
-                List<String> subtables = getNF2TableNames(tablename);
+                List<String> subtables = getNF2TableNames(tablename, userDetails);
                 if (!subtables.isEmpty()) queries.addAll(newQueries(newQuery, tablename, subtables, this::makeQueries));
                 if (!set.get(0).equals("")) {
                     if (set.size() == 1) {
@@ -166,11 +168,11 @@ public class Update extends Update_Delete {
             }
         }
         String delete_stmt = "DELETE FROM " + pointTable + " " + where + "; ";
-        Delete delete = new Delete(delete_stmt);
+        Delete delete = new Delete(delete_stmt, userDetails);
         delete_stmt = delete.nf2To1Nf();
         inserts.add(delete_stmt);
         List<String> otIds = tablename_ID.get(oberTabName);
-        Insert insert1 = new Insert();
+        Insert insert1 = new Insert(userDetails);
         Map<String, List<RuleContext>> childMap = SQL_Parser.getChildMap(value);
         List<RuleContext> valueList = new ArrayList<>();
         RuleContext valueInsert = childMap.get("value_insert").get(0);

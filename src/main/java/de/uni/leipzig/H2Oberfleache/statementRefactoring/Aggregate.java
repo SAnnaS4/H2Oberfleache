@@ -1,6 +1,7 @@
 package de.uni.leipzig.H2Oberfleache.statementRefactoring;
 
 import de.uni.leipzig.H2Oberfleache.parser.SQL_Parser;
+import de.uni.leipzig.H2Oberfleache.presentation.UserDetails;
 import org.antlr.v4.runtime.RuleContext;
 
 import java.util.ArrayList;
@@ -9,11 +10,12 @@ import java.util.List;
 import java.util.Map;
 
 public class Aggregate extends Statement{
-    public static Map<String, List<String>> columnname_tables = new HashMap<>();
+
     private Map<String, String> alias_tablename;
     private List<String> maintables;
     String sql;
-    public Aggregate(Map<Integer, String> position_sql, Map<String, String> alias_tablename, List<String> maintables, String sql){
+    public Aggregate(Map<Integer, String> position_sql, Map<String, String> alias_tablename, List<String> maintables, String sql, UserDetails userDetails){
+        super(userDetails);
         this.position_sql = position_sql;
         this.alias_tablename = alias_tablename;
         this.maintables = maintables;
@@ -51,7 +53,7 @@ public class Aggregate extends Statement{
         if(!children.containsKey("table_name") && !children.containsKey("function_name") && !alias_tablename.containsKey(expr1.getText())){
             for (Map.Entry<String, String> entry : alias_tablename.entrySet()) {
                 if(maintables.contains(entry.getValue())) {
-                    List<String> attributes = Where.getAllAttributes(entry.getValue());
+                    List<String> attributes = Where.getAllAttributes(entry.getValue(), userDetails);
                     for (String attribute : attributes) {
                         if (attribute.equals(expr1.getText())) {
                             tablename = entry.getValue();
@@ -64,7 +66,7 @@ public class Aggregate extends Statement{
                 tablename = alias_tablename.get(alias[alias.length-1]);
             else tablename = alias_tablename.get(alias[alias.length-2]);
         }
-        obertab = getObertabelle(tablename);
+        obertab = getObertabelle(tablename, userDetails);
         for (Map.Entry<String, String> entry : alias_tablename.entrySet()) {
             if(entry.getValue().equals(obertab))aliasMainSelect = entry.getKey();
         }
@@ -107,11 +109,11 @@ public class Aggregate extends Statement{
         }
         this.sql = replaceRuleContext(expr, select);
         changeSQL(select_or_values, from, where);
-        if (columnname_tables.containsKey(functionName)) columnname_tables.get(functionName).add(obertab);
+        if (this.userDetails.columnname_tables.containsKey(functionName)) this.userDetails.columnname_tables.get(functionName).add(obertab);
         else {
             List<String> newList = new ArrayList<>();
             newList.add(obertab);
-            columnname_tables.put(functionName, newList);
+            this.userDetails.columnname_tables.put(functionName, newList);
         }
     }
 

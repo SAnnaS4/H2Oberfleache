@@ -18,7 +18,7 @@
 
         <p:menubar>
             <f:facet name="options">
-                <p:commandButton actionListener="#{statementHandling.closeCon()}" value="Logout" icon="pi pi-home" />
+                <p:commandButton actionListener="#{baseController.closeCon()}" value="Logout" icon="pi pi-home" />
             </f:facet>
         </p:menubar>
     </h:form>
@@ -26,7 +26,7 @@
         <p:layout>
             <p:layoutUnit position="west" resizable="true">
                 <h3>Tables</h3>
-                <p:tree value="#{treeMaker.tree}" var="node" dynamic="true">
+                <p:tree value="#{baseController.treeMaker.tree}" var="node" dynamic="true">
                     <p:treeNode>
                         <h:outputText value="#{node}" />
                     </p:treeNode>
@@ -34,11 +34,11 @@
             </p:layoutUnit>
 
             <p:layoutUnit position="center" resizable="true">
-                <p:inputTextarea rows="7" cols="35" autoResize="true" value="#{statementHandling.sql}" />
-                <p:commandButton value="Submit" actionListener="#{statementHandling.submit()}"/>
-                <h:outputText id="htmlStuff" value="#{statementHandling.html}" escape="false"/>
-                <p:dataTable id="tables" var="table" value="#{statementHandling.getTable().content}" widgetVar="Ttable" >
-                    <p:columns value="#{statementHandling.table.attribute}" var="attribut" columnIndexVar="colIndex" sortBy="#{table[attribut]}" filterBy="#{table[attribut]}">
+                <p:inputTextarea rows="7" cols="35" autoResize="true" value="#{baseController.sql}" />
+                <p:commandButton value="Submit" actionListener="#{baseController.submit()}"/>
+                <h:outputText id="htmlStuff" value="#{baseController.html}" escape="false"/>
+                <p:dataTable id="tables" var="table" value="#{baseController.getTable().content}" widgetVar="Ttable" >
+                    <p:columns value="#{baseController.table.attribute}" var="attribut" columnIndexVar="colIndex" sortBy="#{table[attribut]}" filterBy="#{table[attribut]}">
                         <f:facet name="header">
                             <h:outputText value="#{attribut.name}" />
                         </f:facet>

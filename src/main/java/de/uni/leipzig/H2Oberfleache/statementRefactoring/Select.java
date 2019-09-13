@@ -3,6 +3,7 @@ package de.uni.leipzig.H2Oberfleache.statementRefactoring;
 import de.uni.leipzig.H2Oberfleache.parser.SQL_Parser;
 import de.uni.leipzig.H2Oberfleache.parser.SQLiteLexer;
 import de.uni.leipzig.H2Oberfleache.parser.SQLiteParser;
+import de.uni.leipzig.H2Oberfleache.presentation.UserDetails;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RuleContext;
@@ -14,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 public class Select extends Statement{
-    private UnNest unNest = new UnNest(new HashMap<>(), new HashMap<>());
+    private UnNest unNest = new UnNest(new HashMap<>(), new HashMap<>(), userDetails);
     private static Integer aliasCounter = 0;
     private Map<String, String> alias_tablename = new HashMap<>();
     private Map<String, List<String>> parentTabAlias_childTabAliases = new HashMap<>();
@@ -23,13 +24,15 @@ public class Select extends Statement{
     private Boolean zurAusgabe;
     private Map<String, List<RuleContext>> select_or_values = new HashMap<>();
 
-    public Select(String sql, Boolean zurAusgabe){
+    public Select(String sql, Boolean zurAusgabe, UserDetails userDetails){
+        super(userDetails);
         this.sql = sql;
         this.zurAusgabe = zurAusgabe;
         makePosition_sql(sql);
     }
 
-    public Select(Map<Integer, String> position_sql, String sql, Boolean zurAusgabe){
+    public Select(Map<Integer, String> position_sql, String sql, Boolean zurAusgabe, UserDetails userDetails){
+        super(userDetails);
         this.sql = sql;
         this.zurAusgabe = zurAusgabe;
         this.position_sql = position_sql;
@@ -95,14 +98,14 @@ public class Select extends Statement{
         for (RuleContext tables_or_subquery : tables_or_subqueries) {
             Map<String, List<RuleContext>> children = SQL_Parser.getChildMap(tables_or_subquery);
             if(children.containsKey("select_stmt")){
-                Select select = new Select(cutFromSQL(tables_or_subquery, sql), zurAusgabe);
+                Select select = new Select(cutFromSQL(tables_or_subquery, sql), zurAusgabe, userDetails);
                 replaceRuleContext(tables_or_subquery, "(" + select.nf2To1Nf(alias_tablename) + ")");
             }else {
                 if(children.containsKey("table_name")){
                     List<String> subtables;
                     if(alias_tablename.containsKey(children.get("table_name").get(0).getText())){
-                        subtables = getNF2TableNamesRec(alias_tablename.get(children.get("table_name").get(0).getText()));
-                    }else subtables = getNF2TableNamesRec(children.get("table_name").get(0).getText());
+                        subtables = getNF2TableNamesRec(alias_tablename.get(children.get("table_name").get(0).getText()), userDetails);
+                    }else subtables = getNF2TableNamesRec(children.get("table_name").get(0).getText(), userDetails);
                     if(!subtables.isEmpty()) {
                         String tablename = children.get("table_name").get(0).getText();
                         if(alias_tablename.containsKey(tablename)){
@@ -122,7 +125,7 @@ public class Select extends Statement{
         }
         List<RuleContext> joinConstaints = SQL_Parser.getParsedMap(select_stmt).getOrDefault("join_constraint", new ArrayList<>());
         if(!joinConstaints.isEmpty()) {
-            Joins joins = new Joins();
+            Joins joins = new Joins(userDetails);
             sql = joins.JoinConstraint(sql, joinConstaints, alias_tablename, position_sql, maintables, parentTabAlias_childTabAliases);
         }
         sql = updateResultColumnAndWhere(select_stmt, sql);
@@ -161,7 +164,7 @@ public class Select extends Statement{
     }
 
     private String getTablenameJoins(String tablename, String alias){
-        List<String> subtables = getNF2TableNames(tablename);
+        List<String> subtables = getNF2TableNames(tablename, userDetails);
         Map<String, String> name_newSubtables = new HashMap<>();
         for (String subtable : subtables) {
             String[] parts = subtable.split("_");
@@ -224,11 +227,11 @@ public class Select extends Statement{
         }else {
             List<String> allSubtables = new ArrayList<>();
             for (String haupttable : maintables) {
-                allSubtables.addAll(getNF2TableNamesRec(haupttable));
+                allSubtables.addAll(getNF2TableNamesRec(haupttable, userDetails));
             }
             tablename = getTablename(result_column, allSubtables, true);
         }
-        List<String> subtables = getNF2TableNamesRec(tablename);
+        List<String> subtables = getNF2TableNamesRec(tablename, userDetails);
         for (String subtable : subtables) {
             String[] alias = subtable.split("_");
             String aliasName = alias[alias.length-1];
@@ -243,7 +246,7 @@ public class Select extends Statement{
             List<RuleContext> ordering_terms = context.get("ordering_term");
             for (RuleContext ordering_term : ordering_terms) {
                 RuleContext expr = (RuleContext) ordering_term.getChild(0);
-                String newExp = Where.changeExpr(expr, alias_tablename, maintables, position_sql, sql, parentTabAlias_childTabAliases);
+                String newExp = Where.changeExpr(expr, alias_tablename, maintables, position_sql, sql, parentTabAlias_childTabAliases, userDetails);
                 sql = replaceRuleContext(expr, newExp);
             }
         }
@@ -262,7 +265,7 @@ public class Select extends Statement{
                     assert expr != null;
                     Map<String, List<RuleContext>> childs = SQL_Parser.getChildMap(expr);
                     if(SQLiteParser.ruleNames[expr.getRuleIndex()].equals("un_nest_stmt")){
-                        this.unNest = new UnNest(alias_tablename, parentTabAlias_childTabAliases);
+                        this.unNest = new UnNest(alias_tablename, parentTabAlias_childTabAliases, userDetails);
                         newExp =unNest.setNestUnnestAttributes(result_column, expr, childs, "");
                         if (notAdded && zurAusgabe) {
                             newExp += addIDSToQuery();
@@ -271,7 +274,7 @@ public class Select extends Statement{
                         sql = replaceRuleContext(result_column, newExp);
                         updated = true;
                     }else if(childs.containsKey("aggregate")){
-                        Aggregate aggregate = new Aggregate(position_sql, alias_tablename, maintables, sql);
+                        Aggregate aggregate = new Aggregate(position_sql, alias_tablename, maintables, sql, userDetails);
                         aggregate.aggregateInSelect(expr, select_or_values);
                         sql = aggregate.sql;
                         updated = true;
@@ -279,7 +282,7 @@ public class Select extends Statement{
                         newExp = addAllSubtables(expr);
 
                     }else{
-                        newExp = Where.changeExpr(expr, alias_tablename, maintables, position_sql, sql, parentTabAlias_childTabAliases);
+                        newExp = Where.changeExpr(expr, alias_tablename, maintables, position_sql, sql, parentTabAlias_childTabAliases, userDetails);
                         if (notAdded && zurAusgabe) {
                             newExp += addIDSToQuery();
                             notAdded = false;
@@ -292,7 +295,7 @@ public class Select extends Statement{
         if(select_or_values.containsKey("where_expr")){
             List<RuleContext> where_exprs = select_or_values.get("where_expr");
             for (RuleContext where_expr : where_exprs) {
-                Where where = new Where(sql, where_expr.parent, alias_tablename, position_sql, maintables, parentTabAlias_childTabAliases);
+                Where where = new Where(sql, where_expr.parent, alias_tablename, position_sql, maintables, parentTabAlias_childTabAliases, userDetails);
                 sql = where.sql;
             }
         }

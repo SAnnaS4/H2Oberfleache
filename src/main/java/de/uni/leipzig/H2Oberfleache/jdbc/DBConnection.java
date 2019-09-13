@@ -7,16 +7,8 @@ import java.sql.SQLException;
 
 public class DBConnection {
     private Connection con;
-    private static DBConnection dbConnection;
 
-    public static DBConnection getInstance(Boolean autoCommit, String DbName, String user, String password){
-        if(dbConnection == null){
-            dbConnection = new DBConnection(autoCommit, DbName, user, password);
-        }
-        return dbConnection;
-    }
-
-    private DBConnection(Boolean autoCommit, String DbName, String user, String password) {
+    public DBConnection(Boolean autoCommit, String DbName, String user, String password) {
         try {
             String url = "jdbc:h2:~/" + DbName;
             this.con = DriverManager.getConnection(url,user,password);
@@ -49,7 +41,6 @@ public class DBConnection {
     public void conClose(){
         try {
             this.con.close();
-            dbConnection = null;
         } catch (SQLException e) {
             e.printStackTrace();
         }

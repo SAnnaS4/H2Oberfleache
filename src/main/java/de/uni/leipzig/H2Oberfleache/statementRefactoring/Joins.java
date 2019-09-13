@@ -2,6 +2,7 @@ package de.uni.leipzig.H2Oberfleache.statementRefactoring;
 
 import de.uni.leipzig.H2Oberfleache.parser.SQL_Parser;
 import de.uni.leipzig.H2Oberfleache.parser.SQLiteParser;
+import de.uni.leipzig.H2Oberfleache.presentation.UserDetails;
 import org.antlr.v4.runtime.RuleContext;
 
 import java.util.ArrayList;
@@ -10,9 +11,12 @@ import java.util.List;
 import java.util.Map;
 
 public class Joins extends Where {
-    // mit with Anweisung !!!
 
     public static List<String> operations = Arrays.asList("NATURAL", "LEFT", "INNER", "CROSS");
+
+    public Joins(UserDetails userDetails) {
+        super(userDetails);
+    }
 
     public static List<RuleContext> getTableOrSubQuerys(List<RuleContext> joins){
         List<RuleContext> tableOrSubQuerys = new ArrayList<>();
@@ -35,7 +39,7 @@ public class Joins extends Where {
             usedExpr = new ArrayList<>();
             for (RuleContext expr : exprs) {
                 if(!usedExpr.contains(expr)) {
-                    String newExpr = changeExpr(expr, alias_tablename, haupttables, position_sql, sql, parentTabAlias_childTabAliases);
+                    String newExpr = changeExpr(expr, alias_tablename, haupttables, position_sql, sql, parentTabAlias_childTabAliases, userDetails);
                     if (!newExpr.equals(expr.getText())) {
                         if(newExpr.contains("NOT EXISTS (") && newExpr.contains("AND NOT EXISTS (") && newExpr.contains(" EXCEPT")){
                             this.sql = replaceRuleContext(expr.parent, newExpr);

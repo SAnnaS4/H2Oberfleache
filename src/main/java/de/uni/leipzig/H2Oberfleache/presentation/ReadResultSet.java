@@ -11,13 +11,13 @@ import java.util.*;
 
 public class ReadResultSet {
     private ResultSet rs;
-    public static Map<String, String> ober_untertabelle = new HashMap<>();
     private Map<String, List<Integer>> tablename_schluesselPosition = new HashMap<>();
     private Map<Integer, Integer> position_gleicheBelegung = new HashMap<>();
+    private UserDetails userDetails;
 
-    public ReadResultSet(ResultSet rs){
-        ober_untertabelle = new HashMap<>();
+    public ReadResultSet(ResultSet rs, UserDetails userDetails){
         this.rs = rs;
+        this.userDetails = userDetails;
     }
 
     public Table readResultSet(ResultSet rs) throws SQLException {
@@ -91,17 +91,17 @@ public class ReadResultSet {
         List<Map<String, String>> zusatzlables_tablename = new ArrayList<>();
         DbInfo dbInfo = new DbInfo();
         int neueSpalten = j;
-        List<String> tables = dbInfo.getTables(false, BaseController.dbName, BaseController.user, BaseController.password);
+        List<String> tables = dbInfo.getTables(userDetails);
         for(int i= 1; i<=j; i++){
             String label = rs.getMetaData().getColumnLabel(i);
             String tablename = rs.getMetaData().getTableName(i);
             if(tablename.equals("") && label.startsWith("__") && label.endsWith("ID"))
                 tablename = label.substring(2, label.length()-2);
             if(!tables.contains(tablename)){
-                if(Aggregate.columnname_tables.containsKey(label)) {
-                    tablename = Aggregate.columnname_tables.get(label).get(0);
-                    Aggregate.columnname_tables.get(label).remove(0);
-                    if (Aggregate.columnname_tables.get(label).size() == 1) Aggregate.columnname_tables.remove(label);
+                if(userDetails.columnname_tables.containsKey(label)) {
+                    tablename = userDetails.columnname_tables.get(label).get(0);
+                    userDetails.columnname_tables.get(label).remove(0);
+                    if (userDetails.columnname_tables.get(label).size() == 1) userDetails.columnname_tables.remove(label);
                 }else if(label.startsWith("_N_")){
                     boolean schluessel = false;
                     for (String s : tables) {
@@ -118,7 +118,7 @@ public class ReadResultSet {
                                     obertable = (obertable.equals("")?"":"__" + obertable + "_") + parts[z];
                             }
                         }else obertable = "main";
-                        ober_untertabelle.put(obertable, tablename);
+                        userDetails.ober_untertabelle.put(obertable, tablename);
                         Map<String, String> entry = new HashMap<>();
                         entry.put(label, obertable);
                         zusatzlables_tablename.add(entry);
@@ -175,7 +175,7 @@ public class ReadResultSet {
         if(verschachtelungsGrad < 0){
             verschachtelungsGrad *= -1;
             for (int i = 0; i < verschachtelungsGrad; i++) {
-                tablename = Statement.getObertabelle(tablename);
+                tablename = Statement.getObertabelle(tablename, userDetails);
             }
         }else if(verschachtelungsGrad > 0){
             for(int i = 1; i <= verschachtelungsGrad; i++){

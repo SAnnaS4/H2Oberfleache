@@ -1,5 +1,6 @@
 package de.uni.leipzig.H2Oberfleache.jdbc;
 
+import de.uni.leipzig.H2Oberfleache.presentation.UserDetails;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -24,8 +25,8 @@ public class ExecuteStatement {
         return st.executeUpdate(query);
     }
 
-    public ExecuteStatement(String dBName, String query, Boolean autoCommit, String user, String password) throws SQLException {
-        this.DBcon = DBConnection.getInstance(autoCommit, dBName, user, password);
+    public ExecuteStatement(String query, Boolean autoCommit, UserDetails userDetails) throws SQLException {
+        this.DBcon = userDetails.connection;
         this.DBcon.setAutoCommit(autoCommit);
         this.query = query;
     }

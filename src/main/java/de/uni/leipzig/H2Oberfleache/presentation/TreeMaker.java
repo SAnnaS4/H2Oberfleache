@@ -1,14 +1,12 @@
 package de.uni.leipzig.H2Oberfleache.presentation;
 
-import de.uni.leipzig.H2Oberfleache.controller.BaseController;
+import de.uni.leipzig.H2Oberfleache.jdbc.DBConnection;
 import de.uni.leipzig.H2Oberfleache.jdbc.DbInfo;
 import lombok.Getter;
 import lombok.Setter;
 import org.primefaces.model.DefaultTreeNode;
 import org.primefaces.model.TreeNode;
-import org.springframework.stereotype.Controller;
 
-import javax.faces.view.ViewScoped;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -16,19 +14,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Controller
 @Setter
 @Getter
-@ViewScoped
-public class TreeMaker extends BaseController {
-    DatabaseMetaData dBData = connection.getMeta();
+public class TreeMaker {
+    DatabaseMetaData dBData;
     DbInfo dbInfo = new DbInfo();
+    public UserDetails userDetails;
 
-    public TreeMaker() throws SQLException {
+
+    public TreeMaker(DBConnection connection, UserDetails userDetails) throws SQLException {
+        dBData = connection.getMeta();
+        this.userDetails = userDetails;
     }
 
     public TreeNode getTree() throws SQLException, IllegalAccessException {
-        List<String> allTables = dbInfo.getTables(autoCommit, dbName, user, password);
+        List<String> allTables = dbInfo.getTables(userDetails);
         allTables.remove("NF2_UNTERTABELLEN");
         List<String> tables = new ArrayList<>();
         List<String> subtables = new ArrayList<>();
@@ -62,7 +62,7 @@ public class TreeMaker extends BaseController {
     }
 
     private void addColumns(TreeNode node, String tablename, Map<String, List<String>> table_subtables) throws SQLException, IllegalAccessException {
-        Map<String, String> columns = dbInfo.getColums(autoCommit,dbName,tablename, user, password);
+        Map<String, String> columns = dbInfo.getColums(tablename, userDetails);
         String idName = "__" + tablename + "ID";
         for (Map.Entry<String, String> column : columns.entrySet()) {
             TreeNode node1;

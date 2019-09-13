@@ -17,13 +17,16 @@ public class HtmlBody {
     List<Table.Attribute> attributes;
     Map<String, List<Table.Attribute>> tablename_attribute;
     List<String> mainTables = new ArrayList<>();
+    UserDetails userDetails;
 
-    private HtmlBody(Integer rowspan, Table.Content value){
+    private HtmlBody(Integer rowspan, Table.Content value, UserDetails userDetails){
+        this.userDetails = userDetails;
         this.rowspan = rowspan;
         this.value = value;
     }
 
-    public HtmlBody(List<Table.Attribute> attributes, Map<String, List<Table.Attribute>> tablename_attribute){
+    public HtmlBody(List<Table.Attribute> attributes, Map<String, List<Table.Attribute>> tablename_attribute, UserDetails userDetails){
+        this.userDetails = userDetails;
         this.attributes = attributes;
         this.tablename_attribute=tablename_attribute;
         attribut_td = fillMap(attributes);
@@ -37,7 +40,7 @@ public class HtmlBody {
         for (String tablename : tablenames) {
                 table_rowspan.put(tablename, new ArrayList<>());
             if (tablename_inhalt.containsKey(tablename)) {
-                List<String> subtables = Statement.getNF2TableNames(tablename);
+                List<String> subtables = Statement.getNF2TableNames(tablename, userDetails);
                 String mySchluessel = "__" + tablename + "ID";
                 for (List<Table.Content> contentList : tablename_inhalt.get(tablename)) {
                     String mySchluesselValue = "";
@@ -51,15 +54,15 @@ public class HtmlBody {
                             }
                             Integer rowspan = 1;
                             if(!tableIsConcerned(tablename))rowspan=0;
-                            if (!subtables.isEmpty() || ReadResultSet.ober_untertabelle.containsKey(tablename) || tablename.equals("main")) {
+                            if (!subtables.isEmpty() || userDetails.ober_untertabelle.containsKey(tablename) || tablename.equals("main")) {
                                 List<Integer> usedAttributesAlt = usedAttributes;
                                 if (!subtables.isEmpty()) {
                                     int newRowspan = makeChildList(mySchluesselValue, subtables, mySchluessel, tablename_inhalt, attributes);
                                     if (newRowspan > rowspan) rowspan = newRowspan;
                                 }
-                                if (ReadResultSet.ober_untertabelle.containsKey(tablename)) {
+                                if (userDetails.ober_untertabelle.containsKey(tablename)) {
                                     List<String> subtable = new ArrayList<>();
-                                    subtable.add(ReadResultSet.ober_untertabelle.get(tablename));
+                                    subtable.add(userDetails.ober_untertabelle.get(tablename));
                                     String nestSchluessel = "__" + subtable.get(0) + "ID";
                                     String nestMySchluessel = "";
                                     for (Table.Content attribute : contentList) {
@@ -71,7 +74,7 @@ public class HtmlBody {
                                 }
                                 if (tablename.equals("main")) {
                                     for (String mainTable : mainTables) {
-                                        List<String> subtable = Statement.getNF2TableNames(mainTable);
+                                        List<String> subtable = Statement.getNF2TableNames(mainTable, userDetails);
                                         String nestSchluessel = "__" + mainTable + "ID";
                                         String nestMySchluessel = "";
                                         for (Table.Content attribute : contentList) {
@@ -88,7 +91,7 @@ public class HtmlBody {
                                 usedAttributes.addAll(usedAttributesAlt);
                             }
                                 for (Table.Content content1 : contentList) {
-                                    HtmlBody html_td = new HtmlBody(rowspan, content1);
+                                    HtmlBody html_td = new HtmlBody(rowspan, content1, userDetails);
                                     attribut_td.getOrDefault(content1.getAttribute().getNumber(), new ArrayList<>()).add(html_td);
                                 }
                                 table_rowspan.get(tablename).add(rowspan);
@@ -145,7 +148,7 @@ public class HtmlBody {
 
     private HtmlBody makeEmpty(Integer difference, Integer attribute){
         Table.Content content = new Table.Content(attributes.get(attribute), "");
-        return new HtmlBody(difference, content);
+        return new HtmlBody(difference, content, userDetails);
     }
 
     private void cleanMap(){

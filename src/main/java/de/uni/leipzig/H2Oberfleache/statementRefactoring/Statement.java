@@ -2,6 +2,7 @@ package de.uni.leipzig.H2Oberfleache.statementRefactoring;
 
 import de.uni.leipzig.H2Oberfleache.controller.BaseController;
 import de.uni.leipzig.H2Oberfleache.parser.SQL_Parser;
+import de.uni.leipzig.H2Oberfleache.presentation.UserDetails;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.RuleContext;
 
@@ -15,6 +16,7 @@ import java.util.Map;
 public class Statement {
     public static final String nf2TabName = "NF2_UNTERTABELLEN";
     Map<Integer, String> position_sql = new HashMap<>();
+    public UserDetails userDetails;
 
     private String deleteBlank(String sql){
         StringBuilder newSql = new StringBuilder();
@@ -76,10 +78,10 @@ public class Statement {
         return tablename;
     }
 
-    public static List<String> getNF2TableNames(String tablename){
+    public static List<String> getNF2TableNames(String tablename, UserDetails userDetails){
         List<String> tablenames = new ArrayList<>();
         try {
-            ResultSet rs = getNextTableNames(tablename);
+            ResultSet rs = getNextTableNames(tablename, userDetails);
             while (rs.next()){
                 tablename = rs.getString(1);
                 tablenames.add(tablename);
@@ -90,16 +92,16 @@ public class Statement {
         return tablenames;
     }
 
-    public static List<String> getNF2TableNamesRec(String tablename){
+    public static List<String> getNF2TableNamesRec(String tablename, UserDetails userDetails){
         List<String> tablenames = new ArrayList<>();
         try {
-            ResultSet rs = getNextTableNames(tablename);
+            ResultSet rs = getNextTableNames(tablename, userDetails);
             while (rs.next()){
                 tablename = rs.getString(1);
                 tablenames.add(tablename);
-                ResultSet rs1 = getNextTableNames(tablename);
+                ResultSet rs1 = getNextTableNames(tablename, userDetails);
                 if(rs1.next()) {
-                    tablenames.addAll(getNF2TableNames(tablename));
+                    tablenames.addAll(getNF2TableNames(tablename, userDetails));
                 }
             }
         } catch (SQLException e) {
@@ -108,9 +110,9 @@ public class Statement {
         return tablenames;
     }
 
-    private static ResultSet getNextTableNames(String tablename) throws SQLException {
+    private static ResultSet getNextTableNames(String tablename, UserDetails userDetails) throws SQLException {
         String selection = "SELECT NAME FROM " + nf2TabName + " WHERE OBERTABELLE = '" + tablename + "'";
-        java.sql.Statement st = BaseController.connection.getCon().createStatement();
+        java.sql.Statement st = userDetails.connection.getCon().createStatement();
         return st.executeQuery(selection);
     }
 
@@ -118,7 +120,7 @@ public class Statement {
         String selection = "SELECT MAX(" + "__" + tablename + "ID) FROM " + tablename;
         int maxID = -1;
         try {
-            java.sql.Statement st = BaseController.connection.getCon().createStatement();
+            java.sql.Statement st = userDetails.connection.getCon().createStatement();
             ResultSet rs = st.executeQuery(selection);
             if(rs.next()) {
                 maxID = rs.getInt(1);
@@ -140,11 +142,11 @@ public class Statement {
         return newSQL.toString();
     }
 
-    public static String getObertabelle(String tablename) {
+    public static String getObertabelle(String tablename, UserDetails userDetails) {
         String obertab = "";
         String selection = "SELECT OBERTABELLE FROM " + nf2TabName + " WHERE NAME = '" + tablename + "'";
         try {
-            java.sql.Statement st = BaseController.connection.getCon().createStatement();
+            java.sql.Statement st = userDetails.connection.getCon().createStatement();
             ResultSet rs = st.executeQuery(selection);
             while (rs.next()) {
                 obertab = rs.getString(1);
@@ -162,32 +164,36 @@ public class Statement {
         }
     }
 
-    public static String changeToNF1(String sql) throws SQLException {
+    public Statement(UserDetails userDetails){
+        this.userDetails = userDetails;
+    }
+
+    public String changeToNF1(String sql) throws SQLException {
         String newSQL = sql;
         switch (SQL_Parser.getQueryType(sql)) {
             case "CREATE":
-                Create create = new Create(sql);
+                Create create = new Create(sql, userDetails);
                 newSQL = create.nf2To1Nf();
                 break;
             case "DROP":
-                Drop drop = new Drop(sql);
+                Drop drop = new Drop(sql, userDetails);
                 newSQL = drop.nf2To1Nf();
                 break;
             case "INSERT":
-                Insert insert = new Insert();
+                Insert insert = new Insert(userDetails);
                 newSQL = insert.nf2To1Nf(newSQL);
                 break;
             case "SELECT":
-                Select select = new Select(sql, true);
+                Select select = new Select(sql, true, userDetails);
                 newSQL = select.nf2To1Nf();
                 break;
             case "UPDATE":
                 Update.hauptSQL = sql;
-                Update update = new Update(sql);
+                Update update = new Update(sql, userDetails);
                 newSQL = update.nf2To1Nf();
                 break;
             case "DELETE":
-                Delete delete = new Delete(sql);
+                Delete delete = new Delete(sql, userDetails);
                 newSQL = delete.nf2To1Nf();
                 break;
         }

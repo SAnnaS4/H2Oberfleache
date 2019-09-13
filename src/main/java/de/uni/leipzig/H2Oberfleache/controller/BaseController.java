@@ -1,46 +1,116 @@
 package de.uni.leipzig.H2Oberfleache.controller;
 
 import de.uni.leipzig.H2Oberfleache.jdbc.DBConnection;
+import de.uni.leipzig.H2Oberfleache.jdbc.ExecuteStatement;
+import de.uni.leipzig.H2Oberfleache.presentation.*;
+import de.uni.leipzig.H2Oberfleache.statementRefactoring.Statement;
 import lombok.Getter;
 import lombok.Setter;
+import org.primefaces.PrimeFaces;
 
 import javax.annotation.ManagedBean;
 import javax.faces.context.FacesContext;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 @ManagedBean
 @Getter
 @Setter
 public class BaseController{
-    public static Boolean autoCommit = false;
-    public static String dbName = "testdb";
-    public static DBConnection connection;
-    public static String user = "sa";
-    public static String password = "sa";
+    public UserDetails userDetails;
+    public Boolean autoCommit = false;
+    public String dbName = "testdb";
+    public DBConnection connection;
+    public String user = "sa";
+    public String password = "sa";
+    public TreeMaker treeMaker;
+    String sql;
+    int update;
+    ResultSet rs;
+    public Table table = new Table(new ArrayList<>(), new ArrayList<>());
+    String html = "";
+
+    public void submit() throws SQLException {
+        sql = sql.toUpperCase().trim();
+        ExecuteStatement eS = null;
+        if(autoCommit){
+            for (String neu : changeSQLAutoCommitTrue(sql)) {
+                eS = new ExecuteStatement(neu, false, userDetails);
+                eS.getDBcon().Commit();
+            }
+        }else {
+            eS = new ExecuteStatement(changeSQLAutoCommitFalse(sql), false, userDetails);
+            eS.getDBcon().Commit();
+        }
+        if(isUpdate())update = eS.execUpdate();
+        else {
+            rs = eS.execQuery();
+            ReadResultSet readResultSet = new ReadResultSet(rs, userDetails);
+            this.table = readResultSet.readResultSet(rs);
+            HtmlBuilder htmlBuilder = new HtmlBuilder(table, userDetails);
+            this.html = htmlBuilder.getHtml();
+        }
+        PrimeFaces.current().ajax().update("mainForm");
+    }
+
+    private List<String> changeSQLAutoCommitTrue(String sql) throws SQLException {
+        List<String> newSQL = new ArrayList<>();
+        String[] parts = sql.split(";");
+        for (String part : parts) {
+            Statement statement = new Statement(userDetails);
+            newSQL.add(statement.changeToNF1(part));
+        }
+        return newSQL;
+    }
+
+    private String changeSQLAutoCommitFalse(String sql) throws SQLException {
+        StringBuilder newSQL = new StringBuilder();
+        String[] parts = sql.split(";");
+        boolean erstes = true;
+        for (String part : parts) {
+            if(!erstes) newSQL.append("; ");
+            erstes = false;
+            Statement statement = new Statement(userDetails);
+            newSQL.append(statement.changeToNF1(part));
+        }
+        return newSQL.toString();
+    }
+
+    private Boolean isUpdate(){
+        return sql.startsWith("CREATE") || sql.startsWith("UPDATE") || sql.startsWith("DROP") || sql.startsWith("INSERT") || sql.startsWith("DELETE");
+    }
+
+    public void  closeCon(){
+        connection.conClose();
+        goToPage("login");
+    }
 
     public void onPageLoad(){
         try {
-            connection = DBConnection.getInstance(autoCommit, dbName, user, password);
+            connection = new DBConnection(autoCommit, dbName, user, password);
+            userDetails = new UserDetails(autoCommit, dbName, connection, user, password);
+            treeMaker = new TreeMaker(connection, userDetails);
         }catch (Exception e){
             goToPage("login");
         }
     }
 
-
-
     public String getUser(){return user; }
 
     public String getPassword(){return password;}
 
-    public void setUser(String user){BaseController.user = user; }
+    public void setUser(String user){this.user = user; }
 
-    public void setPassword(String password){BaseController.password = password; }
+    public void setPassword(String password){this.password = password; }
 
     public String getDbName() {
         return dbName;
     }
 
     public void setDbName(String dbName) {
-        BaseController.dbName = dbName;
+        this.dbName = dbName;
     }
 
     public Boolean getAutoCommit() {
@@ -48,7 +118,7 @@ public class BaseController{
     }
 
     public void setAutoCommit(Boolean autoCommit) {
-        BaseController.autoCommit = autoCommit;
+        this.autoCommit = autoCommit;
     }
 
     public void goToPage(String page) {

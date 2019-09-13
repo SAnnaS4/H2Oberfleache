@@ -1,9 +1,9 @@
 package de.uni.leipzig.H2Oberfleache.statementRefactoring;
 
-import de.uni.leipzig.H2Oberfleache.controller.BaseController;
 import de.uni.leipzig.H2Oberfleache.jdbc.DbInfo;
 import de.uni.leipzig.H2Oberfleache.parser.SQL_Parser;
 import de.uni.leipzig.H2Oberfleache.parser.SQLiteParser;
+import de.uni.leipzig.H2Oberfleache.presentation.UserDetails;
 import org.antlr.v4.runtime.RuleContext;
 
 import java.sql.SQLException;
@@ -16,7 +16,8 @@ public class Where extends Statement{
     Map<String, String> alias_tablename;
 
     public Where(String sql, RuleContext context, Map<String, String> alias_tablename, Map<Integer, String> position_sql,
-                 List<String> haupttables, Map<String, List<String>> parentTabAlias_childTabAliases) {
+                 List<String> haupttables, Map<String, List<String>> parentTabAlias_childTabAliases, UserDetails userDetails) {
+        super(userDetails);
         this.sql = sql;
         this.alias_tablename = alias_tablename;
         this.position_sql = position_sql;
@@ -27,7 +28,7 @@ public class Where extends Statement{
                 usedExpr = new ArrayList<>();
                 for (RuleContext expr : exprs) {
                     if(!usedExpr.contains(expr)) {
-                        String newExpr = changeExpr(expr, alias_tablename, haupttables, position_sql, sql, parentTabAlias_childTabAliases);
+                        String newExpr = changeExpr(expr, alias_tablename, haupttables, position_sql, sql, parentTabAlias_childTabAliases, userDetails);
                         if (!newExpr.equals(expr.getText())) {
                             if(newExpr.contains("NOT EXISTS (") && newExpr.contains("AND NOT EXISTS (") && newExpr.contains(" EXCEPT")){
                                 this.sql = replaceRuleContext(expr.parent, newExpr);
@@ -39,7 +40,7 @@ public class Where extends Statement{
             if(SQLiteParser.ruleNames[ruleContext.getRuleIndex()].equals("group_by")){
                 for (RuleContext context1 : SQL_Parser.getChildList(ruleContext)) {
                     if(SQLiteParser.ruleNames[context1.getRuleIndex()].equals("expr")){
-                        String newExpr = changeExpr(context1, alias_tablename, haupttables, position_sql, sql,parentTabAlias_childTabAliases );
+                        String newExpr = changeExpr(context1, alias_tablename, haupttables, position_sql, sql,parentTabAlias_childTabAliases, userDetails);
                         if(!newExpr.equals(context.getText())){
                             this.sql = replaceRuleContext(context, newExpr);
                         }
@@ -49,7 +50,8 @@ public class Where extends Statement{
         }
     }
 
-    public Where() {
+    public Where(UserDetails userDetails) {
+        super(userDetails);
     }
 
     protected List<RuleContext> exploreExpr(RuleContext expr){
@@ -67,7 +69,7 @@ public class Where extends Statement{
                 exprs.add(context.getParent());
             }
             if(SQLiteParser.ruleNames[context.getRuleIndex()].equals("select_stmt")){
-                Select select = new Select(position_sql, this.sql, false);
+                Select select = new Select(position_sql, this.sql, false, userDetails);
                 this.sql = select.nf2To1Nf(context, alias_tablename);
             }
         }
@@ -78,10 +80,10 @@ public class Where extends Statement{
 
     public static String changeExpr(RuleContext expr, Map<String, String> alias_tablename,
                                     List<String> maintables, Map<Integer, String> position_sql, String sql,
-                                    Map<String, List<String>> parentTabAlias_childTabAliases) {
+                                    Map<String, List<String>> parentTabAlias_childTabAliases, UserDetails userDetails) {
         Map<String, List<RuleContext>> children = SQL_Parser.getChildMap(expr);
         if(children.containsKey("aggregate")){
-            Aggregate aggregate = new Aggregate(position_sql, alias_tablename, maintables, sql);
+            Aggregate aggregate = new Aggregate(position_sql, alias_tablename, maintables, sql, userDetails);
             String r = aggregate.aggragateInWhere(expr);
             if(!r.equals(""))return r;
             return aggregate.aggragateInWhere(expr);
@@ -91,19 +93,19 @@ public class Where extends Statement{
             if (alias_tablename.containsKey(column.get(column.size() - 1).getText()) && expr.parent.getText().contains("=")) {
                 usedExpr.add(expr);
                 RuleContext parent = expr.parent;
-                return makeJoinConstraint(parent, alias_tablename, parentTabAlias_childTabAliases);
+                return makeJoinConstraint(userDetails, parent, alias_tablename, parentTabAlias_childTabAliases);
             }
             if (alias_tablename.containsKey(column.get(column.size() - 1).getText()))
-                return getSubtableASQuery(expr, alias_tablename, parentTabAlias_childTabAliases);
+                return getSubtableASQuery(userDetails, expr, alias_tablename, parentTabAlias_childTabAliases);
             if (children.containsKey("function_name")) {
                 Map<String, List<RuleContext>> child = SQL_Parser.getChildMap(children.get("function_name").get(0));
                 if (child.containsKey("expr")) {
-                    return changeExpr(child.get("expr").get(0), alias_tablename, maintables, position_sql, sql, parentTabAlias_childTabAliases);
+                    return changeExpr(child.get("expr").get(0), alias_tablename, maintables, position_sql, sql, parentTabAlias_childTabAliases, userDetails);
                 }
             }
         }
         if(!children.containsKey("table_name") && !children.containsKey("function_name") && !alias_tablename.containsKey(expr.getText())){
-            String alias = getAlias(alias_tablename, expr.getText(), maintables);
+            String alias = getAlias(alias_tablename, expr.getText(), maintables, userDetails);
             return alias.isEmpty()?expr.getText(): alias + "." + expr.getText();
         }
         String[] tables = expr.getText().split("\\.");
@@ -114,11 +116,11 @@ public class Where extends Statement{
         return result;
     }
 
-    private static String makeJoinConstraint(RuleContext parent, Map<String, String> alias_tablename, Map<String, List<String>> parentTabAlias_childTabAliases) {
+    private static String makeJoinConstraint(UserDetails userDetails, RuleContext parent, Map<String, String> alias_tablename, Map<String, List<String>> parentTabAlias_childTabAliases) {
         List<RuleContext> expr = SQL_Parser.getChildMap(parent).get("expr");
         List<String> selectStmts = new ArrayList<>();
         for (RuleContext ruleContext : expr) {
-            selectStmts.add(getSubtableASQuery(ruleContext, alias_tablename, parentTabAlias_childTabAliases));
+            selectStmts.add(getSubtableASQuery(userDetails, ruleContext, alias_tablename, parentTabAlias_childTabAliases));
         }
         String constraint = "NOT EXISTS (" + selectStmts.get(0) +
                 " EXCEPT" + selectStmts.get(1) + ") " +
@@ -127,22 +129,22 @@ public class Where extends Statement{
         return constraint;
     }
 
-    private static String getSubtableASQuery(RuleContext context, Map<String, String> alias_tablename, Map<String, List<String>> parentTabAlias_childTabAliases) {
+    private static String getSubtableASQuery(UserDetails userDetails, RuleContext context, Map<String, String> alias_tablename, Map<String, List<String>> parentTabAlias_childTabAliases) {
         String select = "SELECT ";
         String[] parts = context.getText().split("\\.");
         String table = getLastAlias(parts, alias_tablename, parentTabAlias_childTabAliases);
         String tablename = alias_tablename.getOrDefault(table, table);
         List<String> columns = new ArrayList<>();
         try {
-            columns = DbInfo.getColumnList(false, BaseController.dbName, tablename, BaseController.user, BaseController.password);
-        } catch (SQLException | IllegalAccessException e) {
+            columns = DbInfo.getColumnList(tablename, userDetails);
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         for (String column : columns) {
             if(!column.startsWith("__") && !column.endsWith("ID"))
             select += table + "." + column + ", ";
         }
-        String oberTab = getObertabelle(tablename);
+        String oberTab = getObertabelle(tablename, userDetails);
         String oberAlias = oberTab;
         for (Map.Entry<String, String> entry : alias_tablename.entrySet()) {
             if(entry.getValue().equals(oberTab))oberAlias = entry.getKey();
@@ -154,10 +156,10 @@ public class Where extends Statement{
         return select;
     }
 
-    protected static String getAlias(Map<String, String> alias_tablename, String column, List<String> maintables){
+    protected static String getAlias(Map<String, String> alias_tablename, String column, List<String> maintables, UserDetails userDetails){
         for (Map.Entry<String, String> entry : alias_tablename.entrySet()) {
             if(maintables.contains(entry.getValue())) {
-                List<String> attributes = getAllAttributes(entry.getValue());
+                List<String> attributes = getAllAttributes(entry.getValue(), userDetails);
                 for (String attribute : attributes) {
                     if (attribute.equals(column)) return entry.getKey();
                 }
@@ -166,11 +168,11 @@ public class Where extends Statement{
         return "";
     }
 
-    public static List<String> getAllAttributes(String tablename){
+    public static List<String> getAllAttributes(String tablename, UserDetails userDetails){
         List<String> attributes = new ArrayList<>();
         try {
-            attributes = DbInfo.getColumnList(false,BaseController.dbName,tablename, BaseController.user, BaseController.password);
-        } catch (SQLException | IllegalAccessException e) {
+            attributes = DbInfo.getColumnList(tablename, userDetails);
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return attributes;

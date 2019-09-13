@@ -3,6 +3,7 @@ package de.uni.leipzig.H2Oberfleache.statementRefactoring;
 import de.uni.leipzig.H2Oberfleache.parser.SQL_Parser;
 import de.uni.leipzig.H2Oberfleache.parser.SQLiteLexer;
 import de.uni.leipzig.H2Oberfleache.parser.SQLiteParser;
+import de.uni.leipzig.H2Oberfleache.presentation.UserDetails;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RuleContext;
@@ -14,6 +15,10 @@ import java.util.Map;
 
 public class Insert extends Statement {
     private Map<String, Integer> tablename_nextID = new HashMap<>();
+
+    public Insert(UserDetails userDetails) {
+        super(userDetails);
+    }
 
     public String nf2To1Nf(String sql){
         sql = prepareSQL(sql);

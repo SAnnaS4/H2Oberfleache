@@ -5,6 +5,7 @@ import de.uni.leipzig.H2Oberfleache.jdbc.DbInfo;
 import de.uni.leipzig.H2Oberfleache.parser.SQL_Parser;
 import de.uni.leipzig.H2Oberfleache.parser.SQLiteLexer;
 import de.uni.leipzig.H2Oberfleache.parser.SQLiteParser;
+import de.uni.leipzig.H2Oberfleache.presentation.UserDetails;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RuleContext;
@@ -24,7 +25,8 @@ public class UnNest extends Statement{
     String sql;
     Boolean nested;
 
-    public UnNest(Map<String, String> alias_tablename, Map<String, List<String>> parentTabAlias_childTabAliases){
+    public UnNest(Map<String, String> alias_tablename, Map<String, List<String>> parentTabAlias_childTabAliases, UserDetails userDetails){
+        super(userDetails);
         this.alias_tablename = alias_tablename;
         this.parentTabAlias_childTabAliases = parentTabAlias_childTabAliases;
         nested = false;
@@ -64,7 +66,7 @@ public class UnNest extends Statement{
                 if(!text.contains("*")){
                     List<String> maintab = new ArrayList<>();
                     maintab.add(alias_tablename.get(tablealias));
-                    String attr = Where.changeExpr(ruleContext, alias_tablename, maintab, position_sql, sql, parentTabAlias_childTabAliases);
+                    String attr = Where.changeExpr(ruleContext, alias_tablename, maintab, position_sql, sql, parentTabAlias_childTabAliases, userDetails);
                     attribute = attr + " AS " + aliasStart + attr.split("\\.")[attr.split("\\.").length-1];
                     result.append(attribute).append(" , ");
                 }else {
@@ -75,8 +77,8 @@ public class UnNest extends Statement{
                     String tablename = alias_tablename.get(alias);
                     List<String> attributes = new ArrayList<>();
                     try {
-                        attributes = DbInfo.getColumnList(false, BaseController.dbName,tablename, BaseController.user, BaseController.password);
-                    } catch (SQLException | IllegalAccessException e) {
+                        attributes = DbInfo.getColumnList(tablename, userDetails);
+                    } catch (SQLException e) {
                         e.printStackTrace();
                     }
                     for (String attribut : attributes) {
@@ -151,11 +153,9 @@ public class UnNest extends Statement{
     private Map<String, List<String>> getAlias_Attributes(String alias){
         Map<String, List<String>> alias_Attributes = new HashMap<>();
         try {
-            alias_Attributes.put(alias, DbInfo.getColumnList(false, BaseController.dbName, alias_tablename.get(alias), BaseController.user, BaseController.password));
+            alias_Attributes.put(alias, DbInfo.getColumnList(alias_tablename.get(alias), userDetails));
         } catch (SQLException e) {
             e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            System.out.println("Exception at Select getAlias_Attributes");
         }
         return alias_Attributes;
     }

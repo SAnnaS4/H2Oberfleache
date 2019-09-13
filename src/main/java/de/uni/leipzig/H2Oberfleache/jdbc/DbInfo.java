@@ -1,5 +1,7 @@
 package de.uni.leipzig.H2Oberfleache.jdbc;
 
+import de.uni.leipzig.H2Oberfleache.presentation.UserDetails;
+
 import java.lang.reflect.Field;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
@@ -11,9 +13,9 @@ import java.util.List;
 import java.util.Map;
 
 public class DbInfo {
-    public List<String> getTables(Boolean autoCommit, String dBName, String user, String password) throws SQLException {
+    public List<String> getTables(UserDetails userDetails) throws SQLException {
         List<String> result = new ArrayList<>();
-        DatabaseMetaData meta = DBConnection.getInstance(autoCommit, dBName, user, password).getMeta();
+        DatabaseMetaData meta = userDetails.connection.getMeta();
         ResultSet resultSet = meta.getTables(null, null, null, new String[]{"TABLE"});
         while(resultSet.next())
         {
@@ -23,8 +25,8 @@ public class DbInfo {
         return result;
     }
 
-    public Map<String, String> getColums(Boolean autoCommit, String dBName, String tableName, String user, String password) throws SQLException, IllegalAccessException {
-        DatabaseMetaData meta = DBConnection.getInstance(autoCommit, dBName, user, password).getMeta();
+    public Map<String, String> getColums(String tableName, UserDetails userDetails) throws SQLException, IllegalAccessException {
+        DatabaseMetaData meta = userDetails.connection.getMeta();
         Map<String, String> result = new HashMap<>();
         ResultSet columns = meta.getColumns(null,null, tableName, null);
         while(columns.next())
@@ -36,8 +38,8 @@ public class DbInfo {
         return result;
     }
 
-    public static List<String> getColumnList(Boolean autoCommit, String dBName, String tableName, String user, String password) throws SQLException, IllegalAccessException {
-        DatabaseMetaData meta = DBConnection.getInstance(autoCommit, dBName, user, password).getMeta();
+    public static List<String> getColumnList(String tableName, UserDetails userDetails) throws SQLException {
+        DatabaseMetaData meta = userDetails.connection.getMeta();
         List<String> result = new ArrayList<>();
         ResultSet columns = meta.getColumns(null,null, tableName, null);
         while(columns.next())

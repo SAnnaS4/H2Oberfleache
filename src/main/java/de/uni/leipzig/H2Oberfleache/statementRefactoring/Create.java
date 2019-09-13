@@ -3,6 +3,7 @@ package de.uni.leipzig.H2Oberfleache.statementRefactoring;
 import de.uni.leipzig.H2Oberfleache.parser.SQL_Parser;
 import de.uni.leipzig.H2Oberfleache.parser.SQLiteLexer;
 import de.uni.leipzig.H2Oberfleache.parser.SQLiteParser;
+import de.uni.leipzig.H2Oberfleache.presentation.UserDetails;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RuleContext;
@@ -15,7 +16,8 @@ import java.util.Map;
 public class Create extends Statement {
     String sql;
 
-    public Create(String sql){
+    public Create(String sql, UserDetails userDetails){
+        super(userDetails);
         this.sql = sql;
     }
 

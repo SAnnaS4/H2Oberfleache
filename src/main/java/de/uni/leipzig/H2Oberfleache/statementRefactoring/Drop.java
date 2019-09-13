@@ -1,6 +1,7 @@
 package de.uni.leipzig.H2Oberfleache.statementRefactoring;
 
 import de.uni.leipzig.H2Oberfleache.controller.BaseController;
+import de.uni.leipzig.H2Oberfleache.presentation.UserDetails;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -9,7 +10,8 @@ import java.util.List;
 public class Drop extends Statement{
     String sql;
 
-    public Drop(String sql){
+    public Drop(String sql, UserDetails userDetails){
+        super(userDetails);
         this.sql = sql;
     }
 
@@ -19,9 +21,9 @@ public class Drop extends Statement{
         List<String> queries = new ArrayList<>();
         if(!sql.endsWith(";"))sql += ";";
         for (String tablename : tablenames) {
-            queries.addAll(createQueries(getNF2TableNamesRec(tablename)));
+            queries.addAll(createQueries(getNF2TableNamesRec(tablename, userDetails)));
             String delete = "DELETE FROM " + nf2TabName + " WHERE NAME = '" + tablename + "'";
-            java.sql.Statement st1 = BaseController.connection.getCon().createStatement();
+            java.sql.Statement st1 = userDetails.connection.getCon().createStatement();
             st1.executeUpdate(delete);
         }
         for (String query : queries) {
@@ -46,7 +48,7 @@ public class Drop extends Statement{
         for (String tablename : tablenames) {
             queries.add("DROP TABLE " + tablename + ";");
             String delete = "DELETE FROM " +nf2TabName + " WHERE NAME = '" + tablename + "'";
-            java.sql.Statement st1 = BaseController.connection.getCon().createStatement();
+            java.sql.Statement st1 = userDetails.connection.getCon().createStatement();
             st1.executeUpdate(delete);
         }
         return queries;

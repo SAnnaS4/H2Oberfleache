@@ -5,6 +5,7 @@ import de.uni.leipzig.H2Oberfleache.jdbc.ExecuteStatement;
 import de.uni.leipzig.H2Oberfleache.parser.SQL_Parser;
 import de.uni.leipzig.H2Oberfleache.parser.SQLiteLexer;
 import de.uni.leipzig.H2Oberfleache.parser.SQLiteParser;
+import de.uni.leipzig.H2Oberfleache.presentation.UserDetails;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RuleContext;
@@ -20,6 +21,10 @@ import java.util.Map;
 public class Update_Delete extends Statement {
     String whichStmt = "";
     Map<String, List<String>> tablename_ID = new HashMap<>();
+
+    public Update_Delete(UserDetails userDetails) {
+        super(userDetails);
+    }
 
     private List<String> getIDs(String tablename, RuleContext stmt, String sql) throws SQLException {
         String id = "__" + tablename + "ID";
@@ -38,7 +43,7 @@ public class Update_Delete extends Statement {
         }
         StringBuilder selectStmt = new StringBuilder("SELECT DISTINCT " + id);
         String where = "";
-        List<String> subtables = getNF2TableNamesRec(tablename);
+        List<String> subtables = getNF2TableNamesRec(tablename, userDetails);
         for (String subtable : subtables) {
             String alias = subtable.split("_")[subtable.split("_").length-1];
             String idName = "__" + subtable + "ID";
@@ -60,14 +65,14 @@ public class Update_Delete extends Statement {
             SQLiteLexer lexer = new SQLiteLexer(CharStreams.fromString(selectStmt.toString()));
             SQLiteParser parser = new SQLiteParser(new CommonTokenStream(lexer));
             RuleContext select_stmt = parser.select_or_values();
-            Where updateWhere = new Where(selectStmt.toString(),select_stmt, alias_tablename, position_sql, maintables, new HashMap<>());
+            Where updateWhere = new Where(selectStmt.toString(),select_stmt, alias_tablename, position_sql, maintables, new HashMap<>(), userDetails);
             selectStmt = new StringBuilder(updateWhere.sql);
         }
         position_sql = new HashMap<>();
-        Select select = new Select(selectStmt.toString(), false);
+        Select select = new Select(selectStmt.toString(), false, userDetails);
         selectStmt = new StringBuilder(select.nf2To1Nf());
         List<String> ids = new ArrayList<>();
-        ExecuteStatement eS = new ExecuteStatement(BaseController.dbName, selectStmt.toString(), true, BaseController.user, BaseController.password);
+        ExecuteStatement eS = new ExecuteStatement(selectStmt.toString(), true, userDetails);
         ResultSet rs = eS.execQuery();
         List<String> tables = new ArrayList<>();
         tables.add(tablename);
@@ -142,7 +147,7 @@ public class Update_Delete extends Statement {
             tablename = element.getText();
         }
         if(qualifiedTablename.getChildCount()>1){
-            tablename = getTablename(qualifiedTablename, getNF2TableNamesRec(tablename), mitColumnname);
+            tablename = getTablename(qualifiedTablename, getNF2TableNamesRec(tablename, userDetails), mitColumnname);
         }
         return tablename;
     }
