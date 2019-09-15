@@ -68,7 +68,7 @@ public class BaseController{
         } catch (SQLException e) {
             this.html = "<p>" + e.getMessage() + "</p>";
         } catch (Exception e) {
-            this.html = "<p> Syntax Error in " + sql + "</p>";
+            this.html = "<p> Syntax Fehler in SQL Befehl \"" + sql + "\"</p>";
         }
         PrimeFaces.current().ajax().update("mainForm");
     }
