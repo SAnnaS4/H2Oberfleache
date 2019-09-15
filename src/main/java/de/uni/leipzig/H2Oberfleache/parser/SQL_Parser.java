@@ -15,6 +15,7 @@ public class SQL_Parser {
     public static String getQueryType(String sql){
         SQLiteLexer lexer = new SQLiteLexer(CharStreams.fromString(sql));
         SQLiteParser parser = new SQLiteParser(new CommonTokenStream(lexer));
+        parser.isMatchedEOF();
         return parser.name().getText();
     }
 

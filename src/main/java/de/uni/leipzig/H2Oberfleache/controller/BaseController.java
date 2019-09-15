@@ -32,12 +32,27 @@ public class BaseController{
     public Table table = new Table(new ArrayList<>(), new ArrayList<>());
     String html = "";
 
-    public void submit() throws SQLException {
+    public void submit() {
         sql = sql.toUpperCase().trim();
         ExecuteStatement eS = null;
-        if(autoCommit){
-            for (String neu : changeSQLAutoCommitTrue(sql)) {
-                eS = new ExecuteStatement(neu, false, userDetails);
+        try {
+            if(autoCommit){
+                for (String neu : changeSQLAutoCommitTrue(sql)) {
+                    eS = new ExecuteStatement(neu, false, userDetails);
+                    if(isUpdate()){
+                        update = eS.execUpdate();
+                        eS.getDBcon().Commit();
+                    }
+                    else {
+                        rs = eS.execQuery();
+                        ReadResultSet readResultSet = new ReadResultSet(rs, userDetails);
+                        this.table = readResultSet.readResultSet(rs);
+                        HtmlBuilder htmlBuilder = new HtmlBuilder(table, userDetails);
+                        this.html = htmlBuilder.getHtml();
+                    }
+                }
+            }else {
+                eS = new ExecuteStatement(changeSQLAutoCommitFalse(sql), false, userDetails);
                 if(isUpdate()){
                     update = eS.execUpdate();
                     eS.getDBcon().Commit();
@@ -50,21 +65,11 @@ public class BaseController{
                     this.html = htmlBuilder.getHtml();
                 }
             }
-        }else {
-            eS = new ExecuteStatement(changeSQLAutoCommitFalse(sql), false, userDetails);
-            if(isUpdate()){
-                update = eS.execUpdate();
-                eS.getDBcon().Commit();
-            }
-            else {
-                rs = eS.execQuery();
-                ReadResultSet readResultSet = new ReadResultSet(rs, userDetails);
-                this.table = readResultSet.readResultSet(rs);
-                HtmlBuilder htmlBuilder = new HtmlBuilder(table, userDetails);
-                this.html = htmlBuilder.getHtml();
-            }
+        } catch (SQLException e) {
+            this.html = "<p>" + e.getMessage() + "</p>";
+        } catch (Exception e) {
+            this.html = "<p> Syntax Error in " + sql + "</p>";
         }
-
         PrimeFaces.current().ajax().update("mainForm");
     }
 

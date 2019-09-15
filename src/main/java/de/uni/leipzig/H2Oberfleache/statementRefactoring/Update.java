@@ -89,7 +89,7 @@ public class Update extends Update_Delete {
             if (element instanceof RuleContext) {
                 ctx = (RuleContext) element;
             }
-            if (set.getText().contains("\\.") || set.getText().contains("(")) {
+            if (set.getText().contains(".") || set.getText().contains("(")) {
                 getAllTablenames(set, subtables, ctx);
             }
             Map<String, RuleContext> set_value = new HashMap<>();
@@ -118,7 +118,22 @@ public class Update extends Update_Delete {
                     if (set.size() == 1) {
                         String update = "UPDATE " + tablename + " SET " + set.get(0) + " " + where + "; ";
                         queries.add(update);
-                    } else queries.addAll(set);
+                    } else {
+                        String sets = "";
+                        Boolean komma = false;
+                        for (String s : set) {
+                            if(s.startsWith("DELETE") || s.startsWith("INSERT"))queries.add(s);
+                            else {
+                                if(komma)sets += ", ";
+                                komma = true;
+                                sets += s;
+                            }
+                            if(!sets.equals("")){
+                                String update = "UPDATE " + tablename + " SET " + sets + " " + where + "; ";
+                                queries.add(update);
+                            }
+                        }
+                    }
                 }
             }
         return queries;
@@ -135,7 +150,7 @@ public class Update extends Update_Delete {
                     if(komma)update += ", ";
                     komma = true;
                     update += entry.getKey() + " = " + cutFromSQL(entry.getValue(),hauptSQL);
-                }else if(!entry.getKey().contains("\\.")){
+                }else if(!entry.getKey().contains(".")){
                     if(SQLiteParser.ruleNames[entry.getValue().getRuleIndex()].equals("expr")) {
                         if (komma) update += ", ";
                         komma = true;
@@ -147,8 +162,8 @@ public class Update extends Update_Delete {
                     }
                 }
             }
-            if(queries.size() == 0)queries.add(update);
         }
+        if(!update.equals(""))queries.add(update);
         if(!remove.equals(""))table_set_value.remove(remove);
         return queries;
     }

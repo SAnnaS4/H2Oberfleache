@@ -20,19 +20,14 @@ public class Delete extends Update_Delete{
     public String nf2To1Nf() throws SQLException {
         whichStmt = "delete_stmt";
         Map<String, List<RuleContext>> map = SQL_Parser.getParsedMap(sql);
-        StringBuilder result = new StringBuilder(sql);
+        StringBuilder result;
         String tablename = getTablename(map.get("qualified_table_name").get(0), false);
-        List<String> subtables = getNF2TableNamesRec(tablename, userDetails);
         List<String> table = new ArrayList<>();
         table.add(tablename);
-        if(!subtables.isEmpty()) {
-            result = new StringBuilder();
-            List<String> queries = createQuerys(table, map.get("delete_stmt").get(0), tablename, sql, this::makeQuerys);
-            for (String query : queries) {
-                result.append(query);
-            }
-        }else if(map.get("qualified_table_name").get(0).getText().contains(".")){
-           result = new StringBuilder(replaceRuleContext(map.get("qualified_table_name").get(0), tablename));
+        result = new StringBuilder();
+        List<String> queries = createQuerys(table, map.get("delete_stmt").get(0), tablename, sql, this::makeQuerys);
+        for (String query : queries) {
+            result.append(query);
         }
         return result.toString();
     }

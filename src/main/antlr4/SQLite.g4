@@ -436,7 +436,7 @@ result_column
  ;
 
  un_nest_stmt
-  : (K_NEST|K_UNNEST) table_name K_ON '(' result_column(',' result_column)* ')'
+  : (K_NEST|K_UNNEST) table_name ('.' table_name)? K_ON '(' result_column(',' result_column)* ')'
   ;
 
 table_or_subquery

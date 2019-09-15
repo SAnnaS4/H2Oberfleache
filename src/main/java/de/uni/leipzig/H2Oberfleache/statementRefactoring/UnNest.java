@@ -38,7 +38,7 @@ public class UnNest extends Statement{
         for (Map.Entry<String, List<RuleContext>> entry : SQL_Parser.getChildMap(result_column).entrySet()) {
             if(entry.getKey().equals("column_alias"))nestedTableAlias = entry.getValue().get(0).getText();
         }
-        String tablealias = children.get("table_name").get(0).getText();
+        String tablealias = children.get("table_name").get(children.get("table_name").size()-1).getText();
         if(un_nest_stmt.getChild(0).getText().equals("NEST")){
             aliasStart = start + "_n_" + nestedTableAlias + "_";
             nestedTables_alias.put(nestedTableAlias, tablealias);
