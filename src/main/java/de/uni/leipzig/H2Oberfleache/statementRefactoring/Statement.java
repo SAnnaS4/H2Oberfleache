@@ -7,6 +7,7 @@ import org.antlr.v4.runtime.RuleContext;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLSyntaxErrorException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -170,6 +171,10 @@ public class Statement {
     public String changeToNF1(String sql) throws SQLException {
         sql = prepareSQL(sql);
         String newSQL = sql;
+        if(!SQL_Parser.machesSyntax(sql)){
+            String errorMessage = "Syntax Error in " + sql;
+            throw new SQLSyntaxErrorException(errorMessage);
+        };
         switch (SQL_Parser.getQueryType(sql)) {
             case "CREATE":
                 Create create = new Create(sql, userDetails);

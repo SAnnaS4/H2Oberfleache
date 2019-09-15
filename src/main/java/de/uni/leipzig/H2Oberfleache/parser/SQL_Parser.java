@@ -1,8 +1,7 @@
 package de.uni.leipzig.H2Oberfleache.parser;
 
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.RuleContext;
+import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.ArrayList;
@@ -12,10 +11,35 @@ import java.util.Map;
 
 public class SQL_Parser {
 
+    public static boolean machesSyntax(String sql){
+        try {
+            SQLiteLexer lexer = new SQLiteLexer(CharStreams.fromString(sql));
+            lexer.removeErrorListeners();
+            lexer.addErrorListener(ThrowingErrorListener.INSTANCE);
+            SQLiteParser parser = new SQLiteParser(new CommonTokenStream(lexer));
+            parser.addErrorListener(ThrowingErrorListener.INSTANCE);
+            parser.removeErrorListeners();
+            parser.parse();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public static class ThrowingErrorListener extends BaseErrorListener {
+
+        public static final ThrowingErrorListener INSTANCE = new ThrowingErrorListener();
+
+        @Override
+        public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e)
+                throws ParseCancellationException {
+            throw new ParseCancellationException("line " + line + ":" + charPositionInLine + " " + msg);
+        }
+    }
+
     public static String getQueryType(String sql){
         SQLiteLexer lexer = new SQLiteLexer(CharStreams.fromString(sql));
         SQLiteParser parser = new SQLiteParser(new CommonTokenStream(lexer));
-        parser.isMatchedEOF();
         return parser.name().getText();
     }
 
