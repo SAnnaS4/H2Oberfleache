@@ -172,7 +172,7 @@ public class Statement {
         sql = prepareSQL(sql);
         String newSQL = sql;
         if(!SQL_Parser.machesSyntax(sql)){
-            String errorMessage = "Syntax Error in " + sql;
+            String errorMessage = "Syntax Fehler in SQL Befehl \"" + sql + "\"";
             throw new SQLSyntaxErrorException(errorMessage);
         };
         switch (SQL_Parser.getQueryType(sql)) {
