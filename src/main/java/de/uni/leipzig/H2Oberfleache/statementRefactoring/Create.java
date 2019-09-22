@@ -1,6 +1,6 @@
 package de.uni.leipzig.H2Oberfleache.statementRefactoring;
 
-import de.uni.leipzig.H2Oberfleache.parser.SQL_Parser;
+import de.uni.leipzig.H2Oberfleache.parser.ParserHelper;
 import de.uni.leipzig.H2Oberfleache.parser.SQLiteLexer;
 import de.uni.leipzig.H2Oberfleache.parser.SQLiteParser;
 import de.uni.leipzig.H2Oberfleache.presentation.UserDetails;
@@ -41,7 +41,7 @@ public class Create extends Statement {
 
     private List<String> getQueries(RuleContext stmt, String higherTablename){
         List<String> queries = new ArrayList<>();
-        List<RuleContext> childList = SQL_Parser.getChildList(stmt);
+        List<RuleContext> childList = ParserHelper.getChildList(stmt);
         Map<String, String> columname_type = new HashMap<>();
         boolean containsSubTable = false;
         String tablename = "";
@@ -57,7 +57,7 @@ public class Create extends Statement {
                 containsSubTable = true;
             }
             if(contexttype.equals("column_def")){
-                List<RuleContext> column = SQL_Parser.getChildList(context);
+                List<RuleContext> column = ParserHelper.getChildList(context);
                 String columnName = "";
                 String columntype = "";
                 for (RuleContext ruleContext : column) {

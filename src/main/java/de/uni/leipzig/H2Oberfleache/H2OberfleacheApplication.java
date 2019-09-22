@@ -1,10 +1,5 @@
 package de.uni.leipzig.H2Oberfleache;
 
-import de.uni.leipzig.H2Oberfleache.parser.SQL_Parser;
-import de.uni.leipzig.H2Oberfleache.parser.SQLiteLexer;
-import de.uni.leipzig.H2Oberfleache.parser.SQLiteParser;
-import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 

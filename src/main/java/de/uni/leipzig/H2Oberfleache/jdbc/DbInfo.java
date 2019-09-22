@@ -1,7 +1,6 @@
 package de.uni.leipzig.H2Oberfleache.jdbc;
 
 import de.uni.leipzig.H2Oberfleache.presentation.UserDetails;
-
 import java.lang.reflect.Field;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;

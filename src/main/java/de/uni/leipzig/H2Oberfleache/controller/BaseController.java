@@ -20,11 +20,11 @@ import java.util.List;
 @Setter
 public class BaseController{
     public UserDetails userDetails;
-    public Boolean autoCommit = false;
-    public String dbName = "testdb";
+    public Boolean autoCommit;
+    public String dbName;
     public DBConnection connection;
-    public String user = "sa";
-    public String password = "sa";
+    public String user;
+    public String password;
     public TreeMaker treeMaker;
     String sql;
     int update;

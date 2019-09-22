@@ -1,6 +1,6 @@
 package de.uni.leipzig.H2Oberfleache.statementRefactoring;
 
-import de.uni.leipzig.H2Oberfleache.parser.SQL_Parser;
+import de.uni.leipzig.H2Oberfleache.parser.ParserHelper;
 import de.uni.leipzig.H2Oberfleache.parser.SQLiteLexer;
 import de.uni.leipzig.H2Oberfleache.parser.SQLiteParser;
 import de.uni.leipzig.H2Oberfleache.presentation.UserDetails;
@@ -94,7 +94,7 @@ public class Select extends Statement{
     private String changeSQL(RuleContext select_stmt){
         List<RuleContext> tables_or_subqueries = getTables_orSubquerys(select_stmt);
         for (RuleContext tables_or_subquery : tables_or_subqueries) {
-            Map<String, List<RuleContext>> children = SQL_Parser.getChildMap(tables_or_subquery);
+            Map<String, List<RuleContext>> children = ParserHelper.getChildMap(tables_or_subquery);
             if(children.containsKey("select_stmt")){
                 Select select = new Select(cutFromSQL(tables_or_subquery, sql), zurAusgabe, userDetails);
                 replaceRuleContext(tables_or_subquery, "(" + select.nf2To1Nf(alias_tablename) + ")");
@@ -121,7 +121,7 @@ public class Select extends Statement{
                 }
             }
         }
-        List<RuleContext> joinConstaints = SQL_Parser.getParsedMap(select_stmt).getOrDefault("join_constraint", new ArrayList<>());
+        List<RuleContext> joinConstaints = ParserHelper.getParsedMap(select_stmt).getOrDefault("join_constraint", new ArrayList<>());
         if(!joinConstaints.isEmpty()) {
             Joins joins = new Joins(userDetails);
             sql = joins.JoinConstraint(sql, joinConstaints, alias_tablename, position_sql, maintables, parentTabAlias_childTabAliases);
@@ -145,10 +145,10 @@ public class Select extends Statement{
 
     private List<RuleContext> getTables_orSubquerys(RuleContext select_stmt){
         List<RuleContext> tables_or_subtables = new ArrayList<>();
-        Map<String, List<RuleContext>> children = SQL_Parser.getChildMap(select_stmt);
-        if(children.containsKey("select_stmt"))children = SQL_Parser.getChildMap(children.get("select_stmt").get(0));
+        Map<String, List<RuleContext>> children = ParserHelper.getChildMap(select_stmt);
+        if(children.containsKey("select_stmt"))children = ParserHelper.getChildMap(children.get("select_stmt").get(0));
         if(children.containsKey("select_or_values")){
-            select_or_values = SQL_Parser.getChildMap(children.get("select_or_values").get(0));
+            select_or_values = ParserHelper.getChildMap(children.get("select_or_values").get(0));
             if(select_or_values.containsKey("table_or_subquery"))tables_or_subtables = select_or_values.get("table_or_subquery");
             if(select_or_values.containsKey("join_clause"))tables_or_subtables = Joins.getTableOrSubQuerys(select_or_values.get("join_clause"));
         }
@@ -239,7 +239,7 @@ public class Select extends Statement{
     }
 
     private String updateResultColumnAndWhere(RuleContext stmt, String sql){
-        Map<String, List<RuleContext>> context = SQL_Parser.getChildMap(stmt);
+        Map<String, List<RuleContext>> context = ParserHelper.getChildMap(stmt);
         if(context.containsKey("ordering_term")){
             List<RuleContext> ordering_terms = context.get("ordering_term");
             for (RuleContext ordering_term : ordering_terms) {
@@ -261,7 +261,7 @@ public class Select extends Statement{
                         expr = (RuleContext) element;
                     }
                     assert expr != null;
-                    Map<String, List<RuleContext>> childs = SQL_Parser.getChildMap(expr);
+                    Map<String, List<RuleContext>> childs = ParserHelper.getChildMap(expr);
                     if(SQLiteParser.ruleNames[expr.getRuleIndex()].equals("un_nest_stmt")){
                         this.unNest = new UnNest(alias_tablename, parentTabAlias_childTabAliases, userDetails);
                         newExp =unNest.setNestUnnestAttributes(result_column, expr, childs, "");

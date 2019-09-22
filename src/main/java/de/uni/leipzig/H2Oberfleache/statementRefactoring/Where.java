@@ -1,7 +1,7 @@
 package de.uni.leipzig.H2Oberfleache.statementRefactoring;
 
 import de.uni.leipzig.H2Oberfleache.jdbc.DbInfo;
-import de.uni.leipzig.H2Oberfleache.parser.SQL_Parser;
+import de.uni.leipzig.H2Oberfleache.parser.ParserHelper;
 import de.uni.leipzig.H2Oberfleache.parser.SQLiteParser;
 import de.uni.leipzig.H2Oberfleache.presentation.UserDetails;
 import org.antlr.v4.runtime.RuleContext;
@@ -21,7 +21,7 @@ public class Where extends Statement{
         this.sql = sql;
         this.alias_tablename = alias_tablename;
         this.position_sql = position_sql;
-        for (RuleContext ruleContext : SQL_Parser.getChildList(context)) {
+        for (RuleContext ruleContext : ParserHelper.getChildList(context)) {
             String ruleName = SQLiteParser.ruleNames[ruleContext.getRuleIndex()];
             if(ruleName.equals("where_expr")){
                 List<RuleContext> exprs = exploreExpr((RuleContext) ruleContext.getChild(1));
@@ -38,7 +38,7 @@ public class Where extends Statement{
                 }
             }
             if(SQLiteParser.ruleNames[ruleContext.getRuleIndex()].equals("group_by")){
-                for (RuleContext context1 : SQL_Parser.getChildList(ruleContext)) {
+                for (RuleContext context1 : ParserHelper.getChildList(ruleContext)) {
                     if(SQLiteParser.ruleNames[context1.getRuleIndex()].equals("expr")){
                         String newExpr = changeExpr(context1, alias_tablename, haupttables, position_sql, sql,parentTabAlias_childTabAliases, userDetails);
                         if(!newExpr.equals(context.getText())){
@@ -56,12 +56,12 @@ public class Where extends Statement{
 
     protected List<RuleContext> exploreExpr(RuleContext expr){
         List<RuleContext> exprs = new ArrayList<>();
-        Map<String, List<RuleContext>> children = SQL_Parser.getChildMap(expr);
+        Map<String, List<RuleContext>> children = ParserHelper.getChildMap(expr);
         if(children.containsKey("aggregate")){
             exprs.add(expr);
             return exprs;
         }
-        for (RuleContext context : SQL_Parser.getChildList(expr)) {
+        for (RuleContext context : ParserHelper.getChildList(expr)) {
             if(SQLiteParser.ruleNames[context.getRuleIndex()].equals("expr")){
                 exprs.addAll(exploreExpr(context));
             }
@@ -81,7 +81,7 @@ public class Where extends Statement{
     public static String changeExpr(RuleContext expr, Map<String, String> alias_tablename,
                                     List<String> maintables, Map<Integer, String> position_sql, String sql,
                                     Map<String, List<String>> parentTabAlias_childTabAliases, UserDetails userDetails) {
-        Map<String, List<RuleContext>> children = SQL_Parser.getChildMap(expr);
+        Map<String, List<RuleContext>> children = ParserHelper.getChildMap(expr);
         if(children.containsKey("aggregate")){
             Aggregate aggregate = new Aggregate(position_sql, alias_tablename, maintables, sql, userDetails);
             String r = aggregate.aggragateInWhere(expr);
@@ -98,7 +98,7 @@ public class Where extends Statement{
             if (alias_tablename.containsKey(column.get(column.size() - 1).getText()))
                 return getSubtableASQuery(userDetails, expr, alias_tablename, parentTabAlias_childTabAliases);
             if (children.containsKey("function_name")) {
-                Map<String, List<RuleContext>> child = SQL_Parser.getChildMap(children.get("function_name").get(0));
+                Map<String, List<RuleContext>> child = ParserHelper.getChildMap(children.get("function_name").get(0));
                 if (child.containsKey("expr")) {
                     return changeExpr(child.get("expr").get(0), alias_tablename, maintables, position_sql, sql, parentTabAlias_childTabAliases, userDetails);
                 }
@@ -117,7 +117,7 @@ public class Where extends Statement{
     }
 
     private static String makeJoinConstraint(UserDetails userDetails, RuleContext parent, Map<String, String> alias_tablename, Map<String, List<String>> parentTabAlias_childTabAliases) {
-        List<RuleContext> expr = SQL_Parser.getChildMap(parent).get("expr");
+        List<RuleContext> expr = ParserHelper.getChildMap(parent).get("expr");
         List<String> selectStmts = new ArrayList<>();
         for (RuleContext ruleContext : expr) {
             selectStmts.add(getSubtableASQuery(userDetails, ruleContext, alias_tablename, parentTabAlias_childTabAliases));

@@ -1,11 +1,10 @@
 package de.uni.leipzig.H2Oberfleache.statementRefactoring;
 
-import de.uni.leipzig.H2Oberfleache.parser.SQL_Parser;
+import de.uni.leipzig.H2Oberfleache.parser.ParserHelper;
 import de.uni.leipzig.H2Oberfleache.presentation.UserDetails;
 import org.antlr.v4.runtime.RuleContext;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -30,7 +29,7 @@ public class Aggregate extends Statement{
     private String obertab = "";
 
     public String aggragateInWhere(RuleContext expr){
-        Map<String, List<RuleContext>> map = SQL_Parser.getChildMap(expr);
+        Map<String, List<RuleContext>> map = ParserHelper.getChildMap(expr);
         String functionName = map.get("aggregate").get(0).getText();
         if(functionName.equals("CARDINALITY"))functionName = "COUNT";
         String from = "(SELECT ";
@@ -48,7 +47,7 @@ public class Aggregate extends Statement{
         String[] alias = expr1.getText().split("\\.");
         distinct = " ";
         if(expr.getText().contains("DISTINCT"))distinct = "DISTINCT ";
-        Map<String, List<RuleContext>> children = SQL_Parser.getChildMap(expr1);
+        Map<String, List<RuleContext>> children = ParserHelper.getChildMap(expr1);
         tablename = "";
         if(!children.containsKey("table_name") && !children.containsKey("function_name") && !alias_tablename.containsKey(expr1.getText())){
             for (Map.Entry<String, String> entry : alias_tablename.entrySet()) {
@@ -79,7 +78,7 @@ public class Aggregate extends Statement{
     }
 
     public void aggregateInSelect(RuleContext expr, Map<String, List<RuleContext>> select_or_values){
-        Map<String, List<RuleContext>> map = SQL_Parser.getChildMap(expr);
+        Map<String, List<RuleContext>> map = ParserHelper.getChildMap(expr);
         String functionName = map.get("aggregate").get(0).getText();
         if(functionName.equals("CARDINALITY"))functionName = "COUNT";
         String newAlias = "_" + functionName + "_" + nameNumber;

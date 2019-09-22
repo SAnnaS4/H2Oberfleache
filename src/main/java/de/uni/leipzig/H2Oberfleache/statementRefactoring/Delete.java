@@ -1,6 +1,6 @@
 package de.uni.leipzig.H2Oberfleache.statementRefactoring;
 
-import de.uni.leipzig.H2Oberfleache.parser.SQL_Parser;
+import de.uni.leipzig.H2Oberfleache.parser.ParserHelper;
 import de.uni.leipzig.H2Oberfleache.presentation.UserDetails;
 import org.antlr.v4.runtime.RuleContext;
 
@@ -19,7 +19,7 @@ public class Delete extends Update_Delete{
     }
     public String nf2To1Nf() throws SQLException {
         whichStmt = "delete_stmt";
-        Map<String, List<RuleContext>> map = SQL_Parser.getParsedMap(sql);
+        Map<String, List<RuleContext>> map = ParserHelper.getParsedMap(sql);
         StringBuilder result;
         String tablename = getTablename(map.get("qualified_table_name").get(0), false);
         List<String> table = new ArrayList<>();

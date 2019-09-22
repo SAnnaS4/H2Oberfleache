@@ -1,7 +1,6 @@
 package de.uni.leipzig.H2Oberfleache.statementRefactoring;
 
-import de.uni.leipzig.H2Oberfleache.parser.SQL_Parser;
-import de.uni.leipzig.H2Oberfleache.parser.SQLiteParser;
+import de.uni.leipzig.H2Oberfleache.parser.ParserHelper;
 import de.uni.leipzig.H2Oberfleache.presentation.UserDetails;
 import org.antlr.v4.runtime.RuleContext;
 
@@ -21,9 +20,9 @@ public class Joins extends Where {
     public static List<RuleContext> getTableOrSubQuerys(List<RuleContext> joins){
         List<RuleContext> tableOrSubQuerys = new ArrayList<>();
         for (RuleContext join : joins) {
-            List<RuleContext> table_subquery = SQL_Parser.getParsedMap(join).get("table_or_subquery");
+            List<RuleContext> table_subquery = ParserHelper.getParsedMap(join).get("table_or_subquery");
             for (RuleContext context : table_subquery) {
-                if(!SQL_Parser.getChildMap(context).containsKey("join_clause"))tableOrSubQuerys.add(context);
+                if(!ParserHelper.getChildMap(context).containsKey("join_clause"))tableOrSubQuerys.add(context);
             }
         }
         return tableOrSubQuerys;

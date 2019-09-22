@@ -1,6 +1,6 @@
 package de.uni.leipzig.H2Oberfleache.statementRefactoring;
 
-import de.uni.leipzig.H2Oberfleache.parser.SQL_Parser;
+import de.uni.leipzig.H2Oberfleache.parser.ParserHelper;
 import de.uni.leipzig.H2Oberfleache.presentation.UserDetails;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.RuleContext;
@@ -171,11 +171,11 @@ public class Statement {
     public String changeToNF1(String sql) throws SQLException {
         sql = prepareSQL(sql);
         String newSQL = sql;
-        if(!SQL_Parser.machesSyntax(sql)){
+        if(!ParserHelper.machesSyntax(sql)){
             String errorMessage = "Syntax Fehler in SQL Befehl \"" + sql + "\"";
             throw new SQLSyntaxErrorException(errorMessage);
         };
-        switch (SQL_Parser.getQueryType(sql)) {
+        switch (ParserHelper.getQueryType(sql)) {
             case "CREATE":
                 Create create = new Create(sql, userDetails);
                 newSQL = create.nf2To1Nf();

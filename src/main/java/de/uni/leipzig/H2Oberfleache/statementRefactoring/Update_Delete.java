@@ -1,8 +1,7 @@
 package de.uni.leipzig.H2Oberfleache.statementRefactoring;
 
-import de.uni.leipzig.H2Oberfleache.controller.BaseController;
 import de.uni.leipzig.H2Oberfleache.jdbc.ExecuteStatement;
-import de.uni.leipzig.H2Oberfleache.parser.SQL_Parser;
+import de.uni.leipzig.H2Oberfleache.parser.ParserHelper;
 import de.uni.leipzig.H2Oberfleache.parser.SQLiteLexer;
 import de.uni.leipzig.H2Oberfleache.parser.SQLiteParser;
 import de.uni.leipzig.H2Oberfleache.presentation.UserDetails;
@@ -50,7 +49,7 @@ public class Update_Delete extends Statement {
             selectStmt.append(", ").append(alias).append(".").append(idName);
         }
         selectStmt.append(" FROM ").append(mainTable).append(" ");
-        for (RuleContext context : SQL_Parser.getChildList(stmt)) {
+        for (RuleContext context : ParserHelper.getChildList(stmt)) {
             if(SQLiteParser.ruleNames[context.getRuleIndex()].equals("where_expr")){
                 where = cutFromSQL(context, sql);
             }
@@ -100,7 +99,7 @@ public class Update_Delete extends Statement {
     }
 
     public List<String> newQueries(String sql, String tablename, List<String> subtables, SpezificFunction foo) throws SQLException {
-        Map<String, List<RuleContext>> map = SQL_Parser.getParsedMap(sql);
+        Map<String, List<RuleContext>> map = ParserHelper.getParsedMap(sql);
         RuleContext stmt;
         if(map.containsKey(whichStmt + "_limited")) stmt = map.get(whichStmt + "_limited").get(0);
         else stmt = map.get(whichStmt).get(0);

@@ -1,8 +1,7 @@
 package de.uni.leipzig.H2Oberfleache.statementRefactoring;
 
-import de.uni.leipzig.H2Oberfleache.controller.BaseController;
 import de.uni.leipzig.H2Oberfleache.jdbc.DbInfo;
-import de.uni.leipzig.H2Oberfleache.parser.SQL_Parser;
+import de.uni.leipzig.H2Oberfleache.parser.ParserHelper;
 import de.uni.leipzig.H2Oberfleache.parser.SQLiteLexer;
 import de.uni.leipzig.H2Oberfleache.parser.SQLiteParser;
 import de.uni.leipzig.H2Oberfleache.presentation.UserDetails;
@@ -35,7 +34,7 @@ public class UnNest extends Statement{
     public String setNestUnnestAttributes(RuleContext result_column, RuleContext un_nest_stmt, Map<String, List<RuleContext>> children, String start){
         String aliasStart;
         String nestedTableAlias = "";
-        for (Map.Entry<String, List<RuleContext>> entry : SQL_Parser.getChildMap(result_column).entrySet()) {
+        for (Map.Entry<String, List<RuleContext>> entry : ParserHelper.getChildMap(result_column).entrySet()) {
             if(entry.getKey().equals("column_alias"))nestedTableAlias = entry.getValue().get(0).getText();
         }
         String tablealias = children.get("table_name").get(children.get("table_name").size()-1).getText();
@@ -51,7 +50,7 @@ public class UnNest extends Statement{
         List<RuleContext> column_name = new ArrayList<>();
         List<RuleContext> nests = new ArrayList<>();
         for (RuleContext ruleContext : resultColumn) {
-            Map<String, List<RuleContext>> child = SQL_Parser.getChildMap(ruleContext);
+            Map<String, List<RuleContext>> child = ParserHelper.getChildMap(ruleContext);
             column_name.addAll(child.getOrDefault("expr", new ArrayList<>()));
             nests.addAll(child.getOrDefault("un_nest_stmt", new ArrayList<>()));
         }
@@ -90,7 +89,7 @@ public class UnNest extends Statement{
 
         }
         for (RuleContext ruleContext : nests) {
-            result.append(setNestUnnestAttributes(ruleContext.parent, ruleContext, SQL_Parser.getChildMap(ruleContext), aliasStart));
+            result.append(setNestUnnestAttributes(ruleContext.parent, ruleContext, ParserHelper.getChildMap(ruleContext), aliasStart));
         }
         result = new StringBuilder(result.substring(0, result.length() - 2));
         return result.toString();
@@ -100,7 +99,7 @@ public class UnNest extends Statement{
         SQLiteLexer lexer = new SQLiteLexer(CharStreams.fromString(sql));
         SQLiteParser parser = new SQLiteParser(new CommonTokenStream(lexer));
         RuleContext context = parser.select_or_values();
-        List<RuleContext> result_columns = SQL_Parser.getChildMap(context).get("result_column");
+        List<RuleContext> result_columns = ParserHelper.getChildMap(context).get("result_column");
         makePosition_sql(sql);
         for (Map.Entry<String, String> nestedTable : nestedTables_alias.entrySet()) {
             List<String> nestedObertabs = nestedTable_oberNestedTab.get(nestedTable.getKey());

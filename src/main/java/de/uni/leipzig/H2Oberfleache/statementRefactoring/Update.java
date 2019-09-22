@@ -1,6 +1,6 @@
 package de.uni.leipzig.H2Oberfleache.statementRefactoring;
 
-import de.uni.leipzig.H2Oberfleache.parser.SQL_Parser;
+import de.uni.leipzig.H2Oberfleache.parser.ParserHelper;
 import de.uni.leipzig.H2Oberfleache.parser.SQLiteParser;
 import de.uni.leipzig.H2Oberfleache.presentation.UserDetails;
 import org.antlr.v4.runtime.RuleContext;
@@ -23,7 +23,7 @@ public class Update extends Update_Delete {
     }
     public String nf2To1Nf() throws SQLException {
         whichStmt = "update_stmt";
-        Map<String, List<RuleContext>> map = SQL_Parser.getParsedMap(sql);
+        Map<String, List<RuleContext>> map = ParserHelper.getParsedMap(sql);
         String tablename = getTablename(map.get("qualified_table_name").get(0), false);
         List<String> subtables = getNF2TableNamesRec(tablename, userDetails);
         List<String> table = new ArrayList<>();
@@ -73,7 +73,7 @@ public class Update extends Update_Delete {
                             table_set_value.put(subtable, list);
                         }
                         if (!column.toString().contains("\\.") && !SQLiteParser.ruleNames[value.getRuleIndex()].equals("expr")) {
-                            table_tableInsert.put(subtable, SQL_Parser.getChildMap(set).get("table_insert").get(0));
+                            table_tableInsert.put(subtable, ParserHelper.getChildMap(set).get("table_insert").get(0));
                         }
                     }
                 }
@@ -187,7 +187,7 @@ public class Update extends Update_Delete {
         inserts.add(delete_stmt);
         List<String> otIds = tablename_ID.get(oberTabName);
         Insert insert1 = new Insert(userDetails);
-        Map<String, List<RuleContext>> childMap = SQL_Parser.getChildMap(value);
+        Map<String, List<RuleContext>> childMap = ParserHelper.getChildMap(value);
         List<RuleContext> valueList = new ArrayList<>();
         RuleContext valueInsert = childMap.get("value_insert").get(0);
         if(SQLiteParser.ruleNames[value.getRuleIndex()].equals("set_expr")){

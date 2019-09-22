@@ -37,26 +37,8 @@
                 <p:inputTextarea rows="7" cols="35" autoResize="true" value="#{baseController.sql}" />
                 <p:commandButton value="Submit" actionListener="#{baseController.submit()}"/>
                 <h:outputText id="htmlStuff" value="#{baseController.html}" escape="false"/>
-                <p:dataTable id="tables" var="table" value="#{baseController.getTable().content}" widgetVar="Ttable" >
-                    <p:columns value="#{baseController.table.attribute}" var="attribut" columnIndexVar="colIndex" sortBy="#{table[attribut]}" filterBy="#{table[attribut]}">
-                        <f:facet name="header">
-                            <h:outputText value="#{attribut.name}" />
-                        </f:facet>
-                        <h:outputText value="#{table[attribut.number].value}" />
-                    </p:columns>
-                </p:dataTable>
             </p:layoutUnit>
         </p:layout>
     </h:form>
 </h:body>
 </html>
-
-
-        <!--<p:dataTable id="tables" var="table" name="#{statementSQL.getTable().content}" widgetVar="Ttable" >
-            <p:columns name="#{statementSQL.table.attribute}" var="attribut" columnIndexVar="colIndex" sortBy="#{table[attribut]}" filterBy="#{table[attribut]}">
-                <f:facet name="header">
-                    <h:outputText name="#{attribut.name}" />
-                </f:facet>
-                <h:outputText name="#{table[attribut.number].name}" />
-            </p:columns>
-        </p:dataTable>-->

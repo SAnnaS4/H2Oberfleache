@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class SQL_Parser {
+public class ParserHelper {
 
     public static boolean machesSyntax(String sql){
         try {

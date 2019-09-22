@@ -1,6 +1,5 @@
 package de.uni.leipzig.H2Oberfleache.presentation;
 
-import de.uni.leipzig.H2Oberfleache.controller.BaseController;
 import de.uni.leipzig.H2Oberfleache.jdbc.DbInfo;
 import de.uni.leipzig.H2Oberfleache.statementRefactoring.Statement;
 import lombok.Getter;
@@ -12,7 +11,7 @@ import java.util.*;
 @Getter
 @Setter
 public class HtmlBuilder {
-    String html = "";
+    String html;
     Map<Integer, List<Table.Attribute>> hierarchy_attributes = new HashMap<>();
     List<String> highestTablenames = new ArrayList<>();
     List<Integer> ids = new ArrayList<>();
